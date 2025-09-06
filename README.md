@@ -25,6 +25,17 @@ On‑device Codex CLI benefits (why local):
 - Rapid diagnostics: trace processes, check ROS 2 topics/TF, run targeted tests, and suggest fixes.
 - New hardware integration: quickly scaffold drivers/configs/URDF/launch for sensors, cameras, and more.
 
+## Agents & Roles
+- GPT‑5‑Pro — Architect: designs the end‑to‑end robotics architecture, drafts the roadmap, and proposes interfaces, milestones, and safety gates.
+- Codex CLI — On‑device implementer/maintainer: runs on the rover to implement the plan, maintain services, perform diagnostics, and integrate new hardware locally.
+- Codex IDE — Repo orchestration (this agent): bootstraps and maintains the repository, documentation, and automation. Work so far:
+  - Initialized the Git repo, configured SSH, and pushed the project to GitHub.
+  - Rewrote and structured `README.md`; added hero image and “Project Clock” auto‑updater workflow.
+  - Scaffolded repo per roadmap: `docs/`, `configs/`, `urdf/`, `launch/`, `hw/`, `scripts/`, `calibration/`, `bags/` (placeholders).
+  - Added the AGENTS chain: `AGENTS.md` (root) + subsystem `AGENTS.md` files; created `AGENTS_PROGRESS.md`.
+  - Added governance: `.github/CODEOWNERS`, PR/Issue templates, and `REPO_UPDATES.md`.
+  - Renamed roadmap to `alpha_viam_rover_roadmap_v1.0.md` for proper GitHub rendering; added `CONTRIBUTING.md`.
+
 ## Hardware
 - Chassis: Viam Rover v2
   - Resource page: https://www.viam.com/resources/rover
