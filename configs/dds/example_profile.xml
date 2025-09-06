@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profiles>
+  <!-- Placeholder DDS profile; replace with vendor-specific config -->
+  <participant profile_name="alpha_rover_dds" is_default_profile="true">
+    <domainId>0</domainId>
+  </participant>
+</profiles>

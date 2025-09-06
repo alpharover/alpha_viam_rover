@@ -1,0 +1,8 @@
+# YDLIDAR G4 parameters
+ydlidar:
+  port: /dev/ttyUSB0
+  frame_id: lidar
+  rpm: 600
+  range_min: 0.1
+  range_max: 16.0
+

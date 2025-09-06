@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="alpha_viam_rover">
+  <!-- Placeholder URDF/Xacro. Add links, joints, and ros2_control tags. -->
+  <xacro:macro name="base" params="prefix:=''"></xacro:macro>
+</robot>

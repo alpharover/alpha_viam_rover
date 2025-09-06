@@ -1,0 +1,9 @@
+# IMU (MPU-6050) parameters
+imu:
+  frame_id: imu_link
+  i2c_bus: 1
+  address: 0x68
+  filter:
+    type: madgwick  # optional
+    gain: 0.1
+

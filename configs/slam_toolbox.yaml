@@ -1,0 +1,6 @@
+# slam_toolbox parameters (placeholder)
+slam_toolbox:
+  use_sim_time: false
+  mode: mapping
+  resolution: 0.05
+

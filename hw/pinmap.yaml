@@ -1,0 +1,14 @@
+# Pin map (placeholder)
+gpio:
+  ena: 26
+  enb: 22
+  in1: 19
+  in2: 13
+  in3: 6
+  in4: 5
+
+i2c:
+  bus: 1
+  imu_address: 0x68
+  ina219_address: 0x40
+

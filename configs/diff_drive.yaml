@@ -1,0 +1,10 @@
+# diff_drive_controller parameters
+diff_drive_controller:
+  type: diff_drive_controller/DiffDriveController
+  left_wheel_names: [left_wheel_joint]
+  right_wheel_names: [right_wheel_joint]
+  wheel_separation: 0.30
+  wheel_radius: 0.06
+  publish_rate: 50
+  enable_odom_tf: true
+

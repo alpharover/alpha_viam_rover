@@ -1,0 +1,7 @@
+# Power monitor (INA219)
+power:
+  frame_id: power
+  shunt_ohms: 0.1
+  bus_voltage_topic: /power/bus_voltage
+  current_topic: /power/current
+
