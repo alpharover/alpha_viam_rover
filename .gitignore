@@ -1,0 +1,21 @@
+# ROS 2 workspace artifacts
+build/
+install/
+log/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Node/npm (if used later)
+node_modules/
+

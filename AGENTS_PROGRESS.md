@@ -56,3 +56,23 @@ Rules
 * Acceptance: Pass — non-interactive auth works on RPi.
 * Evidence: `ssh alpha_viam@alpha-viam.local 'codex login status'` → Logged in using ChatGPT.
 * Follow-ups: If preferring API key billing, set `OPENAI_API_KEY` on the RPi and run `codex login --api-key $OPENAI_API_KEY`.
+
+---
+
+* 2025-09-06 / agent: codex-cli
+* Phase / Subsystem: Bring-up / OS+ROS
+* Task: Add ROS 2 Humble bootstrap + checks (clean slate)
+* Summary: Created `scripts/bootstrap_ros2_humble.sh` (idempotent ROS 2 install for Ubuntu 22.04) and `scripts/check_stack.sh`; updated `docs/bringup/os_ros.md` with concrete steps.
+* Acceptance: N/A (installation not executed yet on this host).
+* Evidence: Scripts present; docs updated; ready to run.
+* Follow-ups: Execute bootstrap script, open new shell, run `scripts/check_stack.sh`; confirm `ros2 doctor` OK.
+
+---
+
+* 2025-09-06 / agent: codex-cli
+* Phase / Subsystem: Bring-up / OS+ROS
+* Task: Install ROS 2 Humble and scaffold base bring-up
+* Summary: Ran `scripts/bootstrap_ros2_humble.sh` with sudo; installed Humble, colcon, rosdep. Added ament_python pkg `bringup/alpha_viam_bringup` with `base_bringup.launch.py` composing robot_state_publisher (URDF), EKF (configs/ekf.yaml), and Foxglove bridge. Fixed EKF YAML structure and minimal URDF. Installed dependencies via apt.
+* Acceptance: Pass — `ros2 doctor` reports "All 5 checks passed"; `ros2 launch alpha_viam_bringup base_bringup.launch.py` starts nodes (foxglove at ws://0.0.0.0:8765). 10s smoke test stable.
+* Evidence: Command logs in session; nodes started: robot_state_publisher, ekf_node, foxglove_bridge.
+* Follow-ups: Add `diagnostic_aggregator` to publish `/diagnostics`; record MCAP once sensors are integrated; create systemd unit for bring-up.

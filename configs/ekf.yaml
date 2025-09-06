@@ -1,9 +1,10 @@
-# robot_localization EKF parameters (placeholder)
+# robot_localization EKF parameters (minimal placeholder)
 ekf_filter_node:
-  frequency: 30
-  two_d_mode: true
-  map_frame: map
-  odom_frame: odom
-  base_link_frame: base_link
-  world_frame: odom
-
+  ros__parameters:
+    frequency: 30.0
+    two_d_mode: true
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+    # Inputs to be wired later (odom0, imu0, etc.)
