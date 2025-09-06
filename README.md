@@ -41,6 +41,9 @@ On‑device Codex CLI benefits (why local):
 - [alpha_viam_rover_roadmap_v1.0.md](alpha_viam_rover_roadmap_v1.0.md) — The current high-level roadmap that guides implementation.
 - `README.md` — You’re here. Context, links, and how to follow along.
 - Images and assets for the project log.
+ - `AGENTS.md` — Agent operating guide (root) with links to sub-guides.
+ - `AGENTS_PROGRESS.md` — Append-only log for work evidence.
+ - `REPO_UPDATES.md` — Planning, progress, CI, and releases policy.
 
 More will arrive as the build progresses (modules, configs, scripts, notes).
 
@@ -58,7 +61,13 @@ If you’re following along or want to try something similar:
 - If you have a Viam Rover v2, explore the links above to get your hardware ready.
 
 ## Contributing
-Ideas, discussions, and lightweight PRs are welcome. Please open an issue to propose changes or share ideas that could accelerate the “bot bashing” method.
+Please read `CONTRIBUTING.md` before opening a PR. Highlights:
+- Use short-lived branches and Conventional Commits.
+- Include evidence (short MCAP, Foxglove layout/screenshot) for sensor/control/nav changes.
+- Update docs/configs and append to `AGENTS_PROGRESS.md` after merge.
+- High-impact changes require architect approval (`needs-architect`), enforced by CODEOWNERS.
+
+References: `AGENTS.md`, `REPO_UPDATES.md`.
 
 ## License
 TBD (will be added once the public scope is finalized).
