@@ -4,6 +4,11 @@ Testing and proving a new way to build robots: “bot bashing” — vibe-coding
 
 ![Viam Rover 2 chassis](viam-rover-hero.jpg)
 
+## Project Clock
+<!--PROJECT_CLOCK_START-->
+Project age: initializing…
+<!--PROJECT_CLOCK_END-->
+
 ## Project Clarity
 - Started with an out‑of‑box Viam Rover v2 kit; additional parts were on‑hand.
 - Compute is a Raspberry Pi 4B for now (may upgrade later).
