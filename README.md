@@ -35,10 +35,10 @@ On‑device Codex CLI benefits (why local):
 - Integrate IMU, INA219 power sensing, and YDLIDAR G4.
 - Teleop + visualization with Foxglove; MCAP logging.
 - Mapping and basic navigation with SLAM Toolbox and Nav2.
-- See `alpha_viam_rover_roadmap_v1.0` for the living plan.
+- See [alpha_viam_rover_roadmap_v1.0.md](alpha_viam_rover_roadmap_v1.0.md) for the living plan.
 
 ## Repo Contents
-- `alpha_viam_rover_roadmap_v1.0` — The current high-level roadmap that guides implementation.
+- [alpha_viam_rover_roadmap_v1.0.md](alpha_viam_rover_roadmap_v1.0.md) — The current high-level roadmap that guides implementation.
 - `README.md` — You’re here. Context, links, and how to follow along.
 - Images and assets for the project log.
 
@@ -53,7 +53,7 @@ I’m formalizing “bot bashing” as a dedicated, open framework with clear ro
 
 ## Getting Started (Observers)
 If you’re following along or want to try something similar:
-- Read the roadmap: `alpha_viam_rover_roadmap_v1.0` to see the current plan.
+- Read the roadmap: [alpha_viam_rover_roadmap_v1.0.md](alpha_viam_rover_roadmap_v1.0.md) to see the current plan.
 - Watch issues and PRs for day-to-day progress.
 - If you have a Viam Rover v2, explore the links above to get your hardware ready.
 
