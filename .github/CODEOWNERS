@@ -1,0 +1,12 @@
+# Purpose: Ensure architect sign-off and clear ownership for critical areas.
+# Replace @PROJECT_ARCHITECT_HANDLE and team handles with real GitHub handles.
+
+/drivers/                @PROJECT_ARCHITECT_HANDLE @controls_team
+/nav/                    @PROJECT_ARCHITECT_HANDLE @nav_team
+/perception/             @PROJECT_ARCHITECT_HANDLE @vision_team
+/can/                    @PROJECT_ARCHITECT_HANDLE @embedded_team
+/configs/                @PROJECT_ARCHITECT_HANDLE
+/urdf/                   @PROJECT_ARCHITECT_HANDLE
+/docs/ADR/               @PROJECT_ARCHITECT_HANDLE
+/.github/                @PROJECT_ARCHITECT_HANDLE
+
