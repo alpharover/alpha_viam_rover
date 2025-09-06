@@ -15,6 +15,11 @@ I’ve been building robots since the Basic Stamp 2 days. Robotics is my passion
 
 For this project, I’m experimenting with a workflow where I use GPT‑5‑Pro to generate an end‑to‑end robotics architecture based on my exact hardware configuration, and then a local Codex CLI agent (running GPT‑5‑thinking‑high) on the robot implements the plan. In short: I’m vibe coding a robot. I call it “bot bashing,” and I think it’s the future.
 
+On‑device Codex CLI benefits (why local):
+- System maintenance: automate updates, manage services, inspect logs, and keep the stack healthy.
+- Rapid diagnostics: trace processes, check ROS 2 topics/TF, run targeted tests, and suggest fixes.
+- New hardware integration: quickly scaffold drivers/configs/URDF/launch for sensors, cameras, and more.
+
 ## Hardware
 - Chassis: Viam Rover v2
   - Resource page: https://www.viam.com/resources/rover
