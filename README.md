@@ -1,8 +1,14 @@
-# Alpha Viam Rover — Bot Bashing Demo
+# alpha_viam_rover -- bot bashing demonstration
 
 Testing and proving a new way to build robots: “bot bashing” — vibe-coding a robot by pairing a high-level AI planner with an on-device coding agent.
 
 ![Viam Rover 2 chassis](viam-rover-hero.jpg)
+
+## Project Clarity
+- Started with an out‑of‑box Viam Rover v2 kit; additional parts were on‑hand.
+- Compute is a Raspberry Pi 4B for now (may upgrade later).
+- Viam’s chassis carrier board schematic isn’t published; I manually traced the pinout.
+- Wheel encoders are not fully sorted yet — work in progress.
 
 ## What Is This?
 I’ve been building robots since the Basic Stamp 2 days. Robotics is my passion, but the barrier to entry can be steep — especially on the software side. You need to wrangle Linux, networking, Git, and the whole robotics stack.
@@ -13,6 +19,13 @@ For this project, I’m experimenting with a workflow where I use GPT‑5‑Pro 
 - Chassis: Viam Rover v2
   - Resource page: https://www.viam.com/resources/rover
   - Reference repo: https://github.com/viamrobotics/Viam-Rover-2
+
+## Future Build Plans (Short)
+- Finalize encoder wiring and odometry via `ros2_control`.
+- Integrate IMU, INA219 power sensing, and YDLIDAR G4.
+- Teleop + visualization with Foxglove; MCAP logging.
+- Mapping and basic navigation with SLAM Toolbox and Nav2.
+- See `alpha_viam_rover_roadmap_v1.0` for the living plan.
 
 ## Repo Contents
 - `alpha_viam_rover_roadmap_v1.0` — The current high-level roadmap that guides implementation.
