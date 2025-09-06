@@ -46,3 +46,13 @@ Rules
 * Acceptance: Pass — `node -v` → v20.19.5; `codex --version` → codex-cli 0.30.0.
 * Evidence: Remote install via SSH; verified binaries present in PATH (`/usr/bin/node`, `/usr/bin/codex`).
 * Follow-ups: `sudo apt autoremove` to prune old node packages; consider nvm for per-user Node management.
+
+---
+
+* 2025-09-06 / agent: codex-cli
+* Phase / Subsystem: Bring-up / Tooling
+* Task: Configure Codex CLI auth on headless RPi
+* Summary: Copied local `$HOME/.codex/auth.json` to `alpha-viam.local:~/.codex/auth.json` per headless auth docs; verified `codex login status` shows "Logged in using ChatGPT".
+* Acceptance: Pass — non-interactive auth works on RPi.
+* Evidence: `ssh alpha_viam@alpha-viam.local 'codex login status'` → Logged in using ChatGPT.
+* Follow-ups: If preferring API key billing, set `OPENAI_API_KEY` on the RPi and run `codex login --api-key $OPENAI_API_KEY`.
