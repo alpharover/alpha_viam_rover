@@ -2,16 +2,12 @@
 
 Testing and proving a new way to build robots: “bot bashing” — vibe-coding a robot by pairing a high-level AI planner with an on-device coding agent.
 
-![Viam Rover 2 chassis](638e3de6e9575cf86a297fb7_viam-open-graph-image-rover%20copy.jpg)
+![Viam Rover 2 chassis](viam-rover-hero.jpg)
 
 ## What Is This?
 I’ve been building robots since the Basic Stamp 2 days. Robotics is my passion, but the barrier to entry can be steep — especially on the software side. You need to wrangle Linux, networking, Git, and the whole robotics stack.
 
-For this project, I’m experimenting with a workflow where:
-- I use GPT-5-Pro to generate an end-to-end robotics architecture based on my exact hardware configuration.
-- I hand that roadmap to a local Codex CLI agent (running GPT‑5‑thinking‑high) on the robot’s computer to implement the plan.
-
-In short: I’m vibe coding a robot. I call it “bot bashing,” and I think it’s the future.
+For this project, I’m experimenting with a workflow where I use GPT‑5‑Pro to generate an end‑to‑end robotics architecture based on my exact hardware configuration, and then a local Codex CLI agent (running GPT‑5‑thinking‑high) on the robot implements the plan. In short: I’m vibe coding a robot. I call it “bot bashing,” and I think it’s the future.
 
 ## Hardware
 - Chassis: Viam Rover v2
@@ -25,15 +21,11 @@ In short: I’m vibe coding a robot. I call it “bot bashing,” and I think it
 
 More will arrive as the build progresses (modules, configs, scripts, notes).
 
-## How “Bot Bashing” Works
-1. Profile hardware: enumerate sensors, actuators, compute, networking, power.
-2. Generate architecture: GPT‑5‑Pro proposes stack, interfaces, and milestones.
-3. Plan to actions: turn the roadmap into concrete tasks and checklists.
-4. On-device agent: Codex CLI agent implements changes, files, and glue code.
-5. Tight loop: validate on hardware, adjust the plan, iterate quickly.
+## Bot Bashing Framework (Coming Soon)
+I’m formalizing “bot bashing” as a dedicated, open framework with clear roles, permissions, safety gates, escalation protocols, backup policies, and operational conventions. Once fully defined and tested, it will live in its own repo with docs, templates, and examples.
 
 ## Follow Along
-- Build updates and commentary on X: [add handle/link]
+- Build updates and commentary on X: @alpha_rover — https://x.com/Alpha10six
 - Issues will track milestones and blockers; PRs will show diff-based progress.
 
 ## Getting Started (Observers)
