@@ -27,7 +27,10 @@ jobs:
     if: |
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule' ||
-      (github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ' '), 'ci:ros-build'))
+      (
+        github.event_name == 'pull_request' &&
+        contains(join(github.event.pull_request.labels.*.name, ' '), 'ci:ros-build')
+      )
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,4 +44,3 @@ jobs:
         run: |
           echo "TODO: Add action-ros-ci when packages are present."
           echo "Keeping this job light until runtime is ready."
-

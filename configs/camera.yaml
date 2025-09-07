@@ -4,4 +4,3 @@ camera:
   frame_id: camera_link
   image_size: [1280, 720]
   fps: 30
-

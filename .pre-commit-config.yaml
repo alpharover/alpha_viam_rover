@@ -22,4 +22,3 @@ repos:
     rev: v0.41.0
     hooks:
       - id: markdownlint
-

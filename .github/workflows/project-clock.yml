@@ -26,11 +26,11 @@ jobs:
           FIRST=$(git log --reverse --format=%cI | head -n1)
           export FIRST
           python - << 'PY' | tee /tmp/clock.txt
-import os, datetime
-first = os.environ.get('FIRST', '')
-dt0 = datetime.datetime.fromisoformat(first.replace('Z','+00:00'))
-age = (datetime.datetime.now(datetime.timezone.utc) - dt0).days
-print(f"Project age: {age} days (since {dt0.date()})")
-PY
+            import os, datetime
+            first = os.environ.get('FIRST', '')
+            dt0 = datetime.datetime.fromisoformat(first.replace('Z','+00:00'))
+            age = (datetime.datetime.now(datetime.timezone.utc) - dt0).days
+            print(f"Project age: {age} days (since {dt0.date()})")
+          PY
           echo "### Project Clock" >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/clock.txt >> "$GITHUB_STEP_SUMMARY"
