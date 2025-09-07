@@ -7,4 +7,3 @@ diff_drive_controller:
   wheel_radius: 0.06
   publish_rate: 50
   enable_odom_tf: true
-

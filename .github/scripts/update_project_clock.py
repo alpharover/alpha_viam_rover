@@ -12,9 +12,12 @@ START_FILE = ROOT / "PROJECT_START_DATE"
 
 def git_first_commit_iso() -> str:
     try:
-        out = subprocess.check_output(
-            ["git", "log", "--reverse", "--format=%cI"], cwd=ROOT
-        ).decode().strip().splitlines()
+        out = (
+            subprocess.check_output(["git", "log", "--reverse", "--format=%cI"], cwd=ROOT)
+            .decode()
+            .strip()
+            .splitlines()
+        )
         return out[0] if out else None
     except Exception:
         return None
@@ -56,12 +59,7 @@ def update_readme(age_line: str) -> bool:
         new_text = pattern.sub(replacement, text)
     else:
         # Append a section if markers not present
-        new_text = (
-            text
-            + "\n\n## Project Clock\n"
-            + replacement
-            + "\n"
-        )
+        new_text = text + "\n\n## Project Clock\n" + replacement + "\n"
     if new_text != text:
         README.write_text(new_text)
         return True
@@ -80,4 +78,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

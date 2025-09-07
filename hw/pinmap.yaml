@@ -11,4 +11,3 @@ i2c:
   bus: 1
   imu_address: 0x68
   ina219_address: 0x40
-

@@ -1,0 +1,7 @@
+#!/Users/alpha_dev/robotics_repos/alpha_viam_rover/.venv_ci/bin/python
+import sys
+from codespell_lib import _script_main
+if __name__ == '__main__':
+    if sys.argv[0].endswith('.exe'):
+        sys.argv[0] = sys.argv[0][:-4]
+    sys.exit(_script_main())

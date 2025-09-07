@@ -3,8 +3,6 @@
   apt:
     name: locales
     state: present
-
 - name: Install ROS 2 Humble (placeholder)
   debug:
     msg: "Install ROS 2 Humble via debs (use ros-tooling/setup guidance)"
-

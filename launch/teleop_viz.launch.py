@@ -43,9 +43,7 @@ def generate_launch_description() -> LaunchDescription:
     )
 
     teleop = Node(
-        condition=lambda context: context.perform_substitution(
-            LaunchConfiguration("use_teleop")
-        )
+        condition=lambda context: context.perform_substitution(LaunchConfiguration("use_teleop"))
         .lower()
         .startswith("t"),
         package="teleop_twist_keyboard",
@@ -57,4 +55,3 @@ def generate_launch_description() -> LaunchDescription:
     )
 
     return LaunchDescription([use_teleop, ws_port, ws_address, foxglove, teleop])
-

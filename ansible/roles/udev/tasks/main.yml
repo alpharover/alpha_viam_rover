@@ -5,8 +5,3 @@
     content: |
       # TODO: Add rules for IMU, LiDAR, etc.
   notify: Reload udev
-
-handlers:
-  - name: Reload udev
-    command: udevadm control --reload
-

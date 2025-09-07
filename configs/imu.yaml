@@ -6,4 +6,3 @@ imu:
   filter:
     type: madgwick  # optional
     gain: 0.1
-

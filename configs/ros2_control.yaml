@@ -14,4 +14,3 @@ ros2_control:
       joint: right_wheel_joint
       actuator: right_motor
       reduction: 1.0
-

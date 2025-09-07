@@ -19,6 +19,14 @@ Rules
 
 ---
 
+* 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: CI / Repo Hygiene
+* Task: Fix failing GitHub lint job (yamllint errors)
+* Summary: Moved Ansible role handlers out of tasks files into `handlers/main.yml`; removed disallowed blank lines in YAML across `ansible/`, `configs/`, and `hw/`; formatted Python files with Black to match CI behavior.
+* Acceptance: Pass locally (`yamllint .` clean; `ruff` exit-zero; `codespell` clean). Expect GH “Lint & Unit” to pass post-push (~14s).
+* Evidence: Local CI script run in venv (see `travel_progress_plan.md` CI section for exact commands).
+* Follow-ups: Optionally guard markdownlint step in CI with `command -v` check; tighten CI (make ruff non-exit-zero) when ready.
+
 * 2025-09-06 / agent: codex-cli
 * Phase / Subsystem: Bring-up / Networking
 * Task: Discover RPi and verify SSH reachability (alpha-viam.local)
@@ -233,4 +241,14 @@ Rules
 * Acceptance: Pass — renders well on GitHub; links functional.
 * Evidence: `README.md`.
 * Follow-ups: Add a small banner image later if desired.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Planning / Travel Tasks
+* Task: Prune travel plan to remaining items (local only)
+* Summary: Trimmed `travel_progress_plan.md` to a concise “Remaining Travel Tasks” list, removing items already completed (CI scaffold, schemas/tests, URDF/TF doc, Foxglove/MCAP, teleop, Ansible scaffolds, branding). Preserved reference snippets.
+* Acceptance: Pass (local doc) — ready for next session.
+* Evidence: `travel_progress_plan.md` (not pushed).
+* Follow-ups: Use this list as next-session context; keep local until push is desired.
  

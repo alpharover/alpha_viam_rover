@@ -7,23 +7,29 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
-        "frequency": {"type": "integer", "minimum": 1},
-        "two_d_mode": {"type": "boolean"},
-        "map_frame": {"type": "string"},
-        "odom_frame": {"type": "string"},
-        "base_link_frame": {"type": "string"},
-        "world_frame": {"type": "string"}
+        "ros__parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "frequency": {"type": "number", "minimum": 1},
+            "two_d_mode": {"type": "boolean"},
+            "map_frame": {"type": "string"},
+            "odom_frame": {"type": "string"},
+            "base_link_frame": {"type": "string"},
+            "world_frame": {"type": "string"}
+          },
+          "required": [
+            "frequency",
+            "two_d_mode",
+            "map_frame",
+            "odom_frame",
+            "base_link_frame",
+            "world_frame"
+          ]
+        }
       },
-      "required": [
-        "frequency",
-        "two_d_mode",
-        "map_frame",
-        "odom_frame",
-        "base_link_frame",
-        "world_frame"
-      ]
+      "required": ["ros__parameters"]
     }
   },
   "required": ["ekf_filter_node"]
 }
-

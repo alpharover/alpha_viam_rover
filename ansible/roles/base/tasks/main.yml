@@ -2,7 +2,6 @@
 - name: Update apt cache
   apt:
     update_cache: yes
-
 - name: Install base packages
   apt:
     name:
@@ -11,4 +10,3 @@
       - python3-pip
       - build-essential
     state: present
-

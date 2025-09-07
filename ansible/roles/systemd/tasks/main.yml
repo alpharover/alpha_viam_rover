@@ -16,8 +16,3 @@
       [Install]
       WantedBy=multi-user.target
   notify: Reload systemd
-
-handlers:
-  - name: Reload systemd
-    command: systemctl daemon-reload
-
