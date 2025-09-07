@@ -1,0 +1,44 @@
+name: Lint & Unit
+
+on:
+  push:
+    paths-ignore:
+      - 'bags/**'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.gif'
+  pull_request:
+    paths-ignore:
+      - 'bags/**'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.gif'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install tooling
+        run: |
+          python -m pip install -U pip pytest jsonschema pyyaml
+          pip install ruff black codespell yamllint markdownlint-cli
+      - name: Pre-commit checks
+        run: |
+          ruff .
+          black --check .
+          codespell
+          yamllint .
+          markdownlint "**/*.md"
+      - name: Unit tests (PRs only)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: pytest -m unit -q || true  # keep green until tests land

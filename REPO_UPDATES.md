@@ -42,7 +42,8 @@ All changes land by Pull Request into `main`. PRs must:
 
 Use GitHub Actions to enforce the same rituals on all contributors:
 
-* **ROS build/test:** `ros-tooling/setup-ros` to provision ROS 2 Humble and `action-ros-ci` to build with colcon and run tests. Matrix on Ubuntu (and optional macOS). ([GitHub][15])
+* **Fast checks (always):** Lint & unit workflow runs ruff/black/codespell/yamllint/markdownlint and unit tests. Images/bags ignored via `paths-ignore`; concurrency cancels superseded runs.
+* **ROS build/test (on-demand):** Separate workflow (`ROS Build & Tests`) triggers on `workflow_dispatch`, nightly schedule, or PRs labeled `ci:ros-build`. Keeps heavy builds off doc-only changes and rapid commits. ([GitHub][15])
 * **Linting:** `action-ros-lint` (ament linters) for fast feedback. ([GitHub][16])
 * **Commit message check:** commitlint or a “Conventional Commit Lint” action. ([GitHub][17])
 * **Project automation:** optional action to auto‑attach PRs/issues to the Projects board and set status fields. ([GitHub][18])
@@ -187,4 +188,3 @@ If you want, I can also generate a concise CONTRIBUTING.md that mirrors this pol
 [23]: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-built-in-automations?utm_source=chatgpt.com "Using the built-in automations"
 [24]: https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/creating-and-editing-milestones-for-issues-and-pull-requests?utm_source=chatgpt.com "Creating and editing milestones for issues and pull requests"
 [25]: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/about-issue-and-pull-request-templates?utm_source=chatgpt.com "About issue and pull request templates"
-

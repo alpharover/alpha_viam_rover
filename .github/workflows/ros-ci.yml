@@ -1,0 +1,44 @@
+name: ROS Build & Tests (On-demand)
+
+on:
+  # Manual trigger
+  workflow_dispatch: {}
+  # Nightly (main branch)
+  schedule:
+    - cron: '0 3 * * *'
+  # PR trigger when core runtime files change (job still gated by label)
+  pull_request:
+    paths:
+      - 'bringup/**'
+      - 'drivers/**'
+      - 'nav/**'
+      - 'perception/**'
+      - 'can/**'
+      - 'launch/**'
+      - 'urdf/**'
+      - 'configs/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ros_build:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ' '), 'ci:ros-build'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up ROS 2 Humble
+        uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: humble
+      - name: Build and test (placeholder)
+        run: |
+          echo "TODO: Add action-ros-ci when packages are present."
+          echo "Keeping this job light until runtime is ready."
+
