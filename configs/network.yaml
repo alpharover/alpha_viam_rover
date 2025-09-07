@@ -1,0 +1,6 @@
+# Network and discovery configuration
+rover_hostname: alpha-viam.local
+foxglove_ws_port: 8765
+# Optional ROS_DOMAIN_ID for multi-robot isolation
+ros_domain_id: 20
+

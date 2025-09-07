@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rover Network",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "rover_hostname": {"type": "string"},
+    "foxglove_ws_port": {"type": "integer", "minimum": 1, "maximum": 65535},
+    "ros_domain_id": {"type": "integer", "minimum": 0, "maximum": 232}
+  },
+  "required": ["rover_hostname", "foxglove_ws_port"]
+}
+

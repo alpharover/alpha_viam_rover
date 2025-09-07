@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IMU params",
+  "type": "object",
+  "properties": {
+    "imu": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "frame_id": {"type": "string"},
+        "i2c_bus": {"type": "integer", "minimum": 0},
+        "address": {"type": ["integer", "string"]},
+        "filter": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "type": {"type": "string"},
+            "gain": {"type": "number"}
+          }
+        }
+      },
+      "required": ["frame_id", "i2c_bus", "address"]
+    }
+  },
+  "required": ["imu"]
+}
+

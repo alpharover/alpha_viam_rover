@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ros2_control planning schema (light)",
+  "type": "object",
+  "properties": {
+    "ros2_control": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "joints": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"}
+            },
+            "required": ["name"],
+            "additionalProperties": true
+          }
+        },
+        "transmissions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "joint": {"type": "string"},
+              "actuator": {"type": "string"}
+            },
+            "required": ["name", "joint", "actuator"],
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": ["joints", "transmissions"]
+    }
+  },
+  "required": ["ros2_control"]
+}
+

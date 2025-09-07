@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Topic Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "scan": {"type": "string", "pattern": "^/[-a-zA-Z0-9_/]+$"},
+    "odom": {"type": "string", "pattern": "^/[-a-zA-Z0-9_/]+$"},
+    "tf":   {"type": "string", "pattern": "^/[-a-zA-Z0-9_/]+$"},
+    "joint_states": {"type": "string", "pattern": "^/[-a-zA-Z0-9_/]+$"},
+    "imu": {"type": "string", "pattern": "^/[-a-zA-Z0-9_/]+$"},
+    "power": {"type": "string", "pattern": "^/[-a-zA-Z0-9_/]+$"},
+    "cmd_vel": {"type": "string", "pattern": "^/[-a-zA-Z0-9_/]+$"}
+  },
+  "required": ["scan", "odom", "tf", "joint_states" ]
+}
+

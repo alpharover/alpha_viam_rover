@@ -1,0 +1,9 @@
+# Canonical topic names
+scan: /scan
+odom: /odom
+tf: /tf
+joint_states: /joint_states
+imu: /imu/data
+power: /power/ina219
+cmd_vel: /cmd_vel
+

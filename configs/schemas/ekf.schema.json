@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "robot_localization ekf params",
+  "type": "object",
+  "properties": {
+    "ekf_filter_node": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "frequency": {"type": "integer", "minimum": 1},
+        "two_d_mode": {"type": "boolean"},
+        "map_frame": {"type": "string"},
+        "odom_frame": {"type": "string"},
+        "base_link_frame": {"type": "string"},
+        "world_frame": {"type": "string"}
+      },
+      "required": [
+        "frequency",
+        "two_d_mode",
+        "map_frame",
+        "odom_frame",
+        "base_link_frame",
+        "world_frame"
+      ]
+    }
+  },
+  "required": ["ekf_filter_node"]
+}
+

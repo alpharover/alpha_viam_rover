@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "YDLIDAR G4 params",
+  "type": "object",
+  "properties": {
+    "ydlidar": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "port": {"type": "string"},
+        "frame_id": {"type": "string"},
+        "rpm": {"type": "integer", "minimum": 1},
+        "range_min": {"type": "number", "exclusiveMinimum": 0},
+        "range_max": {"type": "number", "exclusiveMinimum": 0}
+      },
+      "required": ["port", "frame_id"]
+    }
+  },
+  "required": ["ydlidar"]
+}
+

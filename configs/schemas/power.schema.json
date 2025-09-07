@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Power (INA219) params",
+  "type": "object",
+  "properties": {
+    "power": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "frame_id": {"type": "string"},
+        "shunt_ohms": {"type": "number", "exclusiveMinimum": 0},
+        "bus_voltage_topic": {"type": "string"},
+        "current_topic": {"type": "string"}
+      },
+      "required": ["frame_id", "shunt_ohms"]
+    }
+  },
+  "required": ["power"]
+}
+

@@ -1,0 +1,17 @@
+# ros2_control (placeholder structure for planning)
+ros2_control:
+  joints:
+    - name: left_wheel_joint
+      type: revolute
+    - name: right_wheel_joint
+      type: revolute
+  transmissions:
+    - name: left_wheel_transmission
+      joint: left_wheel_joint
+      actuator: left_motor
+      reduction: 1.0
+    - name: right_wheel_transmission
+      joint: right_wheel_joint
+      actuator: right_motor
+      reduction: 1.0
+

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "slam_toolbox params",
+  "type": "object",
+  "properties": {
+    "slam_toolbox": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "use_sim_time": {"type": "boolean"},
+        "mode": {"type": "string"},
+        "resolution": {"type": "number", "exclusiveMinimum": 0}
+      }
+    }
+  },
+  "required": ["slam_toolbox"]
+}
+

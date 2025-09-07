@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Camera params",
+  "type": "object",
+  "properties": {
+    "camera": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "device": {"type": "string"},
+        "frame_id": {"type": "string"},
+        "image_size": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 1},
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "fps": {"type": "integer", "minimum": 1}
+      },
+      "required": ["device", "frame_id"]
+    }
+  },
+  "required": ["camera"]
+}
+
