@@ -1,6 +1,12 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="alpha_viam_rover">
-  <!-- Minimal URDF: single base_link with simple geometry -->
+  <!-- Minimal URDF/Xacro for TF and diff-drive semantics. Dimensions are placeholders. -->
+
+  <!-- Parameters -->
+  <xacro:property name="wheel_separation" value="0.30"/>
+  <xacro:property name="wheel_radius" value="0.06"/>
+
+  <!-- Base with simple geometry/inertial -->
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -23,4 +29,40 @@
       </geometry>
     </collision>
   </link>
+
+  <!-- Wheels -->
+  <link name="left_wheel_link"/>
+  <link name="right_wheel_link"/>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel_link"/>
+    <origin xyz="0 ${wheel_separation/2.0} 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_wheel_link"/>
+    <origin xyz="0 ${-wheel_separation/2.0} 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <!-- Sensors -->
+  <link name="imu_link"/>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+  </joint>
+
+  <link name="lidar_link"/>
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="0.10 0 0.08" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Placeholder for ros2_control tags (controllers/hardware will be added later). -->
+
 </robot>
