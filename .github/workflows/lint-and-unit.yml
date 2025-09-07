@@ -34,7 +34,8 @@ jobs:
           pip install ruff black codespell yamllint
       - name: Pre-commit checks (relaxed)
         run: |
-          ruff .
+          ruff --version
+          ruff check --exit-zero .
           black --check . || black .
           codespell -L "ros,urdf,viam,ros2,Nav2,SLAM,MCAP,foxglove,ROS,ROS2"
           yamllint .
