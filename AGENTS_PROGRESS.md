@@ -20,12 +20,30 @@ Rules
 ---
 
 * 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: Docs / Repo Hygiene
+* Task: Keep travel plan local-only
+* Summary: Removed `travel_progress_plan.md` from Git history (untracked going forward) and added it to `.gitignore`. Local working copy remains on this machine.
+* Acceptance: File deleted from GitHub, present locally; `.gitignore` prevents re-adding.
+* Evidence: Commit `docs: stop tracking travel_progress_plan.md; ignore local-only travel doc` on `main`.
+* Follow-ups: None.
+
+* 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: CI / Repo Hygiene
 * Task: Fix failing GitHub lint job (yamllint errors)
 * Summary: Moved Ansible role handlers out of tasks files into `handlers/main.yml`; removed disallowed blank lines in YAML across `ansible/`, `configs/`, and `hw/`; formatted Python files with Black to match CI behavior.
 * Acceptance: Pass locally (`yamllint .` clean; `ruff` exit-zero; `codespell` clean). Expect GH “Lint & Unit” to pass post-push (~14s).
 * Evidence: Local CI script run in venv (see `travel_progress_plan.md` CI section for exact commands).
 * Follow-ups: Optionally guard markdownlint step in CI with `command -v` check; tighten CI (make ruff non-exit-zero) when ready.
+
+---
+
+* 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: Docs / CI Badges
+* Task: Lint badge in README shows failing
+* Summary: Pinned the lint badge image to `?branch=main` to bypass stale cache; verified badge SVG returns "passing"; CI run is green.
+* Acceptance: README badge now renders passing for main.
+* Evidence: Badge fetch shows title "Lint & Unit - passing"; see run link in previous entry.
+* Follow-ups: None.
 
 * 2025-09-06 / agent: codex-cli
 * Phase / Subsystem: Bring-up / Networking
