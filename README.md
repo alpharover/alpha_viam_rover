@@ -1,5 +1,12 @@
 # alpha_viam_rover -- bot bashing demonstration
 
+[![Lint & Unit](https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml/badge.svg)](https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml)
+[![ROS Build & Tests](https://github.com/alpharover/alpha_viam_rover/actions/workflows/ros-ci.yml/badge.svg)](https://github.com/alpharover/alpha_viam_rover/actions/workflows/ros-ci.yml)
+[![Project Clock](https://github.com/alpharover/alpha_viam_rover/actions/workflows/project-clock.yml/badge.svg)](https://github.com/alpharover/alpha_viam_rover/actions/workflows/project-clock.yml)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![ruff](https://img.shields.io/badge/lint-ruff-0A7BBB?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
+
 Testing and proving a new way to build robots: “bot bashing” — vibe-coding a robot by pairing a high-level AI planner with an on-device coding agent.
 
 ![Viam Rover 2 chassis](viam-rover-hero.jpg)
@@ -82,3 +89,6 @@ References: `AGENTS.md`, `REPO_UPDATES.md`.
 
 ## License
 TBD (will be added once the public scope is finalized).
+
+## Security
+See `SECURITY.md` for private disclosure and operational guidance.
