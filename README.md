@@ -3,7 +3,7 @@
 
 
 <p align="center">
-  <a href="https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml"><img alt="Lint & Unit" src="https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml/badge.svg"></a>
+  <a href="https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml?query=branch%3Amain"><img alt="Lint & Unit" src="https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml/badge.svg?branch=main"></a>
   <a href="https://github.com/alpharover/alpha_viam_rover/actions/workflows/ros-ci.yml"><img alt="ROS Build & Tests" src="https://github.com/alpharover/alpha_viam_rover/actions/workflows/ros-ci.yml/badge.svg"></a>
   <a href="https://github.com/alpharover/alpha_viam_rover/commits/main"><img alt="Last Commit" src="https://img.shields.io/github/last-commit/alpharover/alpha_viam_rover.svg"></a>
   <a href="https://pre-commit.com/"><img alt="pre-commit" src="https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white"></a>
