@@ -93,7 +93,7 @@ Please read `CONTRIBUTING.md` before opening a PR. Highlights:
 References: `AGENTS.md`, `REPO_UPDATES.md`.
 
 ## License
-TBD (will be added once the public scope is finalized).
+Apache-2.0. See `LICENSE` for details.
 
 ## Security
 See `SECURITY.md` for private disclosure and operational guidance.
