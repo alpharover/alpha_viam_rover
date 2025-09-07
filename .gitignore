@@ -19,3 +19,9 @@ __pycache__/
 # Node/npm (if used later)
 node_modules/
 
+# Virtual environments
+.venv/
+.venv_ci/
+venv/
+env/
+ENV/
