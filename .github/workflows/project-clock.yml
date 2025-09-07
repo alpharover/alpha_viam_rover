@@ -1,8 +1,6 @@
-name: Update Project Clock
+name: Project Clock (Manual Summary)
 
 on:
-  schedule:
-    - cron: '0 0 * * *'  # daily at 00:00 UTC
   workflow_dispatch: {}
 
 permissions:
@@ -22,18 +20,17 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Update Project Clock in README
+      - name: Compute age and write summary
+        shell: bash
         run: |
-          python .github/scripts/update_project_clock.py
-
-      - name: Commit and push if changed
-        run: |
-          if ! git diff --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add README.md
-            git commit -m "ci: update project clock"
-            git push
-          else
-            echo "No changes to commit."
-
+          FIRST=$(git log --reverse --format=%cI | head -n1)
+          export FIRST
+          python - << 'PY' | tee /tmp/clock.txt
+import os, datetime
+first = os.environ.get('FIRST', '')
+dt0 = datetime.datetime.fromisoformat(first.replace('Z','+00:00'))
+age = (datetime.datetime.now(datetime.timezone.utc) - dt0).days
+print(f"Project age: {age} days (since {dt0.date()})")
+PY
+          echo "### Project Clock" >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/clock.txt >> "$GITHUB_STEP_SUMMARY"

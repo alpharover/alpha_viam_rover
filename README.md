@@ -1,8 +1,19 @@
-# alpha_viam_rover -- bot bashing demonstration
+# alpha_viam_rover — bot bashing demonstration
+
+```
+      █████╗ ██╗     ██████╗ ██╗  ██╗ █████╗     ██╗   ██╗██╗ █████╗ ███╗  ██╗
+     ██╔══██╗██║     ██╔══██╗██║ ██╔╝██╔══██╗    ██║   ██║██║██╔══██╗████╗ ██║
+     ██║  ██║██║     ██║  ██║█████╔╝ ███████║    ██║   ██║██║███████║██╔██╗██║
+     ██║  ██║██║     ██║  ██║██╔═██╗ ██╔══██║    ╚██╗ ██╔╝██║██╔══██║██║╚████║
+     ╚█████╔╝███████╗██████╔╝██║  ██╗██║  ██║     ╚████╔╝ ██║██║  ██║██║ ╚███║
+      ╚════╝ ╚══════╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝      ╚═══╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚══╝
+```
+
+BOT BASHING // VIAM ROVER v2 // ROS 2 HUMBLE
 
 [![Lint & Unit](https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml/badge.svg)](https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml)
 [![ROS Build & Tests](https://github.com/alpharover/alpha_viam_rover/actions/workflows/ros-ci.yml/badge.svg)](https://github.com/alpharover/alpha_viam_rover/actions/workflows/ros-ci.yml)
-[![Project Clock](https://github.com/alpharover/alpha_viam_rover/actions/workflows/project-clock.yml/badge.svg)](https://github.com/alpharover/alpha_viam_rover/actions/workflows/project-clock.yml)
+[![Last Commit](https://img.shields.io/github/last-commit/alpharover/alpha_viam_rover.svg)](https://github.com/alpharover/alpha_viam_rover/commits/main)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![ruff](https://img.shields.io/badge/lint-ruff-0A7BBB?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
@@ -11,10 +22,11 @@ Testing and proving a new way to build robots: “bot bashing” — vibe-coding
 
 ![Viam Rover 2 chassis](viam-rover-hero.jpg)
 
-## Project Clock
-<!--PROJECT_CLOCK_START-->
-Project age: initializing…
-<!--PROJECT_CLOCK_END-->
+## Quick Links
+- Roadmap: `alpha_viam_rover_roadmap_v1.0.md`
+- Agents: `AGENTS.md` (root) and subsystem guides
+- Backlog: `docs/ISSUE_BACKLOG.md`
+- Teleop & Viz: `docs/tools/teleop.md` and `configs/foxglove/default_layout.json`
 
 ## Project Clarity
 - Started with an out‑of‑box Viam Rover v2 kit; additional parts were on‑hand.

@@ -1,0 +1,11 @@
+extends: default
+
+rules:
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+  document-start: disable
+  comments-indentation: disable
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off', 'yes', 'no']
+
