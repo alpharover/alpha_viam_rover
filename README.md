@@ -1,5 +1,5 @@
-<h1 align="center" style="font-size: 3rem; letter-spacing: 0.08em;">ALPHA VIAM ROVER</h1>
-<p align="center"><strong>BOT BASHING ODYSSEY — CODEX &amp; GPT‑5‑PRO</strong></p>
+<h1 align="center">ALPHA VIAM ROVER</h1>
+<h2 align="center">BOT BASHING ODYSSEY — CODEX &amp; GPT‑5‑PRO</h2>
 
 
 <p align="center">
