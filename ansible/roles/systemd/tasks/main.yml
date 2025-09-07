@@ -1,0 +1,23 @@
+---
+- name: Create bringup service (placeholder)
+  copy:
+    dest: /etc/systemd/system/rover-bringup.service
+    content: |
+      [Unit]
+      Description=Rover bringup
+      After=network.target
+
+      [Service]
+      Type=simple
+      User=alpha_viam
+      ExecStart=/usr/bin/true  # TODO: replace with launch command
+      Restart=on-failure
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: Reload systemd
+
+handlers:
+  - name: Reload systemd
+    command: systemctl daemon-reload
+

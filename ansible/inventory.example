@@ -1,0 +1,3 @@
+[rover]
+alpha-viam.local ansible_user=alpha_viam
+

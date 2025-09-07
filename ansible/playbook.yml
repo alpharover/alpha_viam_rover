@@ -1,0 +1,10 @@
+---
+- name: Provision Alpha Viam Rover (RPi4, Ubuntu 22.04)
+  hosts: rover
+  become: true
+  roles:
+    - base
+    - ros
+    - udev
+    - systemd
+

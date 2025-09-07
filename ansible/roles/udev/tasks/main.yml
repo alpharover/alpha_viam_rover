@@ -1,0 +1,12 @@
+---
+- name: Install udev rules for sensors (placeholder)
+  copy:
+    dest: /etc/udev/rules.d/99-rover.rules
+    content: |
+      # TODO: Add rules for IMU, LiDAR, etc.
+  notify: Reload udev
+
+handlers:
+  - name: Reload udev
+    command: udevadm control --reload
+
