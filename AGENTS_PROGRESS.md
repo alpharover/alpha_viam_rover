@@ -59,6 +59,7 @@ Rules
 
 ---
 
+ 
 * 2025-09-06 / agent: codex-cli
 * Phase / Subsystem: Bring-up / OS+ROS
 * Task: Add ROS 2 Humble bootstrap + checks (clean slate)
@@ -76,3 +77,130 @@ Rules
 * Acceptance: Pass — `ros2 doctor` reports "All 5 checks passed"; `ros2 launch alpha_viam_bringup base_bringup.launch.py` starts nodes (foxglove at ws://0.0.0.0:8765). 10s smoke test stable.
 * Evidence: Command logs in session; nodes started: robot_state_publisher, ekf_node, foxglove_bridge.
 * Follow-ups: Add `diagnostic_aggregator` to publish `/diagnostics`; record MCAP once sensors are integrated; create systemd unit for bring-up.
+ 
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Repo / CI & Standards
+* Task: Add pre-commit and GitHub Actions Lint & Unit workflow
+* Summary: Added `.pre-commit-config.yaml` with ruff/black/codespell/yamllint/markdownlint; added CI workflow to run these checks and stub unit tests on push/PR.
+* Acceptance: Pending — CI will run on next push/PR; configs syntactically valid.
+* Evidence: `.github/workflows/lint-and-unit.yml`, `.pre-commit-config.yaml` present.
+* Follow-ups: Add schema and unit tests; remove `|| true` from pytest once tests exist.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Configs / Validation
+* Task: Add JSON Schemas and YAML configs with unit validation
+* Summary: Added `configs/schemas/` with `topics.schema.json` and `network.schema.json`; created `configs/topics.yaml` and `configs/network.yaml`; added `tests/config/test_yaml_schemas.py` and `pytest.ini`.
+* Acceptance: Pending — tests will run in CI; schemas compile locally.
+* Evidence: `configs/schemas/*.schema.json`, `configs/topics.yaml`, `configs/network.yaml`, `tests/config/test_yaml_schemas.py`.
+* Follow-ups: Extend schemas to other config files; make pytest required in CI.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: URDF / TF
+* Task: Flesh out URDF skeleton and TF contract doc
+* Summary: Expanded `urdf/rover.urdf.xacro` with `base_link`, left/right wheel links and joints, and fixed `imu_link`/`lidar_link`; added `docs/tf_tree.md` describing the planned TF tree and ownership.
+* Acceptance: Pass (text assets only) — URDF parses as XML; docs added.
+* Evidence: `urdf/rover.urdf.xacro`, `docs/tf_tree.md`.
+* Follow-ups: Add ros2_control tags and exact sensor extrinsics after measurements.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Tools / Viz & Logging
+* Task: Add Foxglove default layout and MCAP recording script
+* Summary: Created `configs/foxglove/default_layout.json` with panels for `/scan`, `/tf`, `/odom`, `/joint_states`, `/power/ina219`; added `scripts/record_mcap.sh` to record short MCAP clips; updated `docs/tools/foxglove.md` with quick-start and recording policy.
+* Acceptance: Pass (text assets only) — JSON validates, script present.
+* Evidence: `configs/foxglove/default_layout.json`, `scripts/record_mcap.sh`, `docs/tools/foxglove.md`.
+* Follow-ups: Confirm bridge port and topics on-device; add screenshots and refine layout.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Bring-up / Provisioning
+* Task: Scaffold Ansible roles and setup docs
+* Summary: Added `ansible/inventory.example`, `ansible/playbook.yml`, and role stubs for `base`, `ros`, `udev`, and `systemd`; created `docs/setup_pi.md` with quick-start instructions.
+* Acceptance: Pass (text assets only) — playbook and roles are placeholders ready for fill-in.
+* Evidence: `ansible/*`, `docs/setup_pi.md`.
+* Follow-ups: Implement ROS 2 install steps and bringup ExecStart; add ansible-lint in CI later.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Planning / Issues
+* Task: Draft backlog from roadmap with acceptance criteria
+* Summary: Added `docs/ISSUE_BACKLOG.md` with 15 copy/paste-ready issue titles and acceptance criteria spanning encoders, sensors, Foxglove/MCAP, EKF/SLAM/Nav2, URDF/ros2_control, Ansible, and tests.
+* Acceptance: Pass (planning artifact) — ready to create GitHub issues.
+* Evidence: `docs/ISSUE_BACKLOG.md`.
+* Follow-ups: Create GitHub issues, label by Phase/Subsys; wire to milestone.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Repo / CI
+* Task: Make CI sensible during rapid iteration (gate heavy builds)
+* Summary: Tuned `Lint & Unit` workflow to ignore images/bags and cancel superseded runs; added an on-demand `ROS Build & Tests` workflow that runs only on manual trigger, nightly schedule, or PRs labeled `ci:ros-build`.
+* Acceptance: Pass — workflows defined; heavy jobs won't run unless requested.
+* Evidence: `.github/workflows/lint-and-unit.yml`, `.github/workflows/ros-ci.yml`, `REPO_UPDATES.md` updated.
+* Follow-ups: When ready to tighten, remove `|| true` from unit tests and add action-ros-ci steps.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Configs / Validation
+* Task: Extend schemas and add ros2_control planning config
+* Summary: Added schemas for `diff_drive`, `ekf`, `imu`, `power`, `camera`, `ydlidar_g4`, `slam_toolbox`, and a light `ros2_control` schema; created `configs/ros2_control.yaml` placeholder; expanded unit tests to validate all configs.
+* Acceptance: Pending — unit tests will run in CI; YAML loads locally.
+* Evidence: `configs/schemas/*.schema.json`, `configs/ros2_control.yaml`, `tests/config/test_yaml_schemas.py`.
+* Follow-ups: Replace planning `ros2_control.yaml` with real controller params once hardware interface exists.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Tools / Recording
+* Task: Flesh out MCAP recording policy doc
+* Summary: Updated `docs/data/mcap.md` with topic set, naming, retention, and playback notes aligned to `scripts/record_mcap.sh`.
+* Acceptance: Pass (doc asset) — ready for reviewers and usage.
+* Evidence: `docs/data/mcap.md`.
+* Follow-ups: Add screenshots and example bag `info` snippet once on-device.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop & Viz
+* Task: Implement teleop + Foxglove launch and docs
+* Summary: Updated `launch/teleop_viz.launch.xml` to launch `foxglove_bridge` with configurable `ws_port`/`ws_address` and optional `teleop_twist_keyboard`; added `docs/tools/teleop.md` with usage.
+* Acceptance: Pass (text assets) — launch is parameterized and documented.
+* Evidence: `launch/teleop_viz.launch.xml`, `docs/tools/teleop.md`.
+* Follow-ups: Verify parameters on-device; confirm `foxglove_ws_port` alignment with `configs/network.yaml`.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Repo / Polish
+* Task: Add GitHub badges for CI/tooling to README
+* Summary: Added badges for Lint & Unit, ROS Build & Tests, Project Clock, pre-commit, Black, and Ruff to improve GitHub presentation; linked SECURITY.md.
+* Acceptance: Pass — badges render on GitHub; links point to workflows/docs.
+* Evidence: `README.md` (badges and Security section).
+* Follow-ups: Add license badge once `LICENSE` is finalized.
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Repo / Hygiene
+* Task: Add SECURITY.md policy
+* Summary: Added `SECURITY.md` with private disclosure process and operational guidance for secrets and ROS 2 networking.
+* Acceptance: Pass — policy present in repo.
+* Evidence: `SECURITY.md`.
+* Follow-ups: Link SECURITY.md from README in a later pass.
+
+---
+
+* 2025-09-07 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop & Viz
+* Task: Read Foxglove port/address from `configs/network.yaml`
+* Summary: Added `launch/teleop_viz.launch.py` which loads `foxglove_ws_port` and `rover_hostname` from `configs/network.yaml` and passes them to `foxglove_bridge`; updated `docs/tools/teleop.md` to prefer the Python launch.
+* Acceptance: Pass (text assets) — cleaner configuration source of truth.
+* Evidence: `launch/teleop_viz.launch.py`, `docs/tools/teleop.md`.
+* Follow-ups: Verify on-device; keep XML fallback for manual override.
+ 
