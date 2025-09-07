@@ -1,5 +1,23 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- Placeholder launch: Foxglove bridge and useful defaults -->
-  <!-- TODO: Add nodes and parameters -->
+  <!-- Teleop + Visualization launcher -->
+
+  <!-- Arguments -->
+  <arg name="ws_port" default="8765"/>
+  <arg name="ws_address" default="0.0.0.0"/>
+  <arg name="use_teleop" default="false"/>
+
+  <!-- Foxglove Bridge -->
+  <node pkg="foxglove_bridge" exec="foxglove_bridge" name="foxglove_bridge" output="screen">
+    <param name="port" value="$(var ws_port)"/>
+    <param name="address" value="$(var ws_address)"/>
+  </node>
+
+  <!-- Optional: Keyboard teleop (publishes /cmd_vel) -->
+  <node if="$(var use_teleop)" pkg="teleop_twist_keyboard" exec="teleop_twist_keyboard" name="teleop_twist_keyboard" output="screen">
+    <param name="speed" value="0.5"/>
+    <param name="turn" value="1.0"/>
+    <remap from="/cmd_vel" to="/cmd_vel"/>
+  </node>
+
 </launch>
