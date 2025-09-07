@@ -1,8 +1,7 @@
 {
   "default": true,
-  "MD013": false,  // line length
-  "MD033": false,  // inline HTML
-  "MD041": false,  // first line heading
-  "MD036": false   // emphasis style
+  "MD013": false,
+  "MD033": false,
+  "MD041": false,
+  "MD036": false
 }
-

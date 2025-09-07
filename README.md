@@ -1,4 +1,4 @@
-# alpha_viam_rover — bot bashing demonstration
+# alpha_viam_rover — bot bashing odyssey
 
 ```
       █████╗ ██╗     ██████╗ ██╗  ██╗ █████╗     ██╗   ██╗██╗ █████╗ ███╗  ██╗
@@ -9,7 +9,7 @@
       ╚════╝ ╚══════╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝      ╚═══╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚══╝
 ```
 
-BOT BASHING // VIAM ROVER v2 // ROS 2 HUMBLE
+ALPHA VIAM ROVER v2 • BOT BASHING • ROS 2 HUMBLE
 
 [![Lint & Unit](https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml/badge.svg)](https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml)
 [![ROS Build & Tests](https://github.com/alpharover/alpha_viam_rover/actions/workflows/ros-ci.yml/badge.svg)](https://github.com/alpharover/alpha_viam_rover/actions/workflows/ros-ci.yml)
@@ -17,6 +17,13 @@ BOT BASHING // VIAM ROVER v2 // ROS 2 HUMBLE
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![ruff](https://img.shields.io/badge/lint-ruff-0A7BBB?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
+![ROS 2 Humble](https://img.shields.io/badge/ROS%202-Humble-22314e)
+![ros2_control](https://img.shields.io/badge/ros2__control-ready-306998)
+![Nav2](https://img.shields.io/badge/Nav2-planned-1f425f)
+![SLAM Toolbox](https://img.shields.io/badge/SLAM%20Toolbox-planned-6b4e71)
+![Foxglove](https://img.shields.io/badge/Foxglove-bridge-00A3FF)
+![MCAP](https://img.shields.io/badge/MCAP-rosbag2-4F46E5)
+![Ansible](https://img.shields.io/badge/Ansible-provisioning-EE0000)
 
 Testing and proving a new way to build robots: “bot bashing” — vibe-coding a robot by pairing a high-level AI planner with an on-device coding agent.
 

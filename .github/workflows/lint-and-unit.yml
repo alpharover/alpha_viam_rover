@@ -36,7 +36,7 @@ jobs:
         run: |
           ruff .
           black --check .
-          codespell
+          codespell -L "ros,urdf,viam,ros2,Nav2,SLAM,MCAP,foxglove,ROS,ROS2"
           yamllint .
           markdownlint "**/*.md"
       - name: Unit tests (PRs only)
