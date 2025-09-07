@@ -1,0 +1,21 @@
+{
+  "name": "Alpha Viam Rover - Default",
+  "panels": [
+    { "type": "Plot", "title": "Odometry Twist",
+      "series": [
+        { "topic": "/odom", "path": "twist.twist.linear.x" },
+        { "topic": "/odom", "path": "twist.twist.angular.z" }
+      ]
+    },
+    { "type": "LaserScan", "title": "LiDAR", "topic": "/scan" },
+    { "type": "TF", "title": "TF Tree", "topics": ["/tf", "/tf_static"] },
+    { "type": "RawMessages", "title": "Joint States", "topic": "/joint_states" },
+    { "type": "Plot", "title": "Power",
+      "series": [
+        { "topic": "/power/ina219", "path": "voltage" },
+        { "topic": "/power/ina219", "path": "current" }
+      ]
+    }
+  ]
+}
+
