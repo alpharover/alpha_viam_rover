@@ -1,11 +1,5 @@
 line-length = 100
 target-version = "py311"
 
-# Keep ruff lightweight for now; tighten later.
-select = ["E", "F"]
-ignore = ["E501"]
-
-per-file-ignores = {
-  "launch/*.py": ["E402"],
-}
-
+# Keep ruff very lightweight for now; tighten later.
+select = ["F"]
