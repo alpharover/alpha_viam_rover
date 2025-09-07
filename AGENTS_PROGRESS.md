@@ -20,6 +20,14 @@ Rules
 ---
 
 * 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: Repo Hygiene / Governance
+* Task: Add LICENSE and update CODEOWNERS
+* Summary: Added Apache-2.0 `LICENSE`; replaced placeholder CODEOWNERS with `@alpharover` as catch-all and owner for protected paths; updated README license section.
+* Acceptance: License present; CODEOWNERS enforced; README reflects license.
+* Evidence: Commit `chore(repo): add Apache-2.0 LICENSE; set CODEOWNERS to @alpharover; update README license` on `main`.
+* Follow-ups: Provide architect/team handles if you want finer-grained ownership (controls/nav/vision/embedded).
+
+* 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: Docs / Repo Hygiene
 * Task: Keep travel plan local-only
 * Summary: Removed `travel_progress_plan.md` from Git history (untracked going forward) and added it to `.gitignore`. Local working copy remains on this machine.
