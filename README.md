@@ -1,17 +1,6 @@
-# alpha_viam_rover — bot bashing odyssey
+<h1 align="center">ALPHA VIAM ROVER</h1>
+<p align="center"><em>bot bashing odyssey — ROS 2 Humble</em></p>
 
-```
-   ___    _      _   _    _           __      ___                              
-  / _ \  | |    | | | |  | |         /_ |    / _ \                             
- | | | | | |    | | | |  | |  __ _    | |   | | | |  ___  _ __   ___  ___ ___ 
- | | | | | |    | | | |  | | / _` |   | |   | | | | / _ \| '_ \ / _ \/ __/ __|
- | |_| | | |___ | |_| |__| || (_| |   | |   | |_| || (_) | | | |  __/\__ \__ \
-  \___/  |_____| \___/\____/  \__,_|   |_|    \___/  \___/|_| |_|\___||___/___/
-
-                     A L P H A   V I A M   R O V E R
-```
-
-ALPHA VIAM ROVER v2 • BOT BASHING • ROS 2 HUMBLE
 
 [![Lint & Unit](https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml/badge.svg)](https://github.com/alpharover/alpha_viam_rover/actions/workflows/lint-and-unit.yml)
 [![ROS Build & Tests](https://github.com/alpharover/alpha_viam_rover/actions/workflows/ros-ci.yml/badge.svg)](https://github.com/alpharover/alpha_viam_rover/actions/workflows/ros-ci.yml)
