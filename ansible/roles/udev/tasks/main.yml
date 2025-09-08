@@ -3,5 +3,6 @@
   copy:
     dest: /etc/udev/rules.d/99-rover.rules
     content: |
-      # TODO: Add rules for IMU, LiDAR, etc.
+      # LiDAR (YDLIDAR via CP210x USB-serial) predictable symlink
+      SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="ydlidar", MODE="0666"
   notify: Reload udev

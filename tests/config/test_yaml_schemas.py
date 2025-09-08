@@ -63,3 +63,8 @@ def test_slam_toolbox_yaml_valid():
 @pytest.mark.unit
 def test_ros2_control_yaml_valid():
     _validate_yaml("configs/ros2_control.yaml", "configs/schemas/ros2_control.schema.json")
+
+
+@pytest.mark.unit
+def test_nav2_yaml_valid():
+    _validate_yaml("configs/nav2/nav2_params.yaml", "configs/schemas/nav2.schema.json")

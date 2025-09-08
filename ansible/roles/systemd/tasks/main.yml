@@ -10,7 +10,8 @@
       [Service]
       Type=simple
       User=alpha_viam
-      ExecStart=/usr/bin/true  # TODO: replace with launch command
+      ExecStart=/usr/bin/bash -lc 'source /opt/ros/humble/setup.bash && \
+      ros2 launch alpha_viam_bringup base_bringup.launch.py'
       Restart=on-failure
 
       [Install]

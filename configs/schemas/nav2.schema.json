@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Nav2 minimal params",
+  "type": "object",
+  "properties": {
+    "planner_server": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "use_sim_time": {"type": "boolean"},
+            "planner_plugins": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          },
+          "required": ["use_sim_time"]
+        }
+      },
+      "required": ["ros__parameters"]
+    },
+    "controller_server": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "use_sim_time": {"type": "boolean"},
+            "controller_plugins": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "goal_checker_plugins": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          },
+          "required": ["use_sim_time"]
+        }
+      },
+      "required": ["ros__parameters"]
+    },
+    "bt_navigator": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "use_sim_time": {"type": "boolean"},
+            "default_bt_xml_filename": {"type": "string"}
+          },
+          "required": ["default_bt_xml_filename"]
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": [
+    "planner_server",
+    "controller_server",
+    "bt_navigator"
+  ]
+}
+

@@ -3,6 +3,27 @@
   apt:
     name: locales
     state: present
-- name: Install ROS 2 Humble (placeholder)
-  debug:
-    msg: "Install ROS 2 Humble via debs (use ros-tooling/setup guidance)"
+
+- name: Add ROS 2 apt key
+  ansible.builtin.apt_key:
+    url: https://raw.githubusercontent.com/ros/rosdistro/master/ros.key
+    state: present
+
+- name: Add ROS 2 repository (arm64)
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=arm64] http://packages.ros.org/ros2/ubuntu jammy main"
+    state: present
+  when: ansible_architecture == "aarch64"
+
+- name: Add ROS 2 repository (amd64)
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64] http://packages.ros.org/ros2/ubuntu jammy main"
+    state: present
+  when: ansible_architecture == "x86_64"
+
+- name: Install ROS 2 Humble base
+  ansible.builtin.apt:
+    name:
+      - ros-humble-ros-base
+    state: present
+    update_cache: yes
