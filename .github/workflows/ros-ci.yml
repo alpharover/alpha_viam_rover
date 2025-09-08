@@ -40,7 +40,14 @@ jobs:
         uses: ros-tooling/setup-ros@v0.7
         with:
           required-ros-distributions: humble
-      - name: Build and test (placeholder)
+      - name: Install URDF tools
         run: |
-          echo "TODO: Add action-ros-ci when packages are present."
-          echo "Keeping this job light until runtime is ready."
+          sudo apt-get update
+          sudo apt-get install -y ros-humble-xacro ros-humble-urdfdom
+      - name: check_urdf rover URDF
+        run: |
+          xacro urdf/rover.urdf.xacro -o rover.urdf
+          check_urdf rover.urdf
+      - name: Launch dry-parse (bringup LD)
+        run: |
+          python3 scripts/launch_smoke.py bringup/alpha_viam_bringup/alpha_viam_bringup/launch/base_bringup.launch.py

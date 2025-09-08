@@ -4,6 +4,8 @@
   become: true
   roles:
     - base
+    - overlays
+    - pigpio
     - ros
     - udev
     - systemd

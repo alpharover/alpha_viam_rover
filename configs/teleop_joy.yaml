@@ -1,0 +1,9 @@
+# teleop_twist_joy minimal config (placeholder)
+teleop_twist_joy_node:
+  ros__parameters:
+    axis_linear: 1
+    axis_angular: 0
+    scale_linear: 0.5
+    scale_angular: 1.0
+    enable_button: 4   # e.g., LB
+    enable_turbo_button: 5  # e.g., RB

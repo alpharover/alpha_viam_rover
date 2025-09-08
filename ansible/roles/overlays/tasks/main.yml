@@ -1,0 +1,20 @@
+---
+- name: Ensure I2C enabled
+  ansible.builtin.lineinfile:
+    path: /boot/firmware/config.txt
+    regexp: '^dtparam=i2c_arm='
+    line: 'dtparam=i2c_arm=on'
+    state: present
+- name: Ensure SPI enabled
+  ansible.builtin.lineinfile:
+    path: /boot/firmware/config.txt
+    regexp: '^dtparam=spi='
+    line: 'dtparam=spi=on'
+    state: present
+
+- name: Enable PWM overlay (2 channels)
+  ansible.builtin.lineinfile:
+    path: /boot/firmware/config.txt
+    regexp: '^dtoverlay=pwm-2chan'
+    line: 'dtoverlay=pwm-2chan'
+    state: present

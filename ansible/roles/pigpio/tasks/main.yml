@@ -1,0 +1,12 @@
+---
+- name: Install pigpio
+  ansible.builtin.apt:
+    name: pigpio
+    state: present
+    update_cache: yes
+
+- name: Enable and start pigpio daemon
+  ansible.builtin.service:
+    name: pigpiod
+    state: started
+    enabled: yes

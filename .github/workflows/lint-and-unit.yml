@@ -37,7 +37,7 @@ jobs:
           ruff --version
           ruff check .
           black --check .
-          codespell -L "ros,urdf,viam,ros2,Nav2,SLAM,MCAP,foxglove,ROS,ROS2"
+          codespell -L "ros,urdf,viam,ros2,Nav2,SLAM,MCAP,foxglove,ROS,ROS2,Alfa"
           yamllint .
           # Treat markdownlint as advisory to keep iteration fast
           markdownlint "**/*.md" || echo "markdownlint: non-blocking warnings"
