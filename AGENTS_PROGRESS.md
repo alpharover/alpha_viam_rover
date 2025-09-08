@@ -20,6 +20,24 @@ Rules
 ---
 
 * 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: Configs & Tests / Nav2 & Launch
+* Task: Add Nav2 minimal params + schema; launch dry-check test
+* Summary: Added `configs/nav2/nav2_params.yaml` and `configs/schemas/nav2.schema.json`; extended `tests/config/test_yaml_schemas.py` to validate it. Added `tests/launch/test_teleop_viz_text.py` to assert required launch args/params exist without importing ROS.
+* Acceptance: `pytest` local: 12 passed; linters clean (`yamllint`, `codespell`, `ruff exit-zero`, `black` formatted).
+* Evidence: Commit `feat(configs): add minimal Nav2 params + JSON Schema; add launch dry-check test; improve Ansible roles...`.
+* Follow-ups: Flesh out Nav2 param sets (costmaps, recoveries) later; consider making ruff non-exit-zero and enabling tests on main.
+
+---
+
+* 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: Bring-up / Ansible
+* Task: Fill ROS 2 install steps; add LiDAR udev; set ExecStart
+* Summary: Added apt key/repos and `ros-humble-ros-base` install tasks; wrote udev rule for YDLIDAR predictable symlink; set systemd ExecStart to launch `alpha_viam_bringup` (wrapped + line-length-safe).
+* Acceptance: `yamllint` clean; handlers already wired to reload udev/systemd.
+* Evidence: Same commit as above.
+* Follow-ups: Add workspace sourcing (overlay) and environment files; consider ansible-lint in CI later.
+
+* 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: Repo Hygiene / Governance
 * Task: Add LICENSE and update CODEOWNERS
 * Summary: Added Apache-2.0 `LICENSE`; replaced placeholder CODEOWNERS with `@alpharover` as catch-all and owner for protected paths; updated README license section.
