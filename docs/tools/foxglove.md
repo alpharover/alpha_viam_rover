@@ -6,7 +6,24 @@ Notes on running `foxglove_bridge` on the rover and connecting from a dev machin
 - Panels for IMU, LaserScan, Odometry, TF
 - Saved layouts and troubleshooting
 
-TODO: Add step-by-step bringup and screenshots.
+Step-by-step
+
+1) Ensure the bridge launches on the rover.
+   - Via teleop launch: `ros2 launch launch/teleop_viz.launch.xml`
+   - Or via bring-up: `ros2 launch alpha_viam_bringup base_bringup.launch.py`
+2) Confirm the port/address from `configs/network.yaml` (defaults: `0.0.0.0:8765`).
+3) On your Mac, open Foxglove and add a ROS 2 connection: `ws://<rover-hostname>:<port>`.
+4) Import `configs/foxglove/default_layout.json` to load panels.
+5) Verify topics match layout:
+   - `/tf`, `/tf_static` (TF Tree)
+   - `/odom` (Odometry)
+   - `/scan` (LiDAR)
+   - `/joint_states` (Joints)
+   - `/power/ina219` (Power)
+
+Screenshot (add later)
+
+Place a screenshot at `docs/tools/images/foxglove_layout.png` once you’ve connected; add it to your PR as evidence.
 
 Quick start (when on the rover)
 

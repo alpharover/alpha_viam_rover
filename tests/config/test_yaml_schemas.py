@@ -73,3 +73,8 @@ def test_nav2_yaml_valid():
 @pytest.mark.unit
 def test_diagnostics_yaml_valid():
     _validate_yaml("configs/diagnostics.yaml", "configs/schemas/diagnostics.schema.json")
+
+
+@pytest.mark.unit
+def test_controllers_yaml_valid():
+    _validate_yaml("configs/controllers.yaml", "configs/schemas/controllers.schema.json")

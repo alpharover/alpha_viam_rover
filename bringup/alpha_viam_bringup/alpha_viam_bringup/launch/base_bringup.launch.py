@@ -2,6 +2,8 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch.actions import TimerAction
+from launch.actions import ExecuteProcess
 
 import os
 
@@ -47,6 +49,18 @@ def generate_launch_description():
                 output="screen",
                 parameters=[{"robot_description": robot_desc_raw}],
             ),
+            # Controller manager (ros2_control)
+            Node(
+                package="controller_manager",
+                executable="ros2_control_node",
+                name="controller_manager",
+                output="screen",
+                parameters=[
+                    {"robot_description": robot_desc_raw},
+                    os.path.join(os.getcwd(), "configs", "controllers.yaml"),
+                    os.path.join(os.getcwd(), "configs", "diff_drive.yaml"),
+                ],
+            ),
             Node(
                 package="robot_localization",
                 executable="ekf_node",
@@ -67,6 +81,36 @@ def generate_launch_description():
                 name="foxglove_bridge",
                 output="screen",
                 parameters=[{"address": "0.0.0.0", "port": 8765}],
+            ),
+            # Spawn controllers (after controller_manager is up)
+            TimerAction(
+                period=2.0,
+                actions=[
+                    ExecuteProcess(
+                        cmd=[
+                            "ros2",
+                            "run",
+                            "controller_manager",
+                            "spawner",
+                            "joint_state_broadcaster",
+                            "--controller-manager",
+                            "/controller_manager",
+                        ],
+                        output="screen",
+                    ),
+                    ExecuteProcess(
+                        cmd=[
+                            "ros2",
+                            "run",
+                            "controller_manager",
+                            "spawner",
+                            "diff_drive_controller",
+                            "--controller-manager",
+                            "/controller_manager",
+                        ],
+                        output="screen",
+                    ),
+                ],
             ),
         ]
 

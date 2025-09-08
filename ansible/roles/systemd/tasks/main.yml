@@ -10,10 +10,21 @@
       [Service]
       Type=simple
       User=alpha_viam
-      ExecStart=/usr/bin/bash -lc 'source /opt/ros/humble/setup.bash && \
-      ros2 launch alpha_viam_bringup base_bringup.launch.py'
+      EnvironmentFile=-/etc/default/rover-bringup
+      ExecStart=/usr/bin/bash -lc 'source /opt/ros/humble/setup.bash; \
+      if [ -n "${ROS_OVERLAY:-}" ] && [ -f "$ROS_OVERLAY" ]; then source "$ROS_OVERLAY"; fi; \
+      ros2 launch ${LAUNCH_PKG:-alpha_viam_bringup} ${LAUNCH_FILE:-base_bringup.launch.py}'
       Restart=on-failure
 
       [Install]
       WantedBy=multi-user.target
   notify: Reload systemd
+
+- name: Install bringup environment defaults
+  copy:
+    dest: /etc/default/rover-bringup
+    content: |
+      # Default environment for rover bringup service
+      ROS_OVERLAY=/home/alpha_viam/ros_ws/install/setup.bash
+      LAUNCH_PKG=alpha_viam_bringup
+      LAUNCH_FILE=base_bringup.launch.py

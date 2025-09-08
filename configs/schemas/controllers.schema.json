@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ros2_control controller manager",
+  "type": "object",
+  "properties": {
+    "controller_manager": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "update_rate": {"type": "integer", "minimum": 1},
+            "joint_state_broadcaster": {
+              "type": "object",
+              "properties": {"type": {"type": "string"}}
+            },
+            "diff_drive_controller": {
+              "type": "object",
+              "properties": {"type": {"type": "string"}}
+            }
+          }
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["controller_manager"]
+}
+

@@ -1,0 +1,65 @@
+{
+  "count": 15,
+  "issues": [
+    {
+      "title": "Encoders \u2192 odometry via `ros2_control`",
+      "body": "### Acceptance Criteria\n `/joint_states` \u226550 Hz; `/odom` stable; diff_drive params in `configs/diff_drive.yaml`; wheels spin symmetrically off-ground; watchdog halts on stale `cmd_vel`.\n\n### Evidence\n Short MCAP, Foxglove screenshot of TF/odom."
+    },
+    {
+      "title": "IMU (MPU\u20116050) integration",
+      "body": "### Acceptance Criteria\n `/imu/data` at 100\u2013200 Hz; correct frame `imu_link`; optional `imu_filter_madgwick` node outputs fused orientation.\n\n### Evidence\n MCAP with IMU at rest and during small motion."
+    },
+    {
+      "title": "Power sensing (INA219)",
+      "body": "### Acceptance Criteria\n Topic `/power/ina219` publishes voltage/current; units documented in `docs/sensors/imu_power.md`.\n\n### Evidence\n MCAP segment showing changes under motor load."
+    },
+    {
+      "title": "YDLIDAR G4 bring-up",
+      "body": "### Acceptance Criteria\n `/scan` at expected Hz; frame `lidar_link`; ranges match tape measure; config at `configs/ydlidar_g4.yaml`.\n\n### Evidence\n Foxglove LiDAR panel screenshot + MCAP."
+    },
+    {
+      "title": "Foxglove bridge service",
+      "body": "### Acceptance Criteria\n `foxglove_bridge` systemd unit running on rover with port from `configs/network.yaml`.\n\n### Evidence\n External connection from Mac; panels populated using `configs/foxglove/default_layout.json`."
+    },
+    {
+      "title": "MCAP recording policy + script",
+      "body": "### Acceptance Criteria\n `scripts/record_mcap.sh` records to `bags/samples/` with MCAP; naming policy documented in `docs/data/mcap.md`.\n\n### Evidence\n Sample bag committed (or LFS) with metadata."
+    },
+    {
+      "title": "EKF configuration (robot_localization)",
+      "body": "### Acceptance Criteria\n `configs/ekf.yaml` fuses wheel odom + IMU; publishes `odom` frame; REP\u2011105 compliant.\n\n### Evidence\n MCAP showing stable `odom`; comparison vs raw integration."
+    },
+    {
+      "title": "SLAM Toolbox starter",
+      "body": "### Acceptance Criteria\n Launch starts slam_toolbox with LiDAR; produces `map` and `map->odom` TF; params in `configs/slam_toolbox.yaml`.\n\n### Evidence\n Small loop map artifact + MCAP."
+    },
+    {
+      "title": "Nav2 starter",
+      "body": "### Acceptance Criteria\n Launch Nav2 with basic costmaps; RViz/Foxglove shows planners; successful short waypoint.\n\n### Evidence\n MCAP + screenshot; config under `configs/nav2/`."
+    },
+    {
+      "title": "URDF \u2192 add ros2_control tags",
+      "body": "### Acceptance Criteria\n Wheel joints annotated for diff drive; transmissions defined; matches `diff_drive_controller` names.\n\n### Evidence\n Controller starts without errors; `/joint_states` present."
+    },
+    {
+      "title": "Ansible: ROS 2 install task",
+      "body": "### Acceptance Criteria\n Role `ros` installs Humble; `ros2` CLI available; workspace layout under `/opt/ros/humble` and user overlay.\n\n### Evidence\n Ansible run log snippet; `ros2 doctor` clean (later on device)."
+    },
+    {
+      "title": "Udev rules for USB devices",
+      "body": "### Acceptance Criteria\n Predictable symlinks for LiDAR (e.g., `/dev/ydlidar`); permissions set for user access.\n\n### Evidence\n `udevadm info` snippet; working port in driver config."
+    },
+    {
+      "title": "DDS networking template",
+      "body": "### Acceptance Criteria\n `configs/dds/example_profile.xml` reviewed; `configs/network.yaml` parameters wired; doc `docs/mrdds/networking.md` notes DOMAIN_ID policy.\n\n### Evidence\n Two-device discovery test later; placeholder doc updated."
+    },
+    {
+      "title": "Teleop + viz launch",
+      "body": "### Acceptance Criteria\n `launch/teleop_viz.launch.xml` starts foxglove_bridge and any diagnostics; parameterized ports/frames.\n\n### Evidence\n Launch output; Foxglove connection screenshot."
+    },
+    {
+      "title": "Tests: config schema validation (CI required)",
+      "body": "### Acceptance Criteria\n Extend `tests/config/test_yaml_schemas.py` to cover all configs; CI makes `pytest` required (remove `|| true`).\n\n### Evidence\n Green CI on PR with tests; failure case demonstration."
+    }
+  ]
+}
