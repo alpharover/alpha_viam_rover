@@ -20,6 +20,14 @@ Rules
 ---
 
 * 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: Phase 0/1 Docs & Provisioning / CI / Networking
+* Task: Add Phase 0/1 docs, overlays+pigpio roles; ROS CI checks; AWUS036ACH guide
+* Summary: Added `docs/bringup/time_sync.md` and `docs/bringup/phase0.md`; created Phase‑1 bus docs (`docs/hw/pinmap.md`, `docs/hw/bus_checks.md`) and artifacts folder. Implemented Ansible roles `overlays` (I2C/SPI/PWM) and `pigpio` (install+enable). Added `scripts/gpio_pulse.py` for GPIO sanity. Updated `ros-ci` workflow to run xacro+check_urdf and a launch smoke test via `scripts/launch_smoke.py`. Added `configs/teleop_joy.yaml`. Documented Alfa AWUS036ACH in `docs/networking/awus036ach.md`. Allowed "Alfa" in codespell.
+* Acceptance: Linters/tests pass (18/18). CI lint green; ros-ci workflow now performs model and launch checks.
+* Evidence: Commit `docs: phase0/time-sync/bus-checks/...` on `main`.
+* Follow-ups: On-device execution to capture outputs/screenshots; consider ansible-lint; add gamepad + safety wiring end-to-end on Pi.
+
+* 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: Planning / GitHub Issues
 * Task: Align issues with architect bundle; add Wi‑Fi networking task
 * Summary: Created milestones A–D; created/updated labels (phase, area, type, prio, size). Synced architect issue bundle (#17–#28) and consolidated duplicates by closing older overlapping items (#3–#7) with links. Assigned milestones/labels to remaining seeded issues (#2, #8–#16). Added new "Networking — Integrate external Alfa USB Wi‑Fi as primary" issue (#28).
