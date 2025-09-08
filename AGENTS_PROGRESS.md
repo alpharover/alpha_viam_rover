@@ -20,6 +20,14 @@ Rules
 ---
 
 * 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: Nav2 / Diagnostics / CI
+* Task: Expand Nav2 params + schema; diagnostics config; tighten CI
+* Summary: Added global/local costmaps and behavior_server to Nav2 params and schema; created `configs/diagnostics.yaml` + schema and wired into bringup launch; tightened CI by making Ruff blocking and unit tests required on PRs; added example MCAP info snippet to docs.
+* Acceptance: Local tests 17 passed; linters clean.
+* Evidence: Commit `feat(nav2): expand params ...` on `main`.
+* Follow-ups: Consider ansible-lint in CI; expand Nav2 plugin params incrementally once on device.
+
+* 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: URDF / Control
 * Task: Add ros2_control tags + transmissions
 * Summary: Inserted `<ros2_control>` system block with velocity command/state interfaces for `left_wheel_joint` and `right_wheel_joint`. Added placeholder `<transmission>` elements to align naming with configs.
