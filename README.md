@@ -20,6 +20,10 @@ Testing and proving a new way to build robots: “bot bashing” — vibe-coding
 - Agents: `AGENTS.md` (root) and subsystem guides
 - Backlog: `docs/ISSUE_BACKLOG.md`
 - Teleop & Viz: `docs/tools/teleop.md` and `configs/foxglove/default_layout.json`
+- Handoff (start on the Pi): `docs/handoff.md`
+- Phase 0 evidence: `docs/bringup/phase0.md`, `docs/bringup/time_sync.md`
+- Phase 1 buses: `docs/hw/pinmap.md`, `docs/hw/bus_checks.md`
+- Networking (Alfa AWUS036ACH): `docs/networking/awus036ach.md`
 
 ## Project Clarity
 - Started with an out‑of‑box Viam Rover v2 kit; additional parts were on‑hand.
