@@ -72,7 +72,9 @@ LABELS: Dict[str, str] = {
 }
 
 
-def gh_request(url: str, method: str = "GET", token: Optional[str] = None, data: Optional[dict] = None):
+def gh_request(
+    url: str, method: str = "GET", token: Optional[str] = None, data: Optional[dict] = None
+):
     req = urllib.request.Request(url, method=method)
     if token:
         req.add_header("Authorization", f"token {token}")
@@ -94,7 +96,12 @@ def ensure_milestones(repo: str, token: str) -> Dict[str, int]:
         if title in existing:
             out[title] = existing[title]
         else:
-            m = gh_request(f"https://api.github.com/repos/{repo}/milestones", method="POST", token=token, data={"title": title})
+            m = gh_request(
+                f"https://api.github.com/repos/{repo}/milestones",
+                method="POST",
+                token=token,
+                data={"title": title},
+            )
             out[title] = m["number"]
     return out
 
@@ -141,7 +148,13 @@ def get_issues_by_title(repo: str, token: str) -> Dict[str, dict]:
     return out
 
 
-def upsert_issue(repo: str, token: str, spec: IssueSpec, milestones: Dict[str, int], existing_by_title: Dict[str, dict]):
+def upsert_issue(
+    repo: str,
+    token: str,
+    spec: IssueSpec,
+    milestones: Dict[str, int],
+    existing_by_title: Dict[str, dict],
+):
     milestone_num = milestones[spec.milestone]
     labels = spec.labels
     if spec.title in existing_by_title:
@@ -151,7 +164,12 @@ def upsert_issue(repo: str, token: str, spec: IssueSpec, milestones: Dict[str, i
             f"https://api.github.com/repos/{repo}/issues/{number}",
             method="PATCH",
             token=token,
-            data={"title": spec.title, "body": spec.body, "labels": labels, "milestone": milestone_num},
+            data={
+                "title": spec.title,
+                "body": spec.body,
+                "labels": labels,
+                "milestone": milestone_num,
+            },
         )
         return {"action": "updated", "number": number}
     else:
@@ -159,7 +177,12 @@ def upsert_issue(repo: str, token: str, spec: IssueSpec, milestones: Dict[str, i
             f"https://api.github.com/repos/{repo}/issues",
             method="POST",
             token=token,
-            data={"title": spec.title, "body": spec.body, "labels": labels, "milestone": milestone_num},
+            data={
+                "title": spec.title,
+                "body": spec.body,
+                "labels": labels,
+                "milestone": milestone_num,
+            },
         )
         return {"action": "created", "number": it["number"], "url": it.get("html_url")}
 
@@ -317,4 +340,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
