@@ -20,6 +20,14 @@ Rules
 ---
 
 * 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: Tests / Utilities
+* Task: Add math utilities + unit tests
+* Summary: Implemented `lib/math_utils.py` (ticks→m/s, angle wrap to [-pi, pi), clamp) and added `tests/unit/test_math_utils.py`; ensured import path in tests works without packaging.
+* Acceptance: Local `pytest` now 16 passed; linters clean after Black formatted.
+* Evidence: Commit `feat(utils): add math_utils (ticks→m/s, angle wrap, clamp) with unit tests; format code` on `main`.
+* Follow-ups: Consider moving utils into a proper package later and exposing via `setup.cfg` if needed.
+
+* 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: Configs & Tests / Nav2 & Launch
 * Task: Add Nav2 minimal params + schema; launch dry-check test
 * Summary: Added `configs/nav2/nav2_params.yaml` and `configs/schemas/nav2.schema.json`; extended `tests/config/test_yaml_schemas.py` to validate it. Added `tests/launch/test_teleop_viz_text.py` to assert required launch args/params exist without importing ROS.
