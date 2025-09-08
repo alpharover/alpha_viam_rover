@@ -20,6 +20,14 @@ Rules
 ---
 
 * 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: Backlog / Bring-up / Foxglove
+* Task: Backlog seeding script; overlay env + controller manager; Foxglove doc polish
+* Summary: Added `scripts/seed_issues.py` to parse `docs/ISSUE_BACKLOG.md` and create GitHub issues (requires `GITHUB_TOKEN`), with preview JSON written to `out/issues_seed_preview.json`. Updated bring-up: systemd reads `/etc/default/rover-bringup` for overlay and launch vars; controller manager + spawners added to bringup launch; added `configs/controllers.yaml` + schema and tests. Polished Foxglove doc with step-by-step and topic list.
+* Acceptance: Local tests 18 passed; yamllint clean; preview JSON generated for backlog.
+* Evidence: Commit `chore(backlog): add scripts/seed_issues.py ...` on `main`.
+* Follow-ups: Run issue seeding with `GITHUB_TOKEN` when ready; capture Foxglove screenshot and add to docs.
+
+* 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: Nav2 / Diagnostics / CI
 * Task: Expand Nav2 params + schema; diagnostics config; tighten CI
 * Summary: Added global/local costmaps and behavior_server to Nav2 params and schema; created `configs/diagnostics.yaml` + schema and wired into bringup launch; tightened CI by making Ruff blocking and unit tests required on PRs; added example MCAP info snippet to docs.
