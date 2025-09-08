@@ -20,6 +20,14 @@ Rules
 ---
 
 * 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: URDF / Control
+* Task: Add ros2_control tags + transmissions
+* Summary: Inserted `<ros2_control>` system block with velocity command/state interfaces for `left_wheel_joint` and `right_wheel_joint`. Added placeholder `<transmission>` elements to align naming with configs.
+* Acceptance: Unit tests still pass (16); linters clean.
+* Evidence: Commit `feat(urdf): add ros2_control system/joint interfaces and placeholder transmissions to match diff_drive joints` on `main`.
+* Follow-ups: Replace mock hardware plugin with real HW interface when ready; validate with controller manager on device.
+
+* 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: Tests / Utilities
 * Task: Add math utilities + unit tests
 * Summary: Implemented `lib/math_utils.py` (ticks→m/s, angle wrap to [-pi, pi), clamp) and added `tests/unit/test_math_utils.py`; ensured import path in tests works without packaging.
