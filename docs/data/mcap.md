@@ -23,3 +23,21 @@ Playback
 
 - `ros2 bag info <file.mcap>` to inspect metadata.
 - Use Foxglove to load the bag and validate the TF tree, odometry, and sensor quality.
+
+Example metadata (`ros2 bag info`)
+
+```
+Files:             test_20250101_120000_bench.mcap
+Bag size:          1.2 MiB
+Storage id:        mcap
+Duration:          12.5s
+Start:             Jan 01 2025 12:00:00
+End:               Jan 01 2025 12:00:12
+Messages:          6,200
+Topic information: Topic: /tf (type: tf2_msgs/msg/TFMessage, count: 250)
+                   Topic: /tf_static (type: tf2_msgs/msg/TFMessage, count: 2)
+                   Topic: /odom (type: nav_msgs/msg/Odometry, count: 625)
+                   Topic: /joint_states (type: sensor_msgs/msg/JointState, count: 625)
+                   Topic: /imu/data (type: sensor_msgs/msg/Imu, count: 1,250)
+                   Topic: /scan (type: sensor_msgs/msg/LaserScan, count: 1,250)
+```

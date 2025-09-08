@@ -68,3 +68,8 @@ def test_ros2_control_yaml_valid():
 @pytest.mark.unit
 def test_nav2_yaml_valid():
     _validate_yaml("configs/nav2/nav2_params.yaml", "configs/schemas/nav2.schema.json")
+
+
+@pytest.mark.unit
+def test_diagnostics_yaml_valid():
+    _validate_yaml("configs/diagnostics.yaml", "configs/schemas/diagnostics.schema.json")

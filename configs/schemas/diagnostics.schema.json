@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Diagnostic Aggregator params",
+  "type": "object",
+  "properties": {
+    "diagnostic_aggregator": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "base_path": {"type": "string"},
+            "analyzers": {"type": "object"}
+          }
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["diagnostic_aggregator"]
+}
+

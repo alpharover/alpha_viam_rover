@@ -1,0 +1,5 @@
+# Diagnostic aggregator minimal config
+diagnostic_aggregator:
+  ros__parameters:
+    base_path: ""
+    analyzers: {}

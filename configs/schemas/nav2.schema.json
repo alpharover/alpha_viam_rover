@@ -21,6 +21,63 @@
       },
       "required": ["ros__parameters"]
     },
+    "global_costmap": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "use_sim_time": {"type": "boolean"},
+            "global_frame": {"type": "string"},
+            "robot_base_frame": {"type": "string"},
+            "update_frequency": {"type": "number", "exclusiveMinimum": 0},
+            "publish_frequency": {"type": "number", "exclusiveMinimum": 0},
+            "resolution": {"type": "number", "exclusiveMinimum": 0},
+            "plugins": {"type": "array", "items": {"type": "string"}}
+          },
+          "required": ["global_frame", "robot_base_frame", "resolution"]
+        }
+      },
+      "required": ["ros__parameters"]
+    },
+    "local_costmap": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "use_sim_time": {"type": "boolean"},
+            "global_frame": {"type": "string"},
+            "robot_base_frame": {"type": "string"},
+            "update_frequency": {"type": "number", "exclusiveMinimum": 0},
+            "publish_frequency": {"type": "number", "exclusiveMinimum": 0},
+            "rolling_window": {"type": "boolean"},
+            "width": {"type": "number", "exclusiveMinimum": 0},
+            "height": {"type": "number", "exclusiveMinimum": 0},
+            "resolution": {"type": "number", "exclusiveMinimum": 0},
+            "plugins": {"type": "array", "items": {"type": "string"}}
+          },
+          "required": ["global_frame", "robot_base_frame", "resolution", "width", "height"]
+        }
+      },
+      "required": ["ros__parameters"]
+    },
+    "behavior_server": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "use_sim_time": {"type": "boolean"},
+            "goal_checker_plugins": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      },
+      "required": ["ros__parameters"]
+    },
     "controller_server": {
       "type": "object",
       "properties": {
@@ -62,7 +119,9 @@
   "required": [
     "planner_server",
     "controller_server",
-    "bt_navigator"
+    "bt_navigator",
+    "global_costmap",
+    "local_costmap",
+    "behavior_server"
   ]
 }
-

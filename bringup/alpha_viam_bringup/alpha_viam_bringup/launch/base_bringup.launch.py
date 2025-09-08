@@ -19,9 +19,16 @@ def generate_launch_description():
         description="Path to rover xacro file.",
     )
 
+    diagnostics_params_arg = DeclareLaunchArgument(
+        "diagnostics_params_file",
+        default_value=os.path.join(os.getcwd(), "configs", "diagnostics.yaml"),
+        description="Path to diagnostic_aggregator params YAML.",
+    )
+
     def launch_setup(context, *args, **kwargs):
         ekf_params = LaunchConfiguration("ekf_params_file").perform(context)
         urdf_xacro = LaunchConfiguration("urdf_xacro").perform(context)
+        diagnostics_params = LaunchConfiguration("diagnostics_params_file").perform(context)
 
         # Build robot_description from xacro at runtime
         try:
@@ -52,6 +59,7 @@ def generate_launch_description():
                 executable="aggregator_node",
                 name="diagnostic_aggregator",
                 output="screen",
+                parameters=[diagnostics_params],
             ),
             Node(
                 package="foxglove_bridge",
@@ -69,5 +77,6 @@ def generate_launch_description():
             ekf_params_arg,
             urdf_xacro_arg,
             OpaqueFunction(function=launch_setup),
+            diagnostics_params_arg,
         ]
     )
