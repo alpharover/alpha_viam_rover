@@ -1,0 +1,64 @@
+{
+  "created": [
+    {
+      "title": "Encoders \u2192 odometry via `ros2_control`",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/2"
+    },
+    {
+      "title": "IMU (MPU\u20116050) integration",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/3"
+    },
+    {
+      "title": "Power sensing (INA219)",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/4"
+    },
+    {
+      "title": "YDLIDAR G4 bring-up",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/5"
+    },
+    {
+      "title": "Foxglove bridge service",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/6"
+    },
+    {
+      "title": "MCAP recording policy + script",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/7"
+    },
+    {
+      "title": "EKF configuration (robot_localization)",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/8"
+    },
+    {
+      "title": "SLAM Toolbox starter",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/9"
+    },
+    {
+      "title": "Nav2 starter",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/10"
+    },
+    {
+      "title": "URDF \u2192 add ros2_control tags",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/11"
+    },
+    {
+      "title": "Ansible: ROS 2 install task",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/12"
+    },
+    {
+      "title": "Udev rules for USB devices",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/13"
+    },
+    {
+      "title": "DDS networking template",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/14"
+    },
+    {
+      "title": "Teleop + viz launch",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/15"
+    },
+    {
+      "title": "Tests: config schema validation (CI required)",
+      "url": "https://github.com/alpharover/alpha_viam_rover/issues/16"
+    }
+  ]
+}

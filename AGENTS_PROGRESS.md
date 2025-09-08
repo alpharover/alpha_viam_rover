@@ -20,6 +20,14 @@ Rules
 ---
 
 * 2025-09-07 / agent: codex-cli
+* Phase / Subsystem: Planning / GitHub Issues
+* Task: Align issues with architect bundle; add Wi‑Fi networking task
+* Summary: Created milestones A–D; created/updated labels (phase, area, type, prio, size). Synced architect issue bundle (#17–#28) and consolidated duplicates by closing older overlapping items (#3–#7) with links. Assigned milestones/labels to remaining seeded issues (#2, #8–#16). Added new "Networking — Integrate external Alfa USB Wi‑Fi as primary" issue (#28).
+* Acceptance: Open issues reflect architect structure; duplicates closed and cross‑referenced; preview and sync JSONs under `out/`.
+* Evidence: `scripts/sync_issues_from_architect.py`, `out/issues_sync_results.json`.
+* Follow-ups: Add assignees/milestones dates as needed; refine labels if architect prefers different taxonomy.
+
+* 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: Backlog / Bring-up / Foxglove
 * Task: Backlog seeding script; overlay env + controller manager; Foxglove doc polish
 * Summary: Added `scripts/seed_issues.py` to parse `docs/ISSUE_BACKLOG.md` and create GitHub issues (requires `GITHUB_TOKEN`), with preview JSON written to `out/issues_seed_preview.json`. Updated bring-up: systemd reads `/etc/default/rover-bringup` for overlay and launch vars; controller manager + spawners added to bringup launch; added `configs/controllers.yaml` + schema and tests. Polished Foxglove doc with step-by-step and topic list.
