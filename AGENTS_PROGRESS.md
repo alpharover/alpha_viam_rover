@@ -123,6 +123,25 @@ Rules
 * Evidence: `ip route` shows default via wlan1 (metric 50); `iw dev wlan1 info`.
 * Follow-ups: Consider Ansible Vault templating for SSIDs/PSKs; monitor stability over extended uptime.
 
+---
+
+* 2025-09-08 / agent: codex-cli
+* Phase / Subsystem: Power / Drivers
+* Task: INA219 power publisher (bus voltage/current) + bring-up wiring
+* Summary: Added `drivers/ina219_monitor` (ament_python) publishing `/power/bus_voltage` and `/power/current` using I2C @ 0x40 and `shunt_ohms` from `configs/power.yaml`; integrated into base bring-up. Verified topics present; node logs OK.
+* Acceptance: Pass — topics visible; next step is bench current sweep validation under motor load.
+* Evidence: `ros2 topic list` shows `/power/bus_voltage` and `/power/current`; launch logs show INA219 monitor started.
+* Follow-ups: Record MCAP during a load sweep; add BatteryState publisher variant if needed; calibrate shunt value against bench meter.
+
+---
+
+* 2025-09-08 / agent: codex-cli
+* Phase / Subsystem: Power / Evidence
+* Task: Record INA219 baseline MCAP sample
+* Summary: Recorded ~6.4s MCAP containing `/power/bus_voltage` (130 msgs) and `/power/current` (130 msgs) to `bags/samples/20250908_224822_ina219`.
+* Acceptance: Pass — messages present at ~20 Hz; ready for load sweep capture later.
+* Evidence: `ros2 bag info bags/samples/20250908_224822_ina219` (messages=260).
+
 * 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: Bring-up / Ansible
 * Task: Fill ROS 2 install steps; add LiDAR udev; set ExecStart
@@ -390,3 +409,12 @@ Rules
 * Evidence: `travel_progress_plan.md` (not pushed).
 * Follow-ups: Use this list as next-session context; keep local until push is desired.
  
+---
+
+* 2025-09-09 / agent: codex-cli
+* Phase / Subsystem: Bring-up / IMU
+* Task: IMU (MPU‑6050) integration
+* Summary: Added `drivers/mpu6050_driver` (ament_python) publishing `sensor_msgs/Imu` on `/imu/data` with gyro bias calibration and configurable ranges; wired node into base bring-up and filtered params from `configs/imu.yaml`. Updated EKF to consume IMU angular velocity only.
+* Acceptance: Pending on-device — topics expected: `/imu/data` at ~100 Hz; EKF sees `imu0`.
+* Evidence: Launch includes `mpu6050_driver`; adjust `configs/imu.yaml` to tune `rate_hz`, ranges. Record a short MCAP once verified.
+* Follow-ups: Optionally add `imu_filter_madgwick` for orientation; validate axes vs URDF and update `docs/sensors/imu_power.md` with bias/noise; tune EKF once wheel odom is active.

@@ -61,6 +61,33 @@ def generate_launch_description():
         except Exception as e:
             print(f"[alpha_viam_bringup] power.yaml parse failed: {e}")
 
+        # Load IMU params and filter to known keys
+        imu_params = {}
+        try:
+            import yaml  # type: ignore
+
+            with open(
+                os.path.join(os.getcwd(), "configs", "imu.yaml"), "r", encoding="utf-8"
+            ) as f:
+                y = yaml.safe_load(f)
+                if isinstance(y, dict) and "imu" in y and isinstance(y["imu"], dict):
+                    _raw = y["imu"]
+                    if isinstance(_raw, dict):
+                        allowed = {
+                            "i2c_bus",
+                            "address",
+                            "frame_id",
+                            "rate_hz",
+                            "imu_topic",
+                            "accel_range_g",
+                            "gyro_range_dps",
+                            "calibrate_gyro",
+                            "calib_samples",
+                        }
+                        imu_params = {k: v for k, v in _raw.items() if k in allowed}
+        except Exception as e:
+            print(f"[alpha_viam_bringup] imu.yaml parse failed: {e}")
+
         nodes = [
             Node(
                 package="robot_state_publisher",
@@ -76,6 +103,14 @@ def generate_launch_description():
                 name="ina219_monitor",
                 output="screen",
                 parameters=[power_params, {"i2c_bus": 1, "address": 0x40, "rate_hz": 10.0}],
+            ),
+            # MPU-6050 IMU (publishes sensor_msgs/Imu)
+            Node(
+                package="mpu6050_driver",
+                executable="mpu6050_node",
+                name="mpu6050",
+                output="screen",
+                parameters=[{'rate_hz': 100.0}, imu_params],
             ),
             # Controller manager (ros2_control)
             Node(

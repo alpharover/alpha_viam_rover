@@ -3,6 +3,9 @@ imu:
   frame_id: imu_link
   i2c_bus: 1
   address: 0x68
+  rate_hz: 100.0
+  accel_range_g: 2        # 2, 4, 8, 16
+  gyro_range_dps: 250     # 250, 500, 1000, 2000
   filter:
     type: madgwick  # optional
     gain: 0.1
