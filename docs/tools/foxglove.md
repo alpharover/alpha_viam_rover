@@ -16,11 +16,12 @@ Step-by-step
 4) Import a layout from `configs/foxglove/` (start with `default_layout.json`).
 5) Verify topics match layout (adjust as needed):
    - `/tf`, `/tf_static` (TF Tree)
-   - `/odom` (Odometry)
-   - `/scan` (LiDAR)
+   - `/odometry/filtered` (EKF Odometry)
+   - `/scan` (LiDAR, when present)
    - `/joint_states` (Joints)
-   - `/power/ina219` (Power)
-   - `/imu/data` (raw IMU) and `/imu/data_fused` (fused orientation)
+   - Power (INA219): `/power/bus_voltage`, `/power/current`, `/power/power` (watts)
+   - IMU: `/imu/data` (raw) and `/imu/data_fused` (filtered orientation)
+   - Wi‑Fi telemetry (wlan1): `/wifi/signal_dBm`, `/wifi/link_ok`, `/wifi/iface`, `/wifi/flap_count`
 
 Screenshot (add later)
 
@@ -34,11 +35,17 @@ Quick start (when on the rover)
 
 Layouts
 
-- `configs/foxglove/default_layout.json` — balanced starter layout for LiDAR, TF, Odometry, Joints, Power.
+- `configs/foxglove/default_layout.json` — balanced starter layout for LiDAR, TF, Odometry, Joints, Power (edit topics as needed).
 - `configs/foxglove/viam_rover_bringup_legacy.json` — legacy bring-up layout used during early validation.
 - `configs/foxglove/viam_rover_rnd_dashboard_legacy.json` — legacy R&D dashboard with additional panels.
 
 Tip: Load a legacy layout first to explore, then export your personalized version and commit it back under `configs/foxglove/` with a clear name.
+
+Wi‑Fi telemetry tips
+
+- Pin panels to wlan1: use `/wifi/signal_dBm` and confirm `/wifi/iface` reads `wlan1`.
+- If the Alfa re‑enumerates during development, `/wifi/link_ok` may briefly drop; the layout will stay on wlan1 and report disconnected rather than switching to wlan0.
+- For testing over the data plane, connect Foxglove to the wlan1 IP (e.g., `ws://192.168.0.106:8765`); keep SSH on wlan0 to avoid control impact.
 
 Launch helper
 

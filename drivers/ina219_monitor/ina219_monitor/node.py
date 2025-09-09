@@ -34,6 +34,7 @@ class INA219Monitor(Node):
         self.declare_parameter("bus_voltage_topic", "/power/bus_voltage")
         self.declare_parameter("current_topic", "/power/current")
         self.declare_parameter("rate_hz", 10.0)
+        self.declare_parameter("power_topic", "/power/power")
 
         bus_no = int(self.get_parameter("i2c_bus").value)
         addr = int(self.get_parameter("address").value)
@@ -41,6 +42,7 @@ class INA219Monitor(Node):
         bus_topic = str(self.get_parameter("bus_voltage_topic").value)
         cur_topic = str(self.get_parameter("current_topic").value)
         rate_hz = float(self.get_parameter("rate_hz").value)
+        power_topic = str(self.get_parameter("power_topic").value)
         self._period = max(0.01, 1.0 / rate_hz)
 
         self._bus = None  # type: ignore[assignment]
@@ -53,6 +55,7 @@ class INA219Monitor(Node):
 
         self._pub_bus = self.create_publisher(Float32, bus_topic, 10)
         self._pub_cur = self.create_publisher(Float32, cur_topic, 10)
+        self._pub_pow = self.create_publisher(Float32, power_topic, 10)
 
         self._timer = self.create_timer(self._period, self._tick)
         self.get_logger().info(
@@ -79,6 +82,7 @@ class INA219Monitor(Node):
 
             self._pub_bus.publish(Float32(data=float(v_bus)))
             self._pub_cur.publish(Float32(data=float(current)))
+            self._pub_pow.publish(Float32(data=float(v_bus * current)))
         except Exception as e:
             # Log at throttled rate to avoid floods
             if not hasattr(self, "_last_err"):
