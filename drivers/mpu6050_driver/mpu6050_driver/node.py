@@ -84,7 +84,10 @@ class Mpu6050Node(Node):
             try:
                 self._gyro_bias = self._calibrate_gyro(self._calib_samples)
                 self.get_logger().info(
-                    f"Gyro bias (rad/s): {self._gyro_bias[0]:.5f}, {self._gyro_bias[1]:.5f}, {self._gyro_bias[2]:.5f}"
+                    (
+                        "Gyro bias (rad/s): "
+                        f"{self._gyro_bias[0]:.5f}, {self._gyro_bias[1]:.5f}, {self._gyro_bias[2]:.5f}"
+                    )
                 )
             except Exception as e:
                 self.get_logger().warn(f"Gyro calibration failed: {e}")
@@ -93,7 +96,10 @@ class Mpu6050Node(Node):
         self._pub_imu = self.create_publisher(Imu, imu_topic, 20)
         self._timer = self.create_timer(self._period, self._tick)
         self.get_logger().info(
-            "MPU-6050 started on i2c-%d addr 0x%02x, accel=%dg, gyro=%d dps, rate=%.1f Hz"
+            (
+                "MPU-6050 started on i2c-%d addr 0x%02x, "
+                "accel=%dg, gyro=%d dps, rate=%.1f Hz"
+            )
             % (bus_no, addr, self._accel_range, self._gyro_range, self._rate_hz)
         )
 
@@ -124,7 +130,8 @@ class Mpu6050Node(Node):
         accel_fs_sel = {2: 0, 4: 1, 8: 2, 16: 3}.get(self._accel_range, 0)
         self._write_u8(_REG_ACCEL_CONFIG, (accel_fs_sel & 0x03) << 3)
 
-        # Use SMPLRT_DIV to optionally reduce internal sample rate; set to 0 for 1kHz/(1+0)=1kHz base
+        # Use SMPLRT_DIV to optionally reduce internal sample rate;
+        # set to 0 for 1kHz/(1+0)=1kHz base
         # We will control ROS publish rate via timer; keep internal sampling fast.
         self._write_u8(_REG_SMPLRT_DIV, 0x00)
 

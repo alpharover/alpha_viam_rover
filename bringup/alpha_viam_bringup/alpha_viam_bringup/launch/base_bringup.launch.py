@@ -30,13 +30,18 @@ def generate_launch_description():
     spawn_drive_arg = DeclareLaunchArgument(
         "spawn_drive",
         default_value="false",
-        description="Whether to spawn diff_drive_controller (set true once params are valid)",
+        description=(
+            "Whether to spawn diff_drive_controller "
+            "(set true once params are valid)"
+        ),
     )
 
     def launch_setup(context, *args, **kwargs):
         ekf_params = LaunchConfiguration("ekf_params_file").perform(context)
         urdf_xacro = LaunchConfiguration("urdf_xacro").perform(context)
-        diagnostics_params = LaunchConfiguration("diagnostics_params_file").perform(context)
+        diagnostics_params = LaunchConfiguration("diagnostics_params_file").perform(
+            context
+        )
 
         # Build robot_description from xacro at runtime
         try:
@@ -53,7 +58,9 @@ def generate_launch_description():
             import yaml  # type: ignore
 
             with open(
-                os.path.join(os.getcwd(), "configs", "power.yaml"), "r", encoding="utf-8"
+                os.path.join(os.getcwd(), "configs", "power.yaml"),
+                "r",
+                encoding="utf-8",
             ) as f:
                 y = yaml.safe_load(f)
                 if isinstance(y, dict) and "power" in y and isinstance(y["power"], dict):
@@ -66,7 +73,11 @@ def generate_launch_description():
         try:
             import yaml  # type: ignore
 
-            with open(os.path.join(os.getcwd(), "configs", "imu.yaml"), "r", encoding="utf-8") as f:
+            with open(
+                os.path.join(os.getcwd(), "configs", "imu.yaml"),
+                "r",
+                encoding="utf-8",
+            ) as f:
                 y = yaml.safe_load(f)
                 if isinstance(y, dict) and "imu" in y and isinstance(y["imu"], dict):
                     _raw = y["imu"]
@@ -100,7 +111,10 @@ def generate_launch_description():
                 executable="ina219_monitor",
                 name="ina219_monitor",
                 output="screen",
-                parameters=[power_params, {"i2c_bus": 1, "address": 0x40, "rate_hz": 10.0}],
+                parameters=[
+                    power_params,
+                    {"i2c_bus": 1, "address": 0x40, "rate_hz": 10.0},
+                ],
             ),
             # MPU-6050 IMU (publishes sensor_msgs/Imu)
             Node(
@@ -162,8 +176,12 @@ def generate_launch_description():
             ),
         ]
 
-        # Optionally spawn the diff_drive_controller (gated until parameters are finalized)
-        if LaunchConfiguration("spawn_drive").perform(context).lower() in ("true", "1", "yes"):
+        # Optionally spawn diff_drive_controller (gated until parameters are finalized)
+        if LaunchConfiguration("spawn_drive").perform(context).lower() in (
+            "true",
+            "1",
+            "yes",
+        ):
             nodes.append(
                 TimerAction(
                     period=2.5,
