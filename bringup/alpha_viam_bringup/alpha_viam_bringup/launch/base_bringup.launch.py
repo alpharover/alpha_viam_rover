@@ -131,7 +131,7 @@ def generate_launch_description():
                 output="screen",
                 parameters=[
                     power_params,
-                    {"i2c_bus": 1, "address": 0x40, "rate_hz": 10.0},
+                    {"i2c_bus": 1, "address": 0x40},
                 ],
             ),
             # MPU-6050 IMU (publishes sensor_msgs/Imu)
@@ -200,7 +200,7 @@ def generate_launch_description():
                 executable="wifi_monitor",
                 name="wifi_monitor",
                 output="screen",
-                parameters=[{"iface": net_params.get("wifi_iface", "wlan1"), "rate_hz": 1.0}],
+                parameters=[{"iface": net_params.get("wifi_iface", "wlan1"), "rate_hz": 0.5, "include_info": False}],
             ),
             # Spawn controllers (after controller_manager is up)
             TimerAction(

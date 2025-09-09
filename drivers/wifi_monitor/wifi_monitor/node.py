@@ -24,10 +24,12 @@ class WifiMonitor(Node):
         super().__init__("wifi_monitor")
         self.declare_parameter("iface", "wlan1")
         self.declare_parameter("rate_hz", 1.0)
+        self.declare_parameter("include_info", False)
 
         self._iface = str(self.get_parameter("iface").value)
         rate_hz = float(self.get_parameter("rate_hz").value)
         self._period = max(0.2, 1.0 / max(0.1, rate_hz))
+        self._include_info = bool(self.get_parameter("include_info").value)
 
         self._pub_rssi = self.create_publisher(Float32, "/wifi/signal_dBm", 10)
         self._pub_link = self.create_publisher(Int32, "/wifi/link_ok", 10)
@@ -39,7 +41,7 @@ class WifiMonitor(Node):
     def _tick(self) -> None:
         iface = self._iface
         link_txt = _run(f"iw dev {shlex.quote(iface)} link")
-        info_txt = _run(f"iw dev {shlex.quote(iface)} info")
+        info_txt = _run(f"iw dev {shlex.quote(iface)} info") if self._include_info else ""
 
         connected = "Not connected" not in link_txt and bool(link_txt.strip())
         rssi_dbm: Optional[float] = None
@@ -105,4 +107,3 @@ def main() -> None:  # pragma: no cover
     finally:
         node.destroy_node()
         rclpy.shutdown()
-
