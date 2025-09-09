@@ -96,10 +96,7 @@ class Mpu6050Node(Node):
         self._pub_imu = self.create_publisher(Imu, imu_topic, 20)
         self._timer = self.create_timer(self._period, self._tick)
         self.get_logger().info(
-            (
-                "MPU-6050 started on i2c-%d addr 0x%02x, "
-                "accel=%dg, gyro=%d dps, rate=%.1f Hz"
-            )
+            ("MPU-6050 started on i2c-%d addr 0x%02x, " "accel=%dg, gyro=%d dps, rate=%.1f Hz")
             % (bus_no, addr, self._accel_range, self._gyro_range, self._rate_hz)
         )
 

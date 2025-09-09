@@ -30,18 +30,13 @@ def generate_launch_description():
     spawn_drive_arg = DeclareLaunchArgument(
         "spawn_drive",
         default_value="false",
-        description=(
-            "Whether to spawn diff_drive_controller "
-            "(set true once params are valid)"
-        ),
+        description=("Whether to spawn diff_drive_controller " "(set true once params are valid)"),
     )
 
     def launch_setup(context, *args, **kwargs):
         ekf_params = LaunchConfiguration("ekf_params_file").perform(context)
         urdf_xacro = LaunchConfiguration("urdf_xacro").perform(context)
-        diagnostics_params = LaunchConfiguration("diagnostics_params_file").perform(
-            context
-        )
+        diagnostics_params = LaunchConfiguration("diagnostics_params_file").perform(context)
 
         # Build robot_description from xacro at runtime
         try:
