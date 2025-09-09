@@ -16,3 +16,7 @@ Acceptance (evidence required)
 Progress
 Log completion in `AGENTS_PROGRESS.md` with MCAP link.
 
+Utilities
+
+- `scripts/launch_with_timeout.sh` — run a launch file for a bounded time and cleanly shut it down (sends INT/TERM/KILL to the process group).
+- `scripts/ros_clean.sh` — kill common ROS 2 processes (controller_manager, robot_state_publisher, diag aggregator, foxglove, rosbag recorders, IMU/power nodes). Use `--force` to SIGKILL any stubborn remnants.
