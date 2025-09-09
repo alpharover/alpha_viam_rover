@@ -65,6 +65,7 @@ def generate_launch_description():
 
         # Load IMU params and filter to known keys
         imu_params = {}
+        imu_filter_params = {}
         try:
             import yaml  # type: ignore
 
@@ -89,6 +90,9 @@ def generate_launch_description():
                             "calib_samples",
                         }
                         imu_params = {k: v for k, v in _raw.items() if k in allowed}
+                        # Capture filter sub-params if present
+                        if isinstance(_raw.get("filter"), dict):
+                            imu_filter_params = _raw["filter"]
         except Exception as e:
             print(f"[alpha_viam_bringup] imu.yaml parse failed: {e}")
 
@@ -118,6 +122,22 @@ def generate_launch_description():
                 name="mpu6050",
                 output="screen",
                 parameters=[{"rate_hz": 100.0}, imu_params],
+            ),
+            # Optional IMU orientation filter (Madgwick) → publishes fused orientation
+            # Subscribes to /imu/data (raw) and publishes /imu/data_fused
+            Node(
+                package="imu_filter_madgwick",
+                executable="imu_filter_madgwick_node",
+                name="imu_filter",
+                output="screen",
+                parameters=[
+                    {"use_mag": False, "world_frame": "enu"},
+                    {k: v for k, v in imu_filter_params.items() if k in ("gain", "zeta", "use_mag", "world_frame", "publish_tf")},
+                ],
+                remappings=[
+                    ("imu/data_raw", "/imu/data"),
+                    ("imu/data", "/imu/data_fused"),
+                ],
             ),
             # Controller manager (ros2_control)
             Node(
