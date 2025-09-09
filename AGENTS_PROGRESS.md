@@ -418,3 +418,13 @@ Rules
 * Acceptance: Pass — `/imu/data` at ~100 Hz (`ros2 topic hz` over 7 windows ~100.0 Hz). Frame `imu_link` present.
 * Evidence: MCAP `bags/samples/20250908_230210_bench` (6.65s, 554 msgs on `/imu/data`), node log shows startup and gyro bias; sample message captured.
 * Follow-ups: Optionally add `imu_filter_madgwick` for orientation; validate axes vs URDF and update `docs/sensors/imu_power.md` with bias/noise; tune EKF once wheel odom is active.
+
+---
+
+* 2025-09-09 / agent: codex-cli
+* Phase / Subsystem: Docs / CI
+* Task: Update IMU/Power docs; stabilize CI Black check
+* Summary: Expanded `docs/sensors/imu_power.md` with IMU/INA219 run/acceptance details; noted latest MCAP sample in `docs/data/mcap.md`. Fixed `configs/diff_drive.yaml` to match schema. Adjusted code style to satisfy GitHub Black 23.x; Lint & Unit is green.
+* Acceptance: Pass — latest Lint & Unit succeeded; docs updated.
+* Evidence: GH run 17571693391 (success), 17571742027 (success).
+* Follow-ups: None.
