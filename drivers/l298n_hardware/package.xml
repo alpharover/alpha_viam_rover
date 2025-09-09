@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>l298n_hardware</name>
+  <version>0.1.0</version>
+  <description>ros2_control hardware interface for L298N dual H-bridge with pigpio PWM and quadrature encoders.</description>
+  <maintainer email="alpha@viam.local">alpha_viam</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+
+  <!-- pigpio C library -->
+  <exec_depend>pigpio</exec_depend>
+
+  <export>
+    <hardware_interface plugin="l298n_hardware/l298n_hardware_plugin.xml"/>
+  </export>
+</package>
+

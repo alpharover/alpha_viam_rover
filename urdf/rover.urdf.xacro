@@ -66,8 +66,29 @@
   <!-- ros2_control: system + joint interfaces (placeholders for real hardware) -->
   <ros2_control name="RoverSystem" type="system">
     <hardware>
-      <!-- Placeholder hardware plugin; replace with real hardware when available -->
-      <plugin>mock_components/GenericSystem</plugin>
+      <plugin>l298n_hardware/L298NSystemHardware</plugin>
+      <!-- L298N pin map (BCM numbering) and encoder pins -->
+      <param name="left_pwm">26</param>
+      <param name="left_in1">19</param>
+      <param name="left_in2">13</param>
+      <param name="right_pwm">22</param>
+      <param name="right_in3">6</param>
+      <param name="right_in4">5</param>
+      <!-- Encoders: set to your GPIOs or -1 to disable -->
+      <param name="left_enc_a">-1</param>
+      <param name="left_enc_b">-1</param>
+      <param name="right_enc_a">-1</param>
+      <param name="right_enc_b">-1</param>
+      <!-- Encoder + control params -->
+      <param name="ticks_per_rev">20</param>
+      <param name="encoder_glitch_us">100</param>
+      <param name="max_wheel_rad_s">20.0</param>
+      <param name="pwm_freq">20000</param>
+      <param name="pwm_range">255</param>
+      <param name="invert_left">false</param>
+      <param name="invert_right">false</param>
+      <param name="brake_on_zero">false</param>
+      <param name="watchdog_s">0.5</param>
     </hardware>
     <joint name="left_wheel_joint">
       <command_interface name="velocity"/>

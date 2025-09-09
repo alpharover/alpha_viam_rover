@@ -249,6 +249,8 @@ def generate_launch_description():
                                 "diff_drive_controller",
                                 "--controller-manager",
                                 "/controller_manager",
+                                "--param-file",
+                                os.path.join(os.getcwd(), "configs", "diff_drive.yaml"),
                             ],
                             output="screen",
                         )

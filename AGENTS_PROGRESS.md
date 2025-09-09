@@ -20,6 +20,14 @@ Rules
 ---
 
 * 2025-09-09 / agent: codex-cli
+* Phase / Subsystem: Drive / ros2_control (Phase 3)
+* Task ID: needs-architect — L298N HW + controller bring-up off‑ground
+* Summary: Implemented `l298n_hardware` (pigpio daemon client) with PWM + quadrature encoders + watchdog; wired URDF and bring-up. Verified motors move off‑ground via pigpio when ROS is stopped. Identified interference (controller_manager watchdog writing zeros cancels pigpio). On this Humble build, controller spawner `--param-file` does not apply YAML to controllers; `diff_drive_controller` rejects empty `left_wheel_names`, forward controllers reject empty `joints`. Added `scripts/motor_test.sh` (guarded). Drafted ADR‑0002 to bridge controller params via set_parameters + switch_controller.
+* Acceptance: Partial — hardware path validated (manual); ROS /cmd_vel pending param bridge.
+* Evidence: See `docs/control/phase3_drive_report.md` (log excerpts); observed off‑ground motion during guarded tests.
+* Follow‑ups / Risks: Implement controller param bridge and complete ROS-only /cmd_vel; wire encoders physically and validate; pin map consolidation in `hw/pinmap.yaml`; architect review for motor control changes.
+
+* 2025-09-09 / agent: codex-cli
 * Phase / Subsystem: Networking / Wi‑Fi Policy & Foxglove
 * Task: Persist naming (wlan1), order supplicant startup, disable MAC randomization; finalize telemetry topics
 * Summary: Added MAC‑based `.link` for Alfa → `wlan1`; bound `wpa_supplicant@wlan1` to device with proper ordering and extra config (`mac_addr=0`); disabled USB autosuspend for 0bda:8812; kept single 88XXau driver. `wifi_monitor` pinned to wlan1 (no fallback) and added `/wifi/flap_count`. Updated docs: `docs/networking/wifi_policy.md`, enriched `docs/networking/awus036ach.md`, and `docs/tools/foxglove.md` (Wi‑Fi + Power topics). 15–20 min motion test shows no kernel USB errors or link flaps.
