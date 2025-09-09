@@ -13,7 +13,7 @@ Step-by-step
    - Or via bring-up: `ros2 launch alpha_viam_bringup base_bringup.launch.py`
 2) Confirm the port/address from `configs/network.yaml` (defaults: `0.0.0.0:8765`).
 3) On your Mac, open Foxglove and add a ROS 2 connection: `ws://<rover-hostname>:<port>`.
-4) Import `configs/foxglove/default_layout.json` to load panels.
+4) Import a layout from `configs/foxglove/` (start with `default_layout.json`).
 5) Verify topics match layout (adjust as needed):
    - `/tf`, `/tf_static` (TF Tree)
    - `/odom` (Odometry)
@@ -30,7 +30,15 @@ Quick start (when on the rover)
 
 - Bridge: launch `foxglove_bridge` on the rover with WebSocket port from `configs/network.yaml` (`foxglove_ws_port`).
 - Connect: Open Foxglove on the Mac, add a ROS 2 connection to `ws://<rover-hostname>:<port>` where `<rover-hostname>` matches `rover_hostname`.
-- Layout: Import `configs/foxglove/default_layout.json` to get LiDAR, TF, Odometry, JointStates, and Power panels.
+- Layout: Import a layout from `configs/foxglove/` (start with `default_layout.json`) to get LiDAR, TF, Odometry, JointStates, and Power panels.
+
+Layouts
+
+- `configs/foxglove/default_layout.json` — balanced starter layout for LiDAR, TF, Odometry, Joints, Power.
+- `configs/foxglove/viam_rover_bringup_legacy.json` — legacy bring-up layout used during early validation.
+- `configs/foxglove/viam_rover_rnd_dashboard_legacy.json` — legacy R&D dashboard with additional panels.
+
+Tip: Load a legacy layout first to explore, then export your personalized version and commit it back under `configs/foxglove/` with a clear name.
 
 Launch helper
 

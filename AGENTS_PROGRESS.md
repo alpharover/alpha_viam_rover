@@ -437,3 +437,13 @@ Rules
 * Acceptance: Pass — latest Lint & Unit succeeded; docs updated.
 * Evidence: GH run 17571693391 (success), 17571742027 (success).
 * Follow-ups: None.
+
+---
+
+* 2025-09-09 / agent: codex-cli
+* Phase / Subsystem: Tools / Foxglove
+* Task: Place legacy Foxglove layouts and update docs
+* Summary: Moved `viam_rover_bringup_legacy.json` and `viam_rover_rnd_dashboard_legacy.json` into `configs/foxglove/` per docs plan, and updated `docs/tools/foxglove.md` to list all available layouts and instruct importing from the folder.
+* Acceptance: Pass — files in `configs/foxglove/`; docs updated and pushed to `origin/main`.
+* Evidence: `configs/foxglove/viam_rover_bringup_legacy.json`, `configs/foxglove/viam_rover_rnd_dashboard_legacy.json`; commit adds docs section "Layouts".
+* Follow-ups: Capture and commit a Foxglove screenshot to `docs/tools/images/foxglove_layout.png` during next on-device session.
