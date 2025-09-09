@@ -66,9 +66,7 @@ def generate_launch_description():
         try:
             import yaml  # type: ignore
 
-            with open(
-                os.path.join(os.getcwd(), "configs", "imu.yaml"), "r", encoding="utf-8"
-            ) as f:
+            with open(os.path.join(os.getcwd(), "configs", "imu.yaml"), "r", encoding="utf-8") as f:
                 y = yaml.safe_load(f)
                 if isinstance(y, dict) and "imu" in y and isinstance(y["imu"], dict):
                     _raw = y["imu"]
@@ -110,7 +108,7 @@ def generate_launch_description():
                 executable="mpu6050_node",
                 name="mpu6050",
                 output="screen",
-                parameters=[{'rate_hz': 100.0}, imu_params],
+                parameters=[{"rate_hz": 100.0}, imu_params],
             ),
             # Controller manager (ros2_control)
             Node(
