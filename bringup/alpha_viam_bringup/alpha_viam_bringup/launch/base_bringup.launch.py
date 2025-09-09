@@ -47,8 +47,6 @@ def generate_launch_description():
             robot_desc_raw = ""
             print(f"[alpha_viam_bringup] xacro processing failed: {e}")
 
-        diff_drive_params_file = os.path.join(os.getcwd(), "configs", "diff_drive.yaml")
-
         nodes = [
             Node(
                 package="robot_state_publisher",
@@ -135,10 +133,12 @@ def generate_launch_description():
 
     # Ensure all DeclareLaunchArgument actions are added BEFORE the OpaqueFunction
     # so that LaunchConfiguration lookups succeed when launch_setup runs.
-    return LaunchDescription([
-        ekf_params_arg,
-        urdf_xacro_arg,
-        diagnostics_params_arg,
-        spawn_drive_arg,
-        OpaqueFunction(function=launch_setup),
-    ])
+    return LaunchDescription(
+        [
+            ekf_params_arg,
+            urdf_xacro_arg,
+            diagnostics_params_arg,
+            spawn_drive_arg,
+            OpaqueFunction(function=launch_setup),
+        ]
+    )
