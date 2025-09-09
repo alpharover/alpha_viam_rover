@@ -1,5 +1,5 @@
 # diff_drive_controller parameters (ros2_control)
-ros__parameters:
+diff_drive_controller:
   type: diff_drive_controller/DiffDriveController
   left_wheel_names: [left_wheel_joint]
   right_wheel_names: [right_wheel_joint]

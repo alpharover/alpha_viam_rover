@@ -41,3 +41,7 @@ Topic information: Topic: /tf (type: tf2_msgs/msg/TFMessage, count: 250)
                    Topic: /imu/data (type: sensor_msgs/msg/Imu, count: 1,250)
                    Topic: /scan (type: sensor_msgs/msg/LaserScan, count: 1,250)
 ```
+
+Recent on-device sample
+
+- `bags/samples/20250908_230210_bench` (6.65 s) — contains `/imu/data` at ~100 Hz while base bring-up was running.
