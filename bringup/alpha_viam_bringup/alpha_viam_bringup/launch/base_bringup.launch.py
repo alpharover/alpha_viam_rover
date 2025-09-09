@@ -192,7 +192,9 @@ def generate_launch_description():
                 executable="foxglove_bridge",
                 name="foxglove_bridge",
                 output="screen",
-                parameters=[{"address": "0.0.0.0", "port": int(net_params.get("foxglove_ws_port", 8765))}],
+                parameters=[
+                    {"address": "0.0.0.0", "port": int(net_params.get("foxglove_ws_port", 8765))}
+                ],
             ),
             # Wi‑Fi monitor (RSSI + link_ok + diagnostics)
             Node(
@@ -200,7 +202,13 @@ def generate_launch_description():
                 executable="wifi_monitor",
                 name="wifi_monitor",
                 output="screen",
-                parameters=[{"iface": net_params.get("wifi_iface", "wlan1"), "rate_hz": 0.5, "include_info": False}],
+                parameters=[
+                    {
+                        "iface": net_params.get("wifi_iface", "wlan1"),
+                        "rate_hz": 0.5,
+                        "include_info": False,
+                    }
+                ],
             ),
             # Spawn controllers (after controller_manager is up)
             TimerAction(
