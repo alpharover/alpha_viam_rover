@@ -27,6 +27,12 @@ def generate_launch_description():
         description="Path to diagnostic_aggregator params YAML.",
     )
 
+    spawn_drive_arg = DeclareLaunchArgument(
+        "spawn_drive",
+        default_value="false",
+        description="Whether to spawn diff_drive_controller (set true once params are valid)",
+    )
+
     def launch_setup(context, *args, **kwargs):
         ekf_params = LaunchConfiguration("ekf_params_file").perform(context)
         urdf_xacro = LaunchConfiguration("urdf_xacro").perform(context)
@@ -40,6 +46,8 @@ def generate_launch_description():
         except Exception as e:
             robot_desc_raw = ""
             print(f"[alpha_viam_bringup] xacro processing failed: {e}")
+
+        diff_drive_params_file = os.path.join(os.getcwd(), "configs", "diff_drive.yaml")
 
         nodes = [
             Node(
@@ -58,7 +66,6 @@ def generate_launch_description():
                 parameters=[
                     {"robot_description": robot_desc_raw},
                     os.path.join(os.getcwd(), "configs", "controllers.yaml"),
-                    os.path.join(os.getcwd(), "configs", "diff_drive.yaml"),
                 ],
             ),
             Node(
@@ -98,29 +105,40 @@ def generate_launch_description():
                         ],
                         output="screen",
                     ),
-                    ExecuteProcess(
-                        cmd=[
-                            "ros2",
-                            "run",
-                            "controller_manager",
-                            "spawner",
-                            "diff_drive_controller",
-                            "--controller-manager",
-                            "/controller_manager",
-                        ],
-                        output="screen",
-                    ),
                 ],
             ),
         ]
 
+        # Optionally spawn the diff_drive_controller (gated until parameters are finalized)
+        if LaunchConfiguration("spawn_drive").perform(context).lower() in ("true", "1", "yes"):
+            nodes.append(
+                TimerAction(
+                    period=2.5,
+                    actions=[
+                        ExecuteProcess(
+                            cmd=[
+                                "ros2",
+                                "run",
+                                "controller_manager",
+                                "spawner",
+                                "diff_drive_controller",
+                                "--controller-manager",
+                                "/controller_manager",
+                            ],
+                            output="screen",
+                        )
+                    ],
+                )
+            )
+
         return nodes
 
-    return LaunchDescription(
-        [
-            ekf_params_arg,
-            urdf_xacro_arg,
-            OpaqueFunction(function=launch_setup),
-            diagnostics_params_arg,
-        ]
-    )
+    # Ensure all DeclareLaunchArgument actions are added BEFORE the OpaqueFunction
+    # so that LaunchConfiguration lookups succeed when launch_setup runs.
+    return LaunchDescription([
+        ekf_params_arg,
+        urdf_xacro_arg,
+        diagnostics_params_arg,
+        spawn_drive_arg,
+        OpaqueFunction(function=launch_setup),
+    ])

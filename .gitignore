@@ -28,3 +28,4 @@ ENV/
 
 # Local-only travel doc (do not sync to GH)
 travel_progress_plan.md
+bags/

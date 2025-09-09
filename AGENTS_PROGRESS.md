@@ -19,6 +19,44 @@ Rules
 
 ---
 
+* 2025-09-08 / agent: codex-cli
+* Phase / Subsystem: Bring-up / Repo & HW Sync
+* Task: Sync local repo to origin/main; verify OS/RPi model; enumerate I²C/USB
+* Summary: Fast-forwarded to origin/main; Ubuntu 22.04.5 on RPi4B Rev 1.1; I²C shows 0x40 (INA219) and 0x68 (MPU-6050); Alfa USB Wi‑Fi not enumerated in lsusb (only VIA hub seen).
+* Acceptance: Pass for repo/OS/I²C; USB Alfa pending (needs driver/power check).
+* Evidence: `i2cdetect -y 1` → 0x40, 0x68; `lsusb` output captured in session logs.
+* Follow-ups: Check AWUS036ACH power/driver; run dmesg while hot-plugging; install DKMS if device present.
+
+---
+
+* 2025-09-08 / agent: codex-cli
+* Phase / Subsystem: Bring-up / Launch & Recording
+* Task: Update launch ordering and install ros2_control + MCAP
+* Summary: Fixed launch arg ordering; installed ros2_control and controllers; added diagnostics analyzer; installed rosbag2-storage-mcap. Base bring-up runs; Foxglove at ws://0.0.0.0:8765. diff_drive_controller spawn pending params wiring.
+* Acceptance: Partial — launch stable; drive controller not yet configured (left/right wheel names read empty by controller at load).
+* Evidence: Launch logs; `ros2 pkg executables` confirm nodes; MCAP plugin installed.
+* Follow-ups: Gate diff_drive spawner behind flag until params load path is finalized; proceed with IMU/INA219 drivers and EKF wiring; capture MCAP.
+
+---
+
+* 2025-09-08 / agent: codex-cli
+* Phase / Subsystem: Bring-up / Foxglove
+* Task: Start base bring-up with timeout for Foxglove validation
+* Summary: Launched `alpha_viam_bringup` with a 10-minute timeout guard; verified foxglove_bridge listening on 0.0.0.0:8765 and provided IP 192.168.0.105. User confirmed Foxglove connects from Mac.
+* Acceptance: Pass — port open, external client connected successfully.
+* Evidence: `ss -ltnp` shows foxglove_bridge PID bound to :8765.
+* Follow-ups: Add systemd unit with `TimeoutStopSec` and ExecStop to ensure clean shutdown.
+
+---
+
+* 2025-09-08 / agent: codex-cli
+* Phase / Subsystem: Networking / USB Wi‑Fi
+* Task: Alfa AWUS036ACH (RTL8812AU) driver and detection
+* Summary: Installed `rtl8812au-dkms` initially; then replaced with aircrack `rtl88xxau` via DKMS (`88XXau` module). After replugging to a USB 3.0 port, the device enumerated as `0bda:8812`, interface `wlx00c0cab1223b` created.
+* Acceptance: Pass — driver loaded and interface present.
+* Evidence: `lsusb` shows 0bda:8812; `ip -br link` lists `wlx00c0cab1223b`; `iw dev` shows managed PHY.
+* Follow-ups: Set REGDOMAIN, optionally rename to `wlan1` via systemd .link file; install NetworkManager if desired and create connection profile.
+
 * 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: Phase 0/1 Docs & Provisioning / CI / Networking
 * Task: Add Phase 0/1 docs, overlays+pigpio roles; ROS CI checks; AWUS036ACH guide
@@ -76,6 +114,14 @@ Rules
 * Follow-ups: Flesh out Nav2 param sets (costmaps, recoveries) later; consider making ruff non-exit-zero and enabling tests on main.
 
 ---
+
+* 2025-09-08 / agent: codex-cli
+* Phase / Subsystem: Networking / USB Wi‑Fi
+* Task: Rename Alfa to wlan1; netplan prefer Alfa; full-power profile
+* Summary: Persistently renamed Alfa iface to `wlan1` via systemd .link; added netplan for `wlan1` (metric 50) and raised `wlan0` metric (600) for fallback; added services to disable Wi‑Fi powersave and set txpower to 30 dBm; verified default route via wlan1 and SSH reachability to 192.168.0.106.
+* Acceptance: Pass — `iw dev wlan1 info` shows txpower 30.00 dBm; route prefers wlan1; wlan0 remains reachable as standby.
+* Evidence: `ip route` shows default via wlan1 (metric 50); `iw dev wlan1 info`.
+* Follow-ups: Consider Ansible Vault templating for SSIDs/PSKs; monitor stability over extended uptime.
 
 * 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: Bring-up / Ansible
