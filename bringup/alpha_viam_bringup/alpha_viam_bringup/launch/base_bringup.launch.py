@@ -47,6 +47,20 @@ def generate_launch_description():
             robot_desc_raw = ""
             print(f"[alpha_viam_bringup] xacro processing failed: {e}")
 
+        # Load simple YAML for power params and pass as parameters directly
+        power_params = {}
+        try:
+            import yaml  # type: ignore
+
+            with open(
+                os.path.join(os.getcwd(), "configs", "power.yaml"), "r", encoding="utf-8"
+            ) as f:
+                y = yaml.safe_load(f)
+                if isinstance(y, dict) and "power" in y and isinstance(y["power"], dict):
+                    power_params = y["power"]
+        except Exception as e:
+            print(f"[alpha_viam_bringup] power.yaml parse failed: {e}")
+
         nodes = [
             Node(
                 package="robot_state_publisher",
@@ -54,6 +68,14 @@ def generate_launch_description():
                 name="robot_state_publisher",
                 output="screen",
                 parameters=[{"robot_description": robot_desc_raw}],
+            ),
+            # INA219 power monitor (publishes bus voltage and current)
+            Node(
+                package="ina219_monitor",
+                executable="ina219_monitor",
+                name="ina219_monitor",
+                output="screen",
+                parameters=[power_params, {"i2c_bus": 1, "address": 0x40, "rate_hz": 10.0}],
             ),
             # Controller manager (ros2_control)
             Node(
