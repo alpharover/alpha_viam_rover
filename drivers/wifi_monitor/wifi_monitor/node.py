@@ -7,7 +7,7 @@ from typing import Optional
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32, Int32
+from std_msgs.msg import Float32, Int32, String
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 
@@ -35,13 +35,19 @@ class WifiMonitor(Node):
         self._pub_rssi = self.create_publisher(Float32, "/wifi/signal_dBm", 10)
         self._pub_link = self.create_publisher(Int32, "/wifi/link_ok", 10)
         self._pub_diag = self.create_publisher(DiagnosticArray, "/diagnostics", 10)
+        self._pub_iface = self.create_publisher(String, "/wifi/iface", 10)
 
         self._timer = self.create_timer(self._period, self._tick)
         self.get_logger().info(f"wifi_monitor watching iface={self._iface} at {rate_hz:.1f} Hz")
 
     def _select_iface(self) -> Optional[str]:
-        if self._iface.lower() != "auto":
-            return self._iface
+        # Prefer configured iface when specified and connected; otherwise fallback to any connected managed iface
+        cfg = self._iface
+        if cfg.lower() != "auto":
+            link = _run(f"iw dev {shlex.quote(cfg)} link")
+            if link and "Connected to" in link and "Not connected" not in link:
+                return cfg
+            # else fall through to auto detection
         # Auto-pick a connected managed interface
         out = _run("iw dev")
         candidates = []
@@ -107,6 +113,7 @@ class WifiMonitor(Node):
         status.level = DiagnosticStatus.OK if connected else DiagnosticStatus.WARN
         status.message = "Connected" if connected else "Not connected"
         kvs: list[KeyValue] = []
+        kvs.append(KeyValue(key="iface", value=iface))
         if rssi_dbm is not None:
             kv = KeyValue(key="signal_dBm", value=f"{rssi_dbm:.0f}")
             kvs.append(kv)
@@ -121,6 +128,9 @@ class WifiMonitor(Node):
         arr = DiagnosticArray()
         arr.status = [status]
         self._pub_diag.publish(arr)
+
+        # Also publish the interface name as a simple String for Foxglove RawMessages
+        self._pub_iface.publish(String(data=iface))
 
 
 def main() -> None:  # pragma: no cover
