@@ -8,7 +8,7 @@ Recording policies, retention, and playback notes for evidence capture.
 
 Recommended topics (minimum)
 
-- `/tf`, `/tf_static`, `/odom`, `/joint_states`, `/cmd_vel`, `/imu/data`, `/power/ina219`, `/scan` (when LiDAR is present).
+- `/tf`, `/tf_static`, `/odom`, `/joint_states`, `/cmd_vel`, `/imu/data`, `/imu/data_fused`, `/power/ina219`, `/scan` (when LiDAR is present).
 
 Quick start
 

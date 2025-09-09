@@ -166,6 +166,15 @@ Rules
 * Evidence: Commit `docs: stop tracking travel_progress_plan.md; ignore local-only travel doc` on `main`.
 * Follow-ups: None.
 
+---
+
+* 2025-09-09 / agent: codex-cli
+* Phase / Subsystem: Sensors / IMU
+* Task: Add Madgwick filter for fused orientation
+* Summary: Installed `ros-humble-imu-filter-madgwick` and updated bring-up to start the filter. It subscribes to `/imu/data` and publishes fused orientation on `/imu/data_fused`. Verified in Foxglove; rate ~97–100 Hz.
+* Acceptance: Pass — fused orientation visible; responds to motion.
+* Evidence: Live Foxglove session; `ros2 topic hz /imu/data_fused` ≈ 100 Hz.
+
 * 2025-09-07 / agent: codex-cli
 * Phase / Subsystem: CI / Repo Hygiene
 * Task: Fix failing GitHub lint job (yamllint errors)

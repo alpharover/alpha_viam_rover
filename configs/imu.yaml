@@ -7,5 +7,8 @@ imu:
   accel_range_g: 2        # 2, 4, 8, 16
   gyro_range_dps: 250     # 250, 500, 1000, 2000
   filter:
-    type: madgwick  # optional
-    gain: 0.1
+    type: madgwick  # optional orientation filter
+    gain: 0.1       # beta
+    world_frame: enu
+    use_mag: false
+    publish_tf: false
