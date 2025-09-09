@@ -20,6 +20,13 @@ Rules
 ---
 
 * 2025-09-09 / agent: codex-cli
+* Phase / Subsystem: Networking / Wi‑Fi Policy & Foxglove
+* Task: Persist naming (wlan1), order supplicant startup, disable MAC randomization; finalize telemetry topics
+* Summary: Added MAC‑based `.link` for Alfa → `wlan1`; bound `wpa_supplicant@wlan1` to device with proper ordering and extra config (`mac_addr=0`); disabled USB autosuspend for 0bda:8812; kept single 88XXau driver. `wifi_monitor` pinned to wlan1 (no fallback) and added `/wifi/flap_count`. Updated docs: `docs/networking/wifi_policy.md`, enriched `docs/networking/awus036ach.md`, and `docs/tools/foxglove.md` (Wi‑Fi + Power topics). 15–20 min motion test shows no kernel USB errors or link flaps.
+* Acceptance: Pass — `/wifi/iface=wlan1`; Foxglove stable; routes prefer wlan1 with wlan0 as control fallback.
+* Evidence: `journalctl -k --since 20 min` none; `ip route` shows metric 50/600; layout import works.
+
+* 2025-09-09 / agent: codex-cli
 * Phase / Subsystem: Bring-up / Foxglove
 * Task: Update RND dashboard layout to current topics
 * Summary: Fixed `configs/foxglove/viam_rover_rnd_dashboard_legacy.json` to subscribe to live topics. Repointed power panels from `/power/ina219/*` to `/power/bus_voltage` and `/power/current`; replaced legacy Wi‑Fi panels with IMU and EKF velocity/yaw panels; added titles. Verified data appears in Foxglove during 10‑min bring-up.

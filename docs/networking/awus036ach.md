@@ -113,3 +113,13 @@ Notes
 - Actual max txpower depends on band/channel, regulatory domain, and driver. 2.4 GHz often caps at ~20 dBm; some 5 GHz channels allow ~30 dBm. The rtl88xxau driver may permit an override via `iw` even on 2.4 GHz.
 - Keep wlan0 connected with a higher metric as a fallback path for headless access.
 - Avoid committing PSKs to version control; use Ansible Vault or host‑only files.
+
+## Operational policy and ordering (project standard)
+
+- Data plane on `wlan1` (Alfa), control plane on `wlan0` (builtin). Route metrics: `wlan1` = 50, `wlan0` = 600.
+- Persistent naming via systemd‑link: MACAddress match → `Name=wlan1` (stick to MAC, not path). Disable MAC randomization in `wpa_supplicant`.
+- Startup ordering: bind `wpa_supplicant@wlan1.service` to the device with `BindsTo=` and `After=` the device unit and `systemd-udev-settle.service`. Let `.link` perform the rename; do not use `set-name` in netplan.
+- USB hardening: powered USB hub, short shielded cable, strain relief. Disable USB autosuspend for VID:PID `0bda:8812`.
+- Foxglove: pin Wi‑Fi panels to `wlan1` topics and surface `/wifi/iface`, `/wifi/link_ok`, `/wifi/signal_dBm`, `/wifi/flap_count`.
+
+See also: `docs/tools/foxglove.md` for panel/topic details.
