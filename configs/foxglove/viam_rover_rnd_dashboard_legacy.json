@@ -1,0 +1,253 @@
+{
+  "configById": {
+    "3D!a299f36": {
+      "layers": {
+        "a8cef1e7-ded0-426a-82b5-e0b74530e8e8": {
+          "visible": true,
+          "frameLocked": true,
+          "label": "Grid",
+          "instanceId": "f19a99da-2e2c-445d-9f8b-724a96d60be9",
+          "layerId": "foxglove.Grid",
+          "size": 10,
+          "divisions": 10,
+          "lineWidth": 1,
+          "color": "#248eff",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "order": 1
+        }
+      },
+      "cameraState": {
+        "perspective": true,
+        "distance": 12.0,
+        "phi": 45.0,
+        "thetaOffset": 110.0,
+        "targetOffset": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "target": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "targetOrientation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {
+        "frame:base_link": {
+          "visible": false
+        },
+        "frame:odom": {
+          "visible": false
+        },
+        "frame:map": {
+          "visible": false
+        }
+      },
+      "topics": {
+        "/scan": {
+          "visible": true,
+          "colorField": "intensity",
+          "colorMode": "colormap",
+          "colorMap": "turbo"
+        },
+        "/robot_description": {
+          "visible": true
+        }
+      },
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {}
+    },
+    "Image!a037a0e": {
+      "cameraState": {
+        "distance": 20,
+        "perspective": true,
+        "phi": 60,
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOffset": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "thetaOffset": 45,
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {},
+      "layers": {},
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {
+        "imageTopic": "/camera/image_raw"
+      }
+    },
+    "RawMessages!5cf4665": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/diagnostics"
+    },
+    "RawMessages!4d5bf75": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/wifi/stats"
+    },
+    "RawMessages!46ed4a3": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/power/ina219"
+    },
+    "Gauge!1d25d25": {
+      "path": "/power/ina219/voltage.data",
+      "minValue": 9.0,
+      "maxValue": 13.0,
+      "colorMap": "red-yellow-green",
+      "colorMode": "colormap",
+      "foxglovePanelTitle": "Bus Voltage (V)"
+    },
+    "Gauge!b01cb72": {
+      "path": "/power/ina219/current.data",
+      "minValue": 0.0,
+      "maxValue": 5.0,
+      "colorMap": "red-yellow-green",
+      "colorMode": "colormap",
+      "foxglovePanelTitle": "Current (A)"
+    },
+    "Gauge!aa6ca0b": {
+      "path": "/power/ina219/power.data",
+      "minValue": 0.0,
+      "maxValue": 50.0,
+      "colorMap": "red-yellow-green",
+      "colorMode": "colormap",
+      "foxglovePanelTitle": "Power (W)"
+    },
+    "Gauge!0d5758d": {
+      "path": "/wifi/stats.signal_dBm",
+      "minValue": -90,
+      "maxValue": -30,
+      "colorMap": "red-yellow-green",
+      "colorMode": "colormap",
+      "foxglovePanelTitle": "Wi\u2011Fi RSSI (dBm)"
+    },
+    "Indicator!67fd33c": {
+      "path": "/wifi/stats.link_ok",
+      "style": "bulb",
+      "fallbackColor": "#a0a0a0",
+      "fallbackLabel": "Unknown",
+      "rules": [
+        {
+          "operator": ">",
+          "rawValue": "0",
+          "color": "#68e24a",
+          "label": "Link OK"
+        },
+        {
+          "operator": "==",
+          "rawValue": "0",
+          "color": "#ff4d4d",
+          "label": "Link Down"
+        }
+      ],
+      "foxglovePanelTitle": "Wi\u2011Fi Link"
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "direction": "row",
+    "first": "3D!a299f36",
+    "second": {
+      "direction": "column",
+      "first": {
+        "direction": "row",
+        "first": "Image!a037a0e",
+        "second": {
+          "direction": "column",
+          "first": "Gauge!1d25d25",
+          "second": {
+            "direction": "column",
+            "first": "Gauge!b01cb72",
+            "second": "Gauge!aa6ca0b",
+            "splitPercentage": 50
+          },
+          "splitPercentage": 33
+        },
+        "splitPercentage": 60
+      },
+      "second": {
+        "direction": "row",
+        "first": {
+          "direction": "column",
+          "first": "RawMessages!5cf4665",
+          "second": "RawMessages!46ed4a3",
+          "splitPercentage": 50
+        },
+        "second": {
+          "direction": "column",
+          "first": "Gauge!0d5758d",
+          "second": "Indicator!67fd33c",
+          "splitPercentage": 70
+        },
+        "splitPercentage": 50
+      },
+      "splitPercentage": 55
+    },
+    "splitPercentage": 60
+  }
+}
