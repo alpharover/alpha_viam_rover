@@ -415,6 +415,6 @@ Rules
 * Phase / Subsystem: Bring-up / IMU
 * Task: IMU (MPU‑6050) integration
 * Summary: Added `drivers/mpu6050_driver` (ament_python) publishing `sensor_msgs/Imu` on `/imu/data` with gyro bias calibration and configurable ranges; wired node into base bring-up and filtered params from `configs/imu.yaml`. Updated EKF to consume IMU angular velocity only.
-* Acceptance: Pending on-device — topics expected: `/imu/data` at ~100 Hz; EKF sees `imu0`.
-* Evidence: Launch includes `mpu6050_driver`; adjust `configs/imu.yaml` to tune `rate_hz`, ranges. Record a short MCAP once verified.
+* Acceptance: Pass — `/imu/data` at ~100 Hz (`ros2 topic hz` over 7 windows ~100.0 Hz). Frame `imu_link` present.
+* Evidence: MCAP `bags/samples/20250908_230210_bench` (6.65s, 554 msgs on `/imu/data`), node log shows startup and gyro bias; sample message captured.
 * Follow-ups: Optionally add `imu_filter_madgwick` for orientation; validate axes vs URDF and update `docs/sensors/imu_power.md` with bias/noise; tune EKF once wheel odom is active.
