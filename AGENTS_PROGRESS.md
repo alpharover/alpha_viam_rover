@@ -19,6 +19,35 @@ Rules
 
 ---
 
+* 2025-09-09 / agent: codex-cli
+* Phase / Subsystem: Bring-up / Foxglove
+* Task: Update RND dashboard layout to current topics
+* Summary: Fixed `configs/foxglove/viam_rover_rnd_dashboard_legacy.json` to subscribe to live topics. Repointed power panels from `/power/ina219/*` to `/power/bus_voltage` and `/power/current`; replaced legacy Wi‑Fi panels with IMU and EKF velocity/yaw panels; added titles. Verified data appears in Foxglove during 10‑min bring-up.
+* Acceptance: Pass — gauges show voltage/current; RawMessages shows `/imu/data` streaming; no errors in Foxglove.
+* Evidence: Connect to ws://<rover-ip>:8765 and import layout; topics visible: `/imu/data`, `/power/bus_voltage`, `/power/current`, `/odometry/filtered`.
+* Follow-ups: Optionally add derived power (W) via a small ROS node or Foxglove user node; update `configs/foxglove/default_layout.json` which still references legacy `/odom` and `/power/ina219/*`.
+
+---
+
+* 2025-09-09 / agent: codex-cli
+* Phase / Subsystem: Drivers / Power
+* Task: INA219 — add computed power (watts) topic and refresh Foxglove session
+* Summary: Extended `ina219_monitor` to publish `/power/power` (Float32 = V×I) with configurable `power_topic` param. Updated RND Foxglove layout gauge to `/power/power.data`. Rebuilt, cleared stale nodes, and relaunched a fresh 10‑minute bring‑up.
+* Acceptance: Pass — `/power/bus_voltage`, `/power/current`, and `/power/power` present; gauge reads plausible values in Foxglove.
+* Evidence: `ros2 topic list` shows power topics; connect to ws://<rover-ip>:8765 and import updated layout.
+* Follow-ups: Consider ADR noting the new `/power/power` topic; add optional BatteryState publisher or power smoothing if noisy.
+
+---
+
+* 2025-09-09 / agent: codex-cli
+* Phase / Subsystem: Networking / Foxglove
+* Task: Wi‑Fi monitor node + Foxglove layout fixes (RSSI/link + numeric power readouts)
+* Summary: Added `drivers/wifi_monitor` (rclpy) that publishes `/wifi/signal_dBm` (Float32), `/wifi/link_ok` (Int32), and a `DiagnosticArray` entry. Wired it into `alpha_viam_bringup` and extended `configs/network.yaml` with `wifi_iface`. Updated R&D layout to point RSSI gauge at `/wifi/signal_dBm.data` and link indicator at `/wifi/link_ok.data`. Added RawMessages panels for voltage/current/power to provide digital values alongside gauges.
+* Acceptance: Pass — `/wifi/*` topics present; RND layout shows RSSI and link status; numeric power values are visible.
+* Evidence: `ros2 topic list` shows `/wifi/signal_dBm` and `/wifi/link_ok`; import `configs/foxglove/viam_rover_rnd_dashboard_legacy.json` and verify panels.
+* Follow-ups: Optionally add a small Plot panel with a 10 s window for power and RSSI stability; consider sampling rate 1 Hz for power per architect guidance (currently 10 Hz from INA219).
+
+
 * 2025-09-08 / agent: codex-cli
 * Phase / Subsystem: Bring-up / Repo & HW Sync
 * Task: Sync local repo to origin/main; verify OS/RPi model; enumerate I²C/USB

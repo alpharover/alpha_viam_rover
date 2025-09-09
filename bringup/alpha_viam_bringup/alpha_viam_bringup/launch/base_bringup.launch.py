@@ -96,6 +96,25 @@ def generate_launch_description():
         except Exception as e:
             print(f"[alpha_viam_bringup] imu.yaml parse failed: {e}")
 
+        # Load network params (for Foxglove port and Wi‑Fi iface)
+        net_params = {"foxglove_ws_port": 8765, "wifi_iface": "wlan1"}
+        try:
+            import yaml  # type: ignore
+
+            with open(
+                os.path.join(os.getcwd(), "configs", "network.yaml"),
+                "r",
+                encoding="utf-8",
+            ) as f:
+                y = yaml.safe_load(f)
+                if isinstance(y, dict):
+                    if "foxglove_ws_port" in y:
+                        net_params["foxglove_ws_port"] = int(y["foxglove_ws_port"])  # type: ignore[arg-type]
+                    if "wifi_iface" in y:
+                        net_params["wifi_iface"] = str(y["wifi_iface"])  # type: ignore[arg-type]
+        except Exception as e:
+            print(f"[alpha_viam_bringup] network.yaml parse failed: {e}")
+
         nodes = [
             Node(
                 package="robot_state_publisher",
@@ -173,7 +192,15 @@ def generate_launch_description():
                 executable="foxglove_bridge",
                 name="foxglove_bridge",
                 output="screen",
-                parameters=[{"address": "0.0.0.0", "port": 8765}],
+                parameters=[{"address": "0.0.0.0", "port": int(net_params.get("foxglove_ws_port", 8765))}],
+            ),
+            # Wi‑Fi monitor (RSSI + link_ok + diagnostics)
+            Node(
+                package="wifi_monitor",
+                executable="wifi_monitor",
+                name="wifi_monitor",
+                output="screen",
+                parameters=[{"iface": net_params.get("wifi_iface", "wlan1"), "rate_hz": 1.0}],
             ),
             # Spawn controllers (after controller_manager is up)
             TimerAction(

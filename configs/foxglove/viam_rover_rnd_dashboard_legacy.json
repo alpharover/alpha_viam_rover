@@ -141,17 +141,19 @@
       "diffMethod": "custom",
       "diffTopicPath": "",
       "showFullMessageForDiff": false,
-      "topicPath": "/wifi/stats"
+      "topicPath": "/imu/data",
+      "foxglovePanelTitle": "IMU Raw (/imu/data)"
     },
     "RawMessages!46ed4a3": {
       "diffEnabled": false,
       "diffMethod": "custom",
       "diffTopicPath": "",
       "showFullMessageForDiff": false,
-      "topicPath": "/power/ina219"
+      "topicPath": "/power/bus_voltage",
+      "foxglovePanelTitle": "Power Bus Voltage (/power/bus_voltage)"
     },
     "Gauge!1d25d25": {
-      "path": "/power/ina219/voltage.data",
+      "path": "/power/bus_voltage.data",
       "minValue": 9.0,
       "maxValue": 13.0,
       "colorMap": "red-yellow-green",
@@ -159,7 +161,7 @@
       "foxglovePanelTitle": "Bus Voltage (V)"
     },
     "Gauge!b01cb72": {
-      "path": "/power/ina219/current.data",
+      "path": "/power/current.data",
       "minValue": 0.0,
       "maxValue": 5.0,
       "colorMap": "red-yellow-green",
@@ -167,7 +169,7 @@
       "foxglovePanelTitle": "Current (A)"
     },
     "Gauge!aa6ca0b": {
-      "path": "/power/ina219/power.data",
+      "path": "/power/power.data",
       "minValue": 0.0,
       "maxValue": 50.0,
       "colorMap": "red-yellow-green",
@@ -175,7 +177,7 @@
       "foxglovePanelTitle": "Power (W)"
     },
     "Gauge!0d5758d": {
-      "path": "/wifi/stats.signal_dBm",
+      "path": "/wifi/signal_dBm.data",
       "minValue": -90,
       "maxValue": -30,
       "colorMap": "red-yellow-green",
@@ -183,7 +185,7 @@
       "foxglovePanelTitle": "Wi\u2011Fi RSSI (dBm)"
     },
     "Indicator!67fd33c": {
-      "path": "/wifi/stats.link_ok",
+      "path": "/wifi/link_ok.data",
       "style": "bulb",
       "fallbackColor": "#a0a0a0",
       "fallbackLabel": "Unknown",
@@ -202,6 +204,22 @@
         }
       ],
       "foxglovePanelTitle": "Wi\u2011Fi Link"
+    },
+    "RawMessages!pwr_current": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/power/current",
+      "foxglovePanelTitle": "Current Value"
+    },
+    "RawMessages!pwr_power": {
+      "diffEnabled": false,
+      "diffMethod": "custom",
+      "diffTopicPath": "",
+      "showFullMessageForDiff": false,
+      "topicPath": "/power/power",
+      "foxglovePanelTitle": "Power Value"
     }
   },
   "globalVariables": {},
@@ -235,7 +253,17 @@
         "first": {
           "direction": "column",
           "first": "RawMessages!5cf4665",
-          "second": "RawMessages!46ed4a3",
+          "second": {
+            "direction": "column",
+            "first": "RawMessages!46ed4a3",
+            "second": {
+              "direction": "column",
+              "first": "RawMessages!pwr_current",
+              "second": "RawMessages!pwr_power",
+              "splitPercentage": 50
+            },
+            "splitPercentage": 50
+          },
           "splitPercentage": 50
         },
         "second": {
