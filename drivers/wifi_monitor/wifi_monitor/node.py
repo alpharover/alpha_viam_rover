@@ -27,6 +27,7 @@ class WifiMonitor(Node):
         self.declare_parameter("include_info", False)
 
         self._iface = str(self.get_parameter("iface").value)
+        self._last_iface: Optional[str] = None
         rate_hz = float(self.get_parameter("rate_hz").value)
         self._period = max(0.2, 1.0 / max(0.1, rate_hz))
         self._include_info = bool(self.get_parameter("include_info").value)
@@ -38,8 +39,31 @@ class WifiMonitor(Node):
         self._timer = self.create_timer(self._period, self._tick)
         self.get_logger().info(f"wifi_monitor watching iface={self._iface} at {rate_hz:.1f} Hz")
 
+    def _select_iface(self) -> Optional[str]:
+        if self._iface.lower() != "auto":
+            return self._iface
+        # Auto-pick a connected managed interface
+        out = _run("iw dev")
+        candidates = []
+        cur = None
+        for line in out.splitlines():
+            if line.startswith("\tInterface "):
+                cur = line.split()[1]
+                candidates.append(cur)
+        # Prefer last good iface if still connected
+        for name in ([self._last_iface] if self._last_iface else []) + candidates:
+            if not name:
+                continue
+            link = _run(f"iw dev {shlex.quote(name)} link")
+            if link and "Connected to" in link and "Not connected" not in link:
+                return name
+        return None
+
     def _tick(self) -> None:
-        iface = self._iface
+        iface = self._select_iface()
+        if not iface:
+            return
+        self._last_iface = iface
         link_txt = _run(f"iw dev {shlex.quote(iface)} link")
         info_txt = _run(f"iw dev {shlex.quote(iface)} info") if self._include_info else ""
 
