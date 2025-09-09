@@ -34,6 +34,7 @@ class WifiMonitor(Node):
 
         self._pub_rssi = self.create_publisher(Float32, "/wifi/signal_dBm", 10)
         self._pub_link = self.create_publisher(Int32, "/wifi/link_ok", 10)
+        self._pub_flaps = self.create_publisher(Int32, "/wifi/flap_count", 10)
         self._pub_diag = self.create_publisher(DiagnosticArray, "/diagnostics", 10)
         self._pub_iface = self.create_publisher(String, "/wifi/iface", 10)
 
@@ -66,7 +67,7 @@ class WifiMonitor(Node):
         return None
 
     def _tick(self) -> None:
-        iface = self._select_iface()
+        iface = self._iface if self._iface.lower() != "auto" else self._select_iface()
         if not iface:
             return
         self._last_iface = iface
@@ -102,7 +103,18 @@ class WifiMonitor(Node):
                 txpower_dbm = None
 
         # Publish simple topics
+        # Publish link status; no fallback switching to other ifaces
         self._pub_link.publish(Int32(data=1 if connected else 0))
+        # Track flap count on link transitions
+        if not hasattr(self, "_prev_link_ok"):
+            self._prev_link_ok = 1 if connected else 0  # type: ignore[attr-defined]
+            self._flaps = 0  # type: ignore[attr-defined]
+        prev = self._prev_link_ok  # type: ignore[attr-defined]
+        cur = 1 if connected else 0
+        if cur != prev:
+            self._flaps = int(getattr(self, "_flaps", 0)) + 1  # type: ignore[attr-defined]
+            self._prev_link_ok = cur  # type: ignore[attr-defined]
+        self._pub_flaps.publish(Int32(data=int(getattr(self, "_flaps", 0))))
         if rssi_dbm is not None:
             self._pub_rssi.publish(Float32(data=rssi_dbm))
 
