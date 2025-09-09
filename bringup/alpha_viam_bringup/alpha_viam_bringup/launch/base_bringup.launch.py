@@ -132,7 +132,11 @@ def generate_launch_description():
                 output="screen",
                 parameters=[
                     {"use_mag": False, "world_frame": "enu"},
-                    {k: v for k, v in imu_filter_params.items() if k in ("gain", "zeta", "use_mag", "world_frame", "publish_tf")},
+                    {
+                        k: v
+                        for k, v in imu_filter_params.items()
+                        if k in ("gain", "zeta", "use_mag", "world_frame", "publish_tf")
+                    },
                 ],
                 remappings=[
                     ("imu/data_raw", "/imu/data"),
