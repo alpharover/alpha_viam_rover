@@ -1,0 +1,11 @@
+extends: default
+
+ignore: |
+  bags/**/metadata.yaml
+
+rules:
+  line-length:
+    max: 120
+    level: warning
+  new-line-at-end-of-file:
+    level: warning
