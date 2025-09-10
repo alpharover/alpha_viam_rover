@@ -173,7 +173,7 @@ def generate_launch_description():
                 remappings=[
                     ("~/robot_description", "/robot_description"),
                 ],
-                env={
+                additional_env={
                     "AMENT_PREFIX_PATH": os.path.join(os.getcwd(), "install", "l298n_hardware")
                     + ":"
                     + os.environ.get("AMENT_PREFIX_PATH", ""),

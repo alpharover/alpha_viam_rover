@@ -21,11 +21,11 @@ Rules
 
 * 2025-09-10 / agent: codex-cli
 * Phase / Subsystem: Drive / ros2_control (Phase 3)
-* Task ID: ADR-0005 — Humble diff_drive params at load-time
-* Summary of changes: Implemented architect’s fix. Rewrote `configs/controllers.yaml` to use `type` + `params_file` (absolute path) for `diff_drive_controller`. Updated `configs/diff_drive_params.yaml` to canonical keys (wheels_per_side, use_stamped_vel=false, open_loop=true). Launches (`drive_min`, `base_bringup`) already spawn JSB and diff drive without `--param-file`; left as-is with bounded timeouts. Added `scripts/diff_drive_validate.sh` to perform the acceptance sequence (ros_clean, pigpio, launch, param gets, interface lists, burst on `/diff_drive_controller/cmd_vel_unstamped`, MCAP record, teardown). Updated ADR‑0005 to Accepted with TL;DR and checklist.
-* Acceptance test result: Pending on-device — requires off‑ground run to verify params on controller node and motion + MCAP.
-* Evidence links: Will record to `bags/diff_drive_<timestamp>/` via `scripts/diff_drive_validate.sh`.
-* Follow‑ups / Risks: If params not visible on `/diff_drive_controller` after launch, collect first ~50 lines of `/controller_manager` logs and outputs of two `ros2 param get` commands for triage.
+* Task ID: ADR-0005 — Humble diff_drive params at load-time; Drive status report
+* Summary of changes: Implemented architect’s fix. Rewrote `configs/controllers.yaml` to use `type` + `params_file` (absolute path) for `diff_drive_controller`. Updated `configs/diff_drive_params.yaml` to canonical keys. Added `pigs_smoke.sh` (GPIO smoke), `direct_smoke.sh` (ROS direct path), `diff_drive_smoke.sh` (manager + ros2 control load/activate), and `pub_twist.py`. Hardened plugin discovery by injecting overlay env into `ros2_control_node` in all bring-ups. Added `cm_only.launch.py` for deterministic manager bring-up. Expanded `ros_clean.sh` to catch spawners by path. Wrote status handoff at `docs/control/drive_bringup_status_2025-09-10.md`.
+* Acceptance test result: Direct path PASS (motors spun). Diff-drive: pending — plugin discovery hardened; on-device retest next.
+* Evidence links: `bags/direct_<ts>/`; pigs smoke operator confirmation; status doc.
+* Follow‑ups / Risks: If plugin still fails to load, capture first 60 lines of manager logs and env; consider distro uplift if instability persists.
 
 * 2025-09-09 / agent: codex-cli
 * Phase / Subsystem: Drive / ros2_control (Phase 3)

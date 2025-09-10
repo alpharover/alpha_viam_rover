@@ -44,7 +44,7 @@ def generate_launch_description():
                 remappings=[
                     ("~/robot_description", "/robot_description"),
                 ],
-                env=env_patch,
+                additional_env=env_patch,
             )
         )
 
