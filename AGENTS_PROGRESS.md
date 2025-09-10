@@ -529,3 +529,21 @@ Rules
 * Acceptance: Direct driver confirmed motion off-ground at 1.0 m/s burst (≈>80% duty); diff drive pending architect guidance/workaround.
 * Evidence: User-observed wheel motion; session logs show controller load errors and successful hardware activation.
 * Follow-ups / Risks: Implement robust activation shim or use forward_command_controller pair as interim; avoid stale nodes between runs; ensure pigpio daemon present.
+### 2025-09-10 — Bring-up on Pi (off-ground), Humble
+
+- Task: Phase 3 controller activation (diff_drive on ros2_control) per ADR‑0004; minimal bring-up, motor smoke, evidence capture.
+- Subsystem: bringup, configs, drivers (l298n_hardware)
+- Files touched: `configs/controllers.yaml` (YAML shape: nest ros__parameters under controller); logs under `log/agent_runs/20250910_*`.
+- Steps/Evidence:
+  - Ensured `pigpiod` running; sourced Humble + workspace.
+  - Discovered pluginlib load failure initially (class not found) unless `AMENT_PREFIX_PATH`/`LD_LIBRARY_PATH` include `install/l298n_hardware`; with env override, controller_manager loads L298N hardware and exports velocity command interfaces.
+  - `drive_min.launch.py` + spawner repeatedly fails to load `diff_drive_controller` with: "Parameter 'left_wheel_names' cannot be empty" during init.
+  - Tried spawner `--param-file` and activation shim; load still fails at init stage (params not applied early enough on Humble).
+  - Joint State Broadcaster active; no motion observed.
+  - Attempted `drive_direct.launch.py` (pigpio-only) but it aborted by design while controller_manager was active; recorded short MCAP anyway.
+  - MCAP: `bags/samples/20250910_091704_bench` (tf, joint_states; no wheel motion).
+- Outcome: Fail (no motor movement via diff_drive); hardware plugin loads and exposes interfaces.
+- Follow-ups/Risks:
+  - Need architect guidance on Humble-compatible parameter injection for `diff_drive_controller` at load-time.
+  - Consider enabling forward_command_controller pair as fallback for motion smoke.
+  - Env: ensure `install/l298n_hardware` is on the default overlay so pluginlib finds the hardware without manual env edits.
