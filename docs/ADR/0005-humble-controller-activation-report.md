@@ -26,22 +26,23 @@ controller_manager:
       params_file: /home/alpha_viam/alpha_viam_rover/configs/diff_drive_params.yaml
 ```
 
-2) `configs/diff_drive_params.yaml` contains the controller’s parameters:
+2) `configs/diff_drive_params.yaml` contains the controller’s parameters (on this Humble image the param file is parsed like a standard ROS node params file, so it must include the controller node name at the root):
 
 ```yaml
-ros__parameters:
-  left_wheel_names: [left_wheel_joint]
-  right_wheel_names: [right_wheel_joint]
-  wheel_separation: 0.30
-  wheel_radius: 0.06
-  wheels_per_side: 1
-  use_stamped_vel: false
-  cmd_vel_timeout: 0.5
-  publish_rate: 50.0
-  enable_odom_tf: true
-  odom_frame_id: odom
-  base_frame_id: base_link
-  open_loop: true
+/diff_drive_controller:
+  ros__parameters:
+    left_wheel_names: [left_wheel_joint]
+    right_wheel_names: [right_wheel_joint]
+    wheel_separation: 0.30
+    wheel_radius: 0.06
+    wheels_per_side: 1
+    use_stamped_vel: false
+    cmd_vel_timeout: 0.5
+    publish_rate: 50.0
+    enable_odom_tf: true
+    odom_frame_id: odom
+    base_frame_id: base_link
+    open_loop: true
 ```
 
 3) Launch: spawn JSB and diff drive without `--param-file`:
@@ -111,4 +112,3 @@ timeout 1s ros2 topic pub --once /diff_drive_controller/cmd_vel_unstamped geomet
 - [x] JSB spawns; diff drive spawns without `--param-file`.
 - [ ] Controller node shows correct wheel arrays; controller active with velocity interfaces claimed.
 - [ ] Short burst on `/diff_drive_controller/cmd_vel_unstamped` produces motion; MCAP recorded and logged.
-
