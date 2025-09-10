@@ -163,6 +163,7 @@ def generate_launch_description():
                 ],
             ),
             # Controller manager (ros2_control)
+            # controller_manager with plugin discovery env so l298n_hardware is found
             Node(
                 package="controller_manager",
                 executable="ros2_control_node",
@@ -172,6 +173,14 @@ def generate_launch_description():
                 remappings=[
                     ("~/robot_description", "/robot_description"),
                 ],
+                env={
+                    "AMENT_PREFIX_PATH": os.path.join(os.getcwd(), "install", "l298n_hardware")
+                    + ":"
+                    + os.environ.get("AMENT_PREFIX_PATH", ""),
+                    "LD_LIBRARY_PATH": os.path.join(os.getcwd(), "install", "l298n_hardware", "lib")
+                    + ":"
+                    + os.environ.get("LD_LIBRARY_PATH", ""),
+                },
             ),
             Node(
                 package="robot_localization",

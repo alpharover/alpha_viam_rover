@@ -25,6 +25,13 @@ def generate_launch_description():
             )
         )
 
+        l298n_prefix = os.path.join(os.getcwd(), "install", "l298n_hardware")
+        l298n_lib = os.path.join(l298n_prefix, "lib")
+        env_patch = {
+            "AMENT_PREFIX_PATH": f"{l298n_prefix}:" + os.environ.get("AMENT_PREFIX_PATH", ""),
+            "LD_LIBRARY_PATH": f"{l298n_lib}:" + os.environ.get("LD_LIBRARY_PATH", ""),
+        }
+
         nodes.append(
             Node(
                 package="controller_manager",
@@ -35,10 +42,10 @@ def generate_launch_description():
                 remappings=[
                     ("~/robot_description", "/robot_description"),
                 ],
+                env=env_patch,
             )
         )
 
         return nodes
 
     return LaunchDescription([OpaqueFunction(function=setup)])
-
