@@ -14,11 +14,25 @@ source /opt/ros/humble/setup.bash
 [ -f "$ROOT_DIR/install/setup.bash" ] && source "$ROOT_DIR/install/setup.bash"
 set -u
 
-echo "[diff_drive_smoke] Launching drive_min..."
-setsid bash -lc 'set +u; source /opt/ros/humble/setup.bash; [ -f install/setup.bash ] && source install/setup.bash; set -u; ros2 launch alpha_viam_bringup drive_min.launch.py' &
+echo "[diff_drive_smoke] Launching cm_only (no spawners)..."
+setsid bash -lc 'set +u; source /opt/ros/humble/setup.bash; [ -f install/setup.bash ] && source install/setup.bash; set -u; ros2 launch alpha_viam_bringup cm_only.launch.py' &
 BR_PID=$!
 sleep 5
 BR_PGID=$(ps -o pgid= $BR_PID | tr -d ' ')
+
+echo "[diff_drive_smoke] Waiting for /controller_manager services..."
+for i in $(seq 1 20); do
+  if ros2 service list | grep -q "/controller_manager/list_controllers"; then
+    break
+  fi
+  sleep 0.5
+done
+
+echo "[diff_drive_smoke] Spawn JSB"
+timeout 15s ros2 run controller_manager spawner joint_state_broadcaster --controller-manager /controller_manager --activate || true
+
+echo "[diff_drive_smoke] Spawn diff_drive_controller"
+timeout 20s ros2 run controller_manager spawner diff_drive_controller --controller-manager /controller_manager --activate || true
 
 echo "[diff_drive_smoke] Controllers:" && (ros2 control list_controllers || true)
 echo "[diff_drive_smoke] Interfaces:" && (ros2 control list_hardware_interfaces || true)
@@ -45,4 +59,3 @@ kill -KILL -"$BR_PGID" 2>/dev/null || true
 
 echo "[diff_drive_smoke] Bag: $BAG_DIR"
 ros2 bag info "$BAG_DIR/diff_run" || true
-
