@@ -26,10 +26,10 @@ controller_manager:
       params_file: /home/alpha_viam/alpha_viam_rover/configs/diff_drive_params.yaml
 ```
 
-2) `configs/diff_drive_params.yaml` contains the controller’s parameters (on this Humble image the param file is parsed like a standard ROS node params file, so it must include the controller node name at the root):
+2) `configs/diff_drive_params.yaml` contains the controller’s parameters (Humble parses it as a standard ROS node param file; include the controller node name at the root — unqualified name works best here):
 
 ```yaml
-/diff_drive_controller:
+diff_drive_controller:
   ros__parameters:
     left_wheel_names: [left_wheel_joint]
     right_wheel_names: [right_wheel_joint]
