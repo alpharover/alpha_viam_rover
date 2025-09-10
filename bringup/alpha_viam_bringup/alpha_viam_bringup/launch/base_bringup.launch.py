@@ -233,12 +233,16 @@ def generate_launch_description():
                 period=3.0,
                 actions=[
                     ExecuteProcess(
-                        # Wrap in timeout to prevent indefinite waits
                         cmd=[
-                            "bash",
-                            "-lc",
-                            "timeout 20s ros2 run controller_manager spawner diff_drive_controller "
-                            "--controller-manager /controller_manager --activate --unload-on-kill",
+                            "ros2",
+                            "run",
+                            "controller_manager",
+                            "spawner",
+                            "diff_drive_controller",
+                            "--controller-manager",
+                            "/controller_manager",
+                            "--activate",
+                            "--unload-on-kill",
                         ],
                         output="screen",
                     ),
