@@ -13,6 +13,7 @@ setup(
             "alpha_viam_bringup/launch/base_bringup.launch.py",
             "alpha_viam_bringup/launch/drive_min.launch.py",
             "alpha_viam_bringup/launch/drive_direct.launch.py",
+            "alpha_viam_bringup/launch/drive_forward.launch.py",
         ]),
     ],
     install_requires=["setuptools"],

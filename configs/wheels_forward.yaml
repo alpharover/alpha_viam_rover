@@ -1,0 +1,22 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 50
+    use_sim_time: false
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    left_wheel_velocity_controller:
+      type: forward_command_controller/ForwardCommandController
+    right_wheel_velocity_controller:
+      type: forward_command_controller/ForwardCommandController
+
+left_wheel_velocity_controller:
+  ros__parameters:
+    joints: [left_wheel_joint]
+    interface_name: velocity
+
+right_wheel_velocity_controller:
+  ros__parameters:
+    joints: [right_wheel_joint]
+    interface_name: velocity
