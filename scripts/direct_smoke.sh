@@ -31,18 +31,18 @@ BR_PID=$!
 sleep 4
 BR_PGID=$(ps -o pgid= $BR_PID | tr -d ' ')
 
-echo "[direct_smoke] /cmd_vel subscriber check:" && (ros2 topic info /cmd_vel || true)
+echo "[direct_smoke] /cmd_vel subscriber check:" && (ros2 node list | grep -q l298n_direct && echo "subscriber present (node: l298n_direct)" || echo "subscriber not yet visible")
 
 echo "[direct_smoke] Recording ${DUR}s MCAP..."
 timeout "${DUR}s" ros2 bag record -s mcap -o "$BAG_DIR/direct_run" /cmd_vel /tf /tf_static /joint_states &
 REC_PID=$!
 sleep 1
 
-echo "[direct_smoke] Forward burst"
-timeout 1.6s ros2 topic pub -r 15 /cmd_vel geometry_msgs/msg/Twist '{linear: {x: 1.0}}' || true
+echo "[direct_smoke] Forward burst via pub_twist.py"
+python3 "$ROOT_DIR/scripts/pub_twist.py" --topic /cmd_vel --duration 1.6 --rate 15 --linear_x 1.0 || true
 sleep 0.5
 echo "[direct_smoke] Stop"
-timeout 1s ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist '{linear: {x: 0.0}}' || true
+python3 "$ROOT_DIR/scripts/pub_twist.py" --topic /cmd_vel --duration 0.2 --rate 3 --linear_x 0.0 || true
 
 wait $REC_PID || true
 
@@ -55,4 +55,3 @@ kill -KILL -"$BR_PGID" 2>/dev/null || true
 
 echo "[direct_smoke] Bag: $BAG_DIR"
 ros2 bag info "$BAG_DIR/direct_run" || true
-
