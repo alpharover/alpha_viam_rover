@@ -547,3 +547,20 @@ Rules
   - Need architect guidance on Humble-compatible parameter injection for `diff_drive_controller` at load-time.
   - Consider enabling forward_command_controller pair as fallback for motion smoke.
   - Env: ensure `install/l298n_hardware` is on the default overlay so pluginlib finds the hardware without manual env edits.
+
+### 2025-09-10 — Update: bounded timeouts + forward-controller fallback path
+
+- Changes pushed on branch `chore/lint-fixes`:
+  - `configs/controllers.yaml`: controller params nested under `controller_manager.<ctrl>.ros__parameters` (Humble-safe attempt).
+  - Launches (`drive_min`, `base_bringup`): use robot_description topic; spawner calls wrapped in `timeout` with `--unload-on-kill`.
+  - New: `configs/wheels_forward.yaml`, `bringup/.../drive_forward.launch.py` (JSB only; forward controllers loaded/activated via helper), `scripts/activate_forward.py` (load→set params→activate left/right forward controllers).
+- Result on device:
+  - Diff drive still fails at init: `left_wheel_names cannot be empty` (params not present at init on Humble).
+  - Forward controllers load but `configure` reports `joints parameter was empty` when using spawner. Added helper to set params then activate; not fully validated due to session timeouts; ready for rerun.
+- Evidence/logs:
+  - `log/agent_runs/20250910_103159/drive_min.log` (diff_drive init failure)
+  - `log/agent_runs/20250910_104046/drive_forward.log` (forward controllers: joints empty at configure)
+  - `log/agent_runs/20250910_104520/drive_forward_retry.log` (load-only attempt prior to helper)
+- Next steps:
+  1) Run `drive_forward.launch.py`, then `python3 scripts/activate_forward.py configs/wheels_forward.yaml`, then publish to `/left_wheel_velocity_controller/commands` and `/right_wheel_velocity_controller/commands` to verify motion.
+  2) Once validated, revisit diff drive: either confirm Humble-supported param-at-load shape or adopt controller-specific load API if available.
