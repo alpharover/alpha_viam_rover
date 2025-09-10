@@ -30,7 +30,12 @@ trap stop_all EXIT INT TERM
 
 echo "[pigs_smoke] Configure modes and PWM..."
 for p in $LIN1 $LIN2 $RIN3 $RIN4; do pigs m $p 1; done
-for p in $LPWM $RPWM; do pigs m $p 1; pigs pfs $p $FREQ; pigs prg $p $RANGE; pigs p $p 0; done
+for p in $LPWM $RPWM; do
+  pigs m $p 1
+  pigs pfs $p $FREQ >/dev/null
+  pigs prs $p $RANGE >/dev/null
+  pigs p $p 0
+done
 
 echo "[pigs_smoke] LEFT forward ${DUR}s"
 pigs w $LIN1 1; pigs w $LIN2 0; pigs p $LPWM $DUTY; sleep $DUR; pigs p $LPWM 0
@@ -46,4 +51,3 @@ echo "[pigs_smoke] RIGHT reverse ${DUR}s"
 pigs w $RIN3 0; pigs w $RIN4 1; pigs p $RPWM $DUTY; sleep $DUR; pigs p $RPWM 0
 
 echo "[pigs_smoke] Done. Motors should have spun fwd/rev on each side."
-
