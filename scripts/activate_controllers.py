@@ -7,58 +7,62 @@ import yaml
 
 import rclpy
 from rclpy.node import Node
-from rclpy.parameter import Parameter
 from rcl_interfaces.msg import Parameter as ParamMsg, ParameterValue
 from rcl_interfaces.srv import SetParameters
-from controller_manager_msgs.srv import LoadController, SwitchController
+from controller_manager_msgs.srv import LoadController, SwitchController, ListControllers
 
 
-class DiffDriveActivator(Node):
-    def __init__(self, yaml_path: str) -> None:
-        super().__init__("diff_drive_activator")
-        self.yaml_path = yaml_path
-        self.cm_name = "/controller_manager"
-        self.ctrl_name = "diff_drive_controller"
+class ControllerActivator(Node):
+    def __init__(self, diff_yaml_path: str) -> None:
+        super().__init__("controller_activator")
+        self.cm = "/controller_manager"
+        self.diff = "diff_drive_controller"
+        self.jsb = "joint_state_broadcaster"
+        self.diff_yaml_path = diff_yaml_path
+        self.cli_load = self.create_client(LoadController, f"{self.cm}/load_controller")
+        self.cli_switch = self.create_client(SwitchController, f"{self.cm}/switch_controller")
+        self.cli_list = self.create_client(ListControllers, f"{self.cm}/list_controllers")
 
-        self.cli_load = self.create_client(LoadController, f"{self.cm_name}/load_controller")
-        self.cli_switch = self.create_client(SwitchController, f"{self.cm_name}/switch_controller")
+    def wait(self, name: str, client, timeout: float = 10.0) -> None:
+        end = time.time() + timeout
+        while time.time() < end:
+            if client.wait_for_service(timeout_sec=0.5):
+                return
+        raise RuntimeError(f"Service not available: {name}")
 
-    def wait_for(self, client_name: str, client) -> None:
-        if not client.wait_for_service(timeout_sec=8.0):
-            raise RuntimeError(f"Service not available: {client_name}")
-
-    def load_controller(self) -> None:
-        self.wait_for("load_controller", self.cli_load)
+    def ensure_loaded(self, name: str) -> None:
+        self.wait("load_controller", self.cli_load)
+        # Check if already loaded
+        try:
+            self.wait("list_controllers", self.cli_list)
+            fut = self.cli_list.call_async(ListControllers.Request())
+            rclpy.spin_until_future_complete(self, fut, timeout_sec=5.0)
+            if fut.done() and fut.result():
+                for c in fut.result().controller:
+                    if c.name == name:
+                        return
+        except Exception:
+            pass
+        # Load
         req = LoadController.Request()
-        req.name = self.ctrl_name
+        req.name = name
         fut = self.cli_load.call_async(req)
         rclpy.spin_until_future_complete(self, fut, timeout_sec=8.0)
         if not fut.done() or fut.result() is None or not fut.result().ok:
-            raise RuntimeError("load_controller failed")
+            raise RuntimeError(f"load_controller failed for {name}")
 
-    def set_params(self) -> None:
-        # Read YAML and extract the controller's ros__parameters mapping.
-        with open(self.yaml_path, "r", encoding="utf-8") as f:
+    def set_diff_params(self) -> None:
+        with open(self.diff_yaml_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
-
-        # Accept several shapes:
-        # 1) flat: {ros__parameters: {...}}
-        # 2) controller-nested: {diff_drive_controller: {ros__parameters: {...}}}
-        # 3) controller-nested without ros__parameters: {diff_drive_controller: {...}}
         if "ros__parameters" in data:
             params = data["ros__parameters"]
-        elif self.ctrl_name in data:
-            inner = data[self.ctrl_name]
+        elif self.diff in data:
+            inner = data[self.diff]
             params = inner.get("ros__parameters", inner) if isinstance(inner, dict) else {}
         else:
-            # Fallback: assume the file itself is the param mapping
             params = data
-        cli = self.create_client(SetParameters, f"/{self.ctrl_name}/set_parameters")
-        end = time.time() + 8.0
-        while time.time() < end and not cli.wait_for_service(timeout_sec=0.5):
-            pass
-        if not cli.service_is_ready():
-            raise RuntimeError("controller parameter service not ready")
+        cli = self.create_client(SetParameters, f"/{self.diff}/set_parameters")
+        self.wait("diff_drive set_parameters", cli)
 
         def to_param_msg(name: str, value):
             v = ParameterValue()
@@ -84,7 +88,6 @@ class DiffDriveActivator(Node):
                 v.type = ParameterValue.TYPE_INTEGER_ARRAY
                 v.integer_array_value = value
             else:
-                # Fallback to string
                 v.type = ParameterValue.TYPE_STRING
                 v.string_value = str(value)
             p = ParamMsg()
@@ -96,43 +99,42 @@ class DiffDriveActivator(Node):
         req.parameters = [to_param_msg(k, v) for k, v in params.items()]
         fut = cli.call_async(req)
         rclpy.spin_until_future_complete(self, fut, timeout_sec=8.0)
-        if not fut.done() or fut.result() is None:
-            raise RuntimeError("set_parameters call failed")
-        if not all(r.successful for r in fut.result().results):
-            raise RuntimeError("one or more parameters rejected")
+        if not fut.done() or fut.result() is None or not all(r.successful for r in fut.result().results):
+            raise RuntimeError("diff_drive set_parameters failed")
 
     def activate(self) -> None:
-        self.wait_for("switch_controller", self.cli_switch)
+        self.wait("switch_controller", self.cli_switch)
         req = SwitchController.Request()
-        req.activate_controllers = [self.ctrl_name]
+        req.activate_controllers = [self.jsb, self.diff]
         req.strictness = SwitchController.Request.STRICT
         req.timeout = 3.0
         fut = self.cli_switch.call_async(req)
         rclpy.spin_until_future_complete(self, fut, timeout_sec=8.0)
         if not fut.done() or fut.result() is None or not fut.result().ok:
-            raise RuntimeError("switch_controller failed to activate")
+            raise RuntimeError("switch_controller failed")
 
 
 def main() -> int:
     if len(sys.argv) < 2:
-        print("usage: activate_diff_drive.py <diff_drive_params.yaml>")
+        print("usage: activate_controllers.py <diff_drive_params.yaml>")
         return 2
-    yaml_path = sys.argv[1]
     rclpy.init()
-    node = DiffDriveActivator(yaml_path)
+    node = ControllerActivator(sys.argv[1])
     try:
-        node.get_logger().info("Loading controller...")
-        node.load_controller()
-        node.get_logger().info("Setting parameters...")
-        node.set_params()
-        node.get_logger().info("Activating controller...")
+        node.get_logger().info("Loading controllers...")
+        node.ensure_loaded(node.jsb)
+        node.ensure_loaded(node.diff)
+        node.get_logger().info("Setting diff_drive parameters...")
+        node.set_diff_params()
+        node.get_logger().info("Activating controllers...")
         node.activate()
-        node.get_logger().info("diff_drive_controller active")
+        node.get_logger().info("Controllers active")
         return 0
     finally:
         node.destroy_node()
         rclpy.shutdown()
 
 
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":
     raise SystemExit(main())
+

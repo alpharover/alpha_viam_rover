@@ -20,3 +20,7 @@ Utilities
 
 - `scripts/launch_with_timeout.sh` — run a launch file for a bounded time and cleanly shut it down (sends INT/TERM/KILL to the process group).
 - `scripts/ros_clean.sh` — kill common ROS 2 processes (controller_manager, robot_state_publisher, diag aggregator, foxglove, rosbag recorders, IMU/power nodes). Use `--force` to SIGKILL any stubborn remnants.
+- Tip: `launch_with_timeout.sh` also exports `AMENT_PREFIX_PATH` for the C++ plugin (`l298n_hardware`) so pluginlib can locate it. If launching manually, ensure you `source install/setup.bash` and, if necessary, `source install/l298n_hardware/share/l298n_hardware/local_setup.bash`.
+- Minimal launches (Phase 3 troubleshooting):
+  - `ros2 launch alpha_viam_bringup drive_min.launch.py` — robot_state_publisher + controller_manager, spawns `joint_state_broadcaster`, then attempts `diff_drive_controller` (see ADR‑0004 re: Humble param quirk).
+  - `ros2 launch alpha_viam_bringup drive_direct.launch.py` — direct pigpio `/cmd_vel` → PWM mapping for demos; refuses to run if controller_manager is present. Use only off‑ground and with `ros_clean` before/after.

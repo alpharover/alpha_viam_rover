@@ -8,4 +8,3 @@ ros__parameters:
   cmd_vel_timeout: 0.5
   odom_frame_id: odom
   base_frame_id: base_link
-

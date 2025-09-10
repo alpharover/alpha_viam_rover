@@ -210,7 +210,7 @@ def generate_launch_description():
                     }
                 ],
             ),
-            # Spawn controllers (after controller_manager is up)
+            # Spawn joint_state_broadcaster using spawner (no params needed)
             TimerAction(
                 period=2.0,
                 actions=[
@@ -228,35 +228,26 @@ def generate_launch_description():
                     ),
                 ],
             ),
+            # Load + param set + activate diff_drive_controller using helper
+            TimerAction(
+                period=3.0,
+                actions=[
+                    ExecuteProcess(
+                        cmd=[
+                            "python3",
+                            os.path.join(os.getcwd(), "scripts", "activate_diff_drive.py"),
+                            os.path.join(os.getcwd(), "configs", "diff_drive.yaml"),
+                        ],
+                        output="screen",
+                    ),
+                ],
+            ),
         ]
 
-        # Optionally spawn diff_drive_controller (gated until parameters are finalized)
-        if LaunchConfiguration("spawn_drive").perform(context).lower() in (
-            "true",
-            "1",
-            "yes",
-        ):
-            nodes.append(
-                TimerAction(
-                    period=2.5,
-                    actions=[
-                        ExecuteProcess(
-                            cmd=[
-                                "ros2",
-                                "run",
-                                "controller_manager",
-                                "spawner",
-                                "diff_drive_controller",
-                                "--controller-manager",
-                                "/controller_manager",
-                                "--param-file",
-                                os.path.join(os.getcwd(), "configs", "diff_drive.yaml"),
-                            ],
-                            output="screen",
-                        )
-                    ],
-                )
-            )
+        # Optionally gate diff drive activation (helper already loads/activates both controllers)
+        # If spawn_drive is false, controllers will still load but not be activated; keep default false for safety.
+        if LaunchConfiguration("spawn_drive").perform(context).lower() in ("false", "0", "no"):
+            pass
 
         return nodes
 

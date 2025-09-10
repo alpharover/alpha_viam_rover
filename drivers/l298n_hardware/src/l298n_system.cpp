@@ -108,6 +108,8 @@ CallbackReturn L298NSystemHardware::on_init(const hardware_interface::HardwareIn
 
   ticks_per_rev_ = get_d("ticks_per_rev", ticks_per_rev_);
   max_wheel_rad_s_ = get_d("max_wheel_rad_s", max_wheel_rad_s_);
+  deadband_rad_s_ = get_d("deadband_rad_s", deadband_rad_s_);
+  slew_duty_per_s_ = get_d("slew_duty_per_s", slew_duty_per_s_);
   pwm_freq_ = get_i("pwm_freq", pwm_freq_);
   pwm_range_ = get_i("pwm_range", pwm_range_);
   invert_left_ = get_b("invert_left", invert_left_);
@@ -188,6 +190,7 @@ CallbackReturn L298NSystemHardware::on_activate(const rclcpp_lifecycle::State & 
   pos_[0] = pos_[1] = 0.0;
   vel_[0] = vel_[1] = 0.0;
   cmd_[0] = cmd_[1] = 0.0;
+  last_duty_[0] = last_duty_[1] = 0;
   last_cmd_tp_ = std::chrono::steady_clock::now();
   return CallbackReturn::SUCCESS;
 }
@@ -225,18 +228,15 @@ return_type L298NSystemHardware::read(const rclcpp::Time & /*time*/, const rclcp
   return return_type::OK;
 }
 
-void L298NSystemHardware::set_motor(int idx, double cmd_rad_s) {
+void L298NSystemHardware::set_motor(int idx, double cmd_rad_s, double dt) {
   const bool invert = (idx == 0 ? invert_left_ : invert_right_);
   const int pwm_pin = (idx == 0 ? left_pwm_ : right_pwm_);
   const int in_a = (idx == 0 ? left_in1_ : right_in3_);
   const int in_b = (idx == 0 ? left_in2_ : right_in4_);
 
   double c = invert ? -cmd_rad_s : cmd_rad_s;
-  double mag = std::min(std::fabs(c) / std::max(1e-6, max_wheel_rad_s_), 1.0);
-  int duty = static_cast<int>(std::round(mag * pwm_range_));
-
-  if (mag < 1e-6) {
-    // Zero command
+  // Deadband near zero to avoid buzz/stiction
+  if (std::fabs(c) < deadband_rad_s_) {
     if (brake_on_zero_) {
       gpio_write(pi_, in_a, 1);
       gpio_write(pi_, in_b, 1);
@@ -245,7 +245,20 @@ void L298NSystemHardware::set_motor(int idx, double cmd_rad_s) {
       gpio_write(pi_, in_b, 0);
     }
     set_PWM_dutycycle(pi_, pwm_pin, 0);
+    last_duty_[idx] = 0;
     return;
+  }
+
+  double mag = std::min(std::fabs(c) / std::max(1e-6, max_wheel_rad_s_), 1.0);
+  int target_duty = static_cast<int>(std::round(mag * pwm_range_));
+
+  // Slew rate limit on duty change (duty units per second)
+  int max_step = static_cast<int>(std::round(std::max(0.0, slew_duty_per_s_) * std::max(1e-3, dt)));
+  int duty = target_duty;
+  if (max_step > 0) {
+    int prev = last_duty_[idx];
+    if (duty > prev + max_step) duty = prev + max_step;
+    if (duty < prev - max_step) duty = prev - max_step;
   }
 
   // Direction
@@ -257,6 +270,7 @@ void L298NSystemHardware::set_motor(int idx, double cmd_rad_s) {
     gpio_write(pi_, in_b, 1);
   }
   set_PWM_dutycycle(pi_, pwm_pin, duty);
+  last_duty_[idx] = duty;
 }
 
 void L298NSystemHardware::stop_all(bool brake) {
@@ -275,7 +289,8 @@ void L298NSystemHardware::stop_all(bool brake) {
   set_PWM_dutycycle(pi_, right_pwm_, 0);
 }
 
-return_type L298NSystemHardware::write(const rclcpp::Time &time, const rclcpp::Duration & /*period*/) {
+return_type L298NSystemHardware::write(const rclcpp::Time &time, const rclcpp::Duration & period) {
+  const double dt = std::max(1e-3, period.seconds());
   // Update watchdog timestamp when commands are non-zero or changed
   if (std::fabs(cmd_[0]) > 1e-6 || std::fabs(cmd_[1]) > 1e-6 ||
       std::fabs(cmd_[0] - cmd_prev_[0]) > 1e-6 || std::fabs(cmd_[1] - cmd_prev_[1]) > 1e-6) {
@@ -289,8 +304,8 @@ return_type L298NSystemHardware::write(const rclcpp::Time &time, const rclcpp::D
     stop_all(true);
     return return_type::OK;
   }
-  set_motor(0, cmd_[0]);
-  set_motor(1, cmd_[1]);
+  set_motor(0, cmd_[0], dt);
+  set_motor(1, cmd_[1], dt);
   return return_type::OK;
 }
 

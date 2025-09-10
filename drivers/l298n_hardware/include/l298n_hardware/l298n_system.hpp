@@ -57,6 +57,7 @@ class L298NSystemHardware : public hardware_interface::SystemInterface {
   // Helpers
   bool init_gpio();
   void set_motor(int idx, double cmd_rad_s);
+  void set_motor(int idx, double cmd_rad_s, double dt);
   void stop_all(bool brake);
 
   // Parameters
@@ -70,6 +71,8 @@ class L298NSystemHardware : public hardware_interface::SystemInterface {
   EncoderPins right_enc_{};
   double ticks_per_rev_{20.0};
   double max_wheel_rad_s_{20.0};
+  double deadband_rad_s_{0.1};
+  double slew_duty_per_s_{50.0};
   int pwm_freq_{20000};
   int pwm_range_{255};
   bool invert_left_{false};
@@ -83,6 +86,7 @@ class L298NSystemHardware : public hardware_interface::SystemInterface {
   std::array<double, 2> vel_{0.0, 0.0};
   std::array<double, 2> cmd_{0.0, 0.0};
   std::array<double, 2> cmd_prev_{0.0, 0.0};
+  std::array<int, 2> last_duty_{0, 0};
   std::array<int64_t, 2> ticks_prev_{0, 0};
 
   QuadEncoder enc_left_{};

@@ -29,16 +29,19 @@ Root cause detail
   2) Param propagation: Controller params not applied by spawner; symptoms: `diff_drive_controller` → “left_wheel_names cannot be empty”; per‑wheel forward controllers → “‘joints’ parameter was empty.”
 
 Recommendations
-- Short‑term: Use a small helper to `load_controller` → call `/<controller>/set_parameters` with our YAML → `switch_controller` to `active`. This is robust across Humble variants and bypasses the spawner’s param quirks.
-- Add an enable/disable ramp in the hardware mapping (small PWM “kick” on transition) if needed after ROS path is verified, but L298N typically doesn’t require it once enabled.
+- Short‑term: Use a small helper to `load_controller` → call `/<controller>/set_parameters` with our YAML → `switch_controller` to `active`. This is robust across Humble variants and bypasses the spawner’s param quirks. Integrated into bring‑up.
+- Add deadband (|ω| < 0.1 rad/s → 0 duty) and duty slew limit (~50 duty/s) to avoid buzz and current spikes. Implemented in hardware plugin.
 - Always run manual motor tests only with ROS stopped (use `scripts/ros_clean.sh --force`, then `scripts/motor_test.sh`).
 
 Acceptance status (off‑ground)
 - Hardware path validated via pigpio (Forward/Reverse tests observed). ✔
-- ROS controllers: joint_state_broadcaster active; diff drive pending param bridge. ◻
+- ROS controllers: joint_state_broadcaster active; diff drive pending param bridge (ADR‑0004). ◻
+
+Interim demo path
+- For off‑ground evidence while controller params are investigated on Humble, use `drive_direct.launch.py` with bounded `/cmd_vel` bursts (1.0 m/s for ~4 s, then stop). Ensure `ros_clean` has been run and `controller_manager` is not active to avoid GPIO contention.
 
 Follow‑ups
-- Implement controller parameter bridge (helper node/script) and complete /cmd_vel off‑ground spin; record short MCAP.
+- Complete /cmd_vel off‑ground spin using the param bridge; record short MCAP.
 - Wire encoders physically and validate ticks/velocity; tune `ticks_per_rev` and inversion.
 - Open ADR for the param bridge and spawner behavior on Humble.
 
@@ -52,4 +55,3 @@ Appendix (key files)
 - bringup/alpha_viam_bringup/launch/base_bringup.launch.py — controller_manager + spawners
 - scripts/motor_test.sh — guarded pigpio test
 - docs/ADR/0001-l298n-ros2-control.md — decision record
-

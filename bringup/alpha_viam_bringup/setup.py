@@ -9,7 +9,11 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
-        ("share/" + package_name + "/launch", ["alpha_viam_bringup/launch/base_bringup.launch.py"]),
+        ("share/" + package_name + "/launch", [
+            "alpha_viam_bringup/launch/base_bringup.launch.py",
+            "alpha_viam_bringup/launch/drive_min.launch.py",
+            "alpha_viam_bringup/launch/drive_direct.launch.py",
+        ]),
     ],
     install_requires=["setuptools"],
     zip_safe=True,

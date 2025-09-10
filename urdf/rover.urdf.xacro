@@ -85,6 +85,8 @@
       <param name="max_wheel_rad_s">20.0</param>
       <param name="pwm_freq">20000</param>
       <param name="pwm_range">255</param>
+      <param name="deadband_rad_s">0.10</param>
+      <param name="slew_duty_per_s">200.0</param>
       <param name="invert_left">false</param>
       <param name="invert_right">false</param>
       <param name="brake_on_zero">false</param>

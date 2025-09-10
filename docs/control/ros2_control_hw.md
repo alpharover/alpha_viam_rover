@@ -5,7 +5,7 @@ This rover uses an L298N dual H‑bridge for the base drive and quadrature encod
 Package: `drivers/l298n_hardware` (C++ / ament_cmake)
 
 - Plugin: `l298n_hardware/L298NSystemHardware` (exported via pluginlib)
-- Library uses `pigpio` for PWM and GPIO with optional glitch filtering for encoders.
+- Library uses `pigpio` via the daemon client (`pigpiod_if2`) for PWM and GPIO with optional glitch filtering for encoders. Ensure `pigpiod` system service is active.
 
 Pin Map (default; BCM numbering)
 
@@ -19,8 +19,10 @@ URDF Wiring
 
 Control & Safety
 
-- PWM: pigpio software‑timed PWM at `pwm_freq=20000` Hz (out of audible range) with `pwm_range=255`.
-- Scaling: commanded wheel velocity (rad/s) is linearly mapped to PWM based on `max_wheel_rad_s`. Start conservative (e.g., `≤ 20 rad/s`) and tune after encoder verification.
+- PWM: pigpio PWM at `pwm_freq=20000` Hz (out of audible range) with `pwm_range=255`.
+- Scaling: commanded wheel velocity (rad/s) is linearly mapped to PWM based on `max_wheel_rad_s`. Start conservative (e.g., `≤ 20 rad/s`).
+- Deadband: small deadband around zero (`deadband_rad_s`, default 0.1 rad/s) to avoid stiction buzzing.
+- Slew limiting: duty change limited by `slew_duty_per_s` (default 50 duty/sec) to avoid current spikes.
 - Direction: sign sets `INx` polarity; per‑wheel inversion via `invert_left/right`.
 - Brake/Coast: `brake_on_zero=false` (coast) by default; set `true` to drive both inputs high on zero command (L298N brake).
 - Encoders: quadrature decoded with a small state table, `encoder_glitch_us=100` default. Set `ticks_per_rev` to your measured value (post‑gear, including any quadrature multiplication effect).
@@ -46,7 +48,7 @@ Acceptance Procedure (Phase 3)
 
 Operational Notes (Humble quirk)
 
-- On this rover’s Humble image, the controller spawner’s `--param-file` does not set controller parameters; controllers fail to configure due to missing params. Use a parameter bridge (see ADR‑0002) that loads the controller, sets parameters via `/<controller>/set_parameters`, and activates via `/controller_manager/switch_controller`.
+- On this rover’s Humble image, the controller spawner’s `--param-file` may not set controller parameters; controllers fail to configure due to missing params. Use the included parameter bridge (see ADR‑0002) that loads the controller, sets parameters via `/<controller>/set_parameters`, and activates via `/controller_manager/switch_controller`.
 - Manual motor tests must not run while `controller_manager` is active. Use `scripts/ros_clean.sh --force` first, then `scripts/motor_test.sh` (guarded) to verify motion.
 
 Escalation & ADR
@@ -57,4 +59,13 @@ Notes
 
 - Begin with wheels off the ground; confirm directions and inversion before any floor test.
 - If encoders are not wired yet, the plugin will integrate commands as a fallback for position/velocity; acceptance requires encoders to be active.
-- pigpio must be available (install `pigpio`/`pigpio-dev`); the plugin initializes pigpio internally and does not require `pigpiod`.
+- pigpio daemon (`pigpiod`) must be available and running; ansible role `pigpio` installs and enables the service.
+
+Parameters (URDF <ros2_control><hardware>)
+
+- `left_pwm`, `left_in1`, `left_in2`, `right_pwm`, `right_in3`, `right_in4`
+- `left_enc_a`, `left_enc_b`, `right_enc_a`, `right_enc_b`
+- `ticks_per_rev`, `encoder_glitch_us`
+- `max_wheel_rad_s`, `pwm_freq`, `pwm_range`
+- `deadband_rad_s` (default 0.1), `slew_duty_per_s` (default 50)
+- `invert_left`, `invert_right`, `brake_on_zero`, `watchdog_s`

@@ -491,3 +491,41 @@ Rules
 * Acceptance: Pass — files in `configs/foxglove/`; docs updated and pushed to `origin/main`.
 * Evidence: `configs/foxglove/viam_rover_bringup_legacy.json`, `configs/foxglove/viam_rover_rnd_dashboard_legacy.json`; commit adds docs section "Layouts".
 * Follow-ups: Capture and commit a Foxglove screenshot to `docs/tools/images/foxglove_layout.png` during next on-device session.
+
+* 2025-09-10 / agent: codex-cli
+* Phase / Subsystem: Planning & Docs / Cross-cutting
+* Task: Familiarization — AGENTS.md, roadmap, documentation plan, and motor control docs
+* Summary: Read root and subfolder AGENTS.md guides; reviewed roadmap (alpha_viam_rover_roadmap_v1.0.md, esp. Section 4: Documentation & Repo Structure); opened motor control report (docs/control/phase3_drive_report.md) and ADRs (0001 L298N HW, 0002 Param Bridge). Confirmed helper exists (`scripts/activate_diff_drive.py`) to load/set/activate `diff_drive_controller`. Noted documentation mismatch: ADR‑0001 says in‑process pigpio (no pigpiod), but code links `pigpiod_if2` and ansible enables `pigpiod` (daemon). Launch still uses spawner `--param-file` for diff drive; will likely switch to the helper per ADR‑0002.
+* Acceptance: N/A — discovery pass only.
+* Evidence: Files reviewed as above; see grep outputs and script presence.
+* Follow-ups / Risks: Align docs with pigpio daemon reality or change code; decide launch strategy for controller activation; await architect guidance before touching motor control parameters or pin maps.
+
+---
+
+* 2025-09-10 / agent: codex-cli
+* Phase / Subsystem: Drive / ros2_control (Phase 3)
+* Task ID: #drive-activate — Deterministic controller activation + PWM mapping tweaks
+* Summary: Implemented architect guidance. Switched bring-up to use param-bridge helper (`scripts/activate_diff_drive.py`) to load/set/activate `diff_drive_controller` instead of relying on spawner `--param-file` (Humble quirk). Fixed helper to parse our YAML (controller-nested shape). Added deadband (`deadband_rad_s`, default 0.1) and slew limiting (`slew_duty_per_s`, default 50 duty/s) to `l298n_hardware`. Standardized pigpio mode via ADR‑0003 (daemon client) and updated docs (`docs/control/ros2_control_hw.md`, phase report).
+* Acceptance: Build pending; on-device test next (off-ground /cmd_vel spin and MCAP snapshot).
+* Evidence: Diffs in bring-up launch, driver code, ADR‑0003.
+* Follow-ups / Risks: Ensure `pigpiod` is active before controller_manager; wire encoders ASAP and tune `ticks_per_rev`; verify no regressions from slew limiting (watch for too-slow ramp).
+
+---
+
+* 2025-09-10 / agent: codex-cli
+* Phase / Subsystem: Drive / Off-ground test (Phase 3)
+* Task ID: #phase3-offground — Bring-up, command bursts, MCAP capture
+* Summary: Ran timed bring-up with helper-based controller activation; executed forward and reverse /cmd_vel bursts off-ground; recorded short MCAP. Verified ros2_control hardware activated and joint_state_broadcaster publishing. Added `scripts/drive_smoke.sh` to repeat test safely with built-in timeouts and clean shutdown.
+* Acceptance: Pending operator confirmation of visible wheel spin (off-ground). Bag captured and contains `/joint_states`, `/tf`, `/odometry/filtered`.
+* Evidence: `bags/phase3_offground_20250909_200420/phase3_offground_0.mcap` (1758 msgs, 14.7 s), `bags/phase3_offground_20250909_200755/phase3_offground_0.mcap` (1076 msgs, 11.6 s). See `ros2 bag info` outputs in shell logs.
+* Follow-ups / Risks: `/cmd_vel` did not appear in bags despite publish bursts; likely CLI pub timing/record overlap—`drive_smoke.sh` keeps bounded publishes; confirm on next run. Foxglove exits with -6 on forced shutdown (expected during timed teardown).
+
+---
+
+* 2025-09-10 / agent: codex-cli
+* Phase / Subsystem: Control / Controller Activation (Humble)
+* Task ID: #adr-0004 — Document spawner param failure; provide demo path
+* Summary: Documented Humble spawner param-file behavior where typed controller params are not present at `on_init` (left_wheel_names empty). Added `configs/diff_drive_params.yaml` (top-level ros__parameters). Created `drive_min.launch.py` (JSB spawn + diff drive spawner attempts) and `drive_direct.launch.py` + `scripts/l298n_direct.py` for safe demos mapping `/cmd_vel`→PWM via pigpio when ROS control is stopped. Wrote ADR‑0004 with options and open architect questions; standardized cleanup with expanded `ros_clean`.
+* Acceptance: Direct driver confirmed motion off-ground at 1.0 m/s burst (≈>80% duty); diff drive pending architect guidance/workaround.
+* Evidence: User-observed wheel motion; session logs show controller load errors and successful hardware activation.
+* Follow-ups / Risks: Implement robust activation shim or use forward_command_controller pair as interim; avoid stale nodes between runs; ensure pigpio daemon present.

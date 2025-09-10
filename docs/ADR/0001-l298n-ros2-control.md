@@ -8,11 +8,11 @@ The rover uses an L298N dual H-bridge to drive two DC motors and wheel encoders 
 
 Decision
 
-Implement a C++ ros2_control `SystemInterface` (`l298n_hardware/L298NSystemHardware`) using the `pigpio` C library for PWM/GPIO and in-process quadrature decoding with glitch filtering. Wire this hardware into the URDF `ros2_control` block; keep controller configs in `configs/controllers.yaml` and `configs/diff_drive.yaml` aligned. Add a hardware-layer watchdog and keep motors disabled on boot.
+Implement a C++ ros2_control `SystemInterface` (`l298n_hardware/L298NSystemHardware`) using the `pigpio` C library (daemon client `pigpiod_if2`) for PWM/GPIO and in-process quadrature decoding with glitch filtering. Wire this hardware into the URDF `ros2_control` block; keep controller configs in `configs/controllers.yaml` and `configs/diff_drive.yaml` aligned. Add a hardware-layer watchdog and keep motors disabled on boot.
 
 Details
 
-- PWM: pigpio software PWM at 20 kHz (out of audible range), range 255.
+- PWM: pigpio PWM at 20 kHz (out of audible range), range 255.
 - Mapping: linear from wheel rad/s to PWM duty; `max_wheel_rad_s` sets the full-scale.
 - Direction: sign sets IN pins; `invert_left/right` parameters handle mechanical swaps.
 - Encoders: quadrature with small finite-state table; `encoder_glitch_us` for debouncing; `ticks_per_rev` config.
@@ -22,17 +22,16 @@ Details
 Consequences
 
 - Enables `diff_drive_controller` with real wheel feedback and consistent TF (`odom→base_link`).
-- Requires pigpio library on the rover; plugin initializes pigpio and cleans up on deactivate.
+- Requires pigpio daemon on the rover; plugin uses `pigpiod_if2` to connect and cleans up on deactivate. See ADR‑0003 for the mode selection.
 - Open-loop PWM mapping is simple to start; can later add closed-loop velocity control (PI) using encoder velocity.
 
 Alternatives Considered
 
 - Python node proxy (rclpy) without ros2_control: rejected; does not integrate cleanly with controllers/TF.
-- Using pigpiod client library: deferred; current approach uses in-process pigpio, which is sufficient.
+- Using pigpio in-process: deferred; current approach uses the daemon client for operational simplicity (see ADR‑0003).
 
 Follow-ups
 
 - Measure actual `ticks_per_rev` and signs; update params.
 - Optionally implement PI velocity control per wheel.
 - Add endurance test and thermal/voltage monitoring overlayed in Foxglove.
-
