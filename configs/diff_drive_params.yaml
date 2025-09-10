@@ -3,8 +3,11 @@ ros__parameters:
   right_wheel_names: [right_wheel_joint]
   wheel_separation: 0.30
   wheel_radius: 0.06
-  publish_rate: 50
-  enable_odom_tf: true
+  wheels_per_side: 1
+  use_stamped_vel: false
   cmd_vel_timeout: 0.5
+  publish_rate: 50.0
+  enable_odom_tf: true
   odom_frame_id: odom
   base_frame_id: base_link
+  open_loop: true

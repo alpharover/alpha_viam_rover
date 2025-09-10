@@ -1,131 +1,114 @@
-# ADR-0005: Humble Controller Activation — diff_drive init-time params; forward-controller fallback
+# ADR-0005: Humble Controller Activation — params at load-time via params_file
 
-Status: Proposed (needs-architect)
+Status: Accepted
 
 Date: 2025-09-10
 
-## Executive Summary
+## Decision
 
-On ROS 2 Humble (Raspberry Pi 4), `diff_drive_controller` fails to load because its required parameters (`left_wheel_names`, `right_wheel_names`) are validated during controller initialization. Parameter delivery via the spawner `--param-file` occurs after instantiation, so validation trips with empty defaults. Manager-level YAML attempts (both top-level and nested under `controller_manager`) did not place the params at init time in this environment. As a result, `diff_drive_controller` never becomes active and motors do not move.
+On ROS 2 Humble, `diff_drive_controller` must receive its required parameters at controller creation time. We will provide those parameters via the controller manager’s `<controller_name>.params_file`, referenced from `configs/controllers.yaml` as an absolute path. We will not pass a param file to the spawner for `diff_drive_controller`.
 
-To maintain velocity-command semantics while we resolve Humble’s timing edge case, we prepared a fallback using two `forward_command_controller` instances (one per wheel). Initial spawner attempts also showed `joints parameter was empty` with our first YAML shape; we added a helper to set params first and then activate, keeping all waits bounded with timeouts. This provides a path to validate hardware motion immediately while awaiting guidance on diff drive.
+## TL;DR — Required changes
 
-We request architect decisions on the YAML pattern to ensure `diff_drive_controller` receives parameters at initialization on Humble, or approval to proceed with the forward-controller fallback for demos/testing and defer diff drive until a distro where spawner timing is improved.
+1) `configs/controllers.yaml` uses controller types and `params_file` (absolute path):
 
-## Environment & Safety
-
-- Hardware: Raspberry Pi 4; L298N H-bridge; pigpio daemon (`pigpiod`) for PWM/encoders.
-- OS/ROS: Humble (binary packages). Workspace overlay with custom `l298n_hardware` plugin.
-- Safety: Wheels off ground, watchdog active; pigpio daemon only; no concurrent GPIO users.
-
-## What Works
-
-- Plugin discovery: `l298n_hardware` loads under `ros2_control_node` when the overlay is sourced; hardware initializes and activates successfully.
-- Hardware interfaces: `left_wheel_joint/velocity` and `right_wheel_joint/velocity` command interfaces exported; state interfaces present.
-- JSB: `joint_state_broadcaster` loads, configures, and activates.
-
-## What Fails (Key Symptoms)
-
-1) diff drive — init-time param validation
-
-- Error: `Invalid value set during initialization for parameter 'left_wheel_names': Parameter 'left_wheel_names' cannot be empty`.
-- Observed repeatedly whether the controller type + params are provided (a) nested under `controller_manager` or (b) at top-level under `diff_drive_controller` in the YAML handed to `ros2_control_node`.
-- Spawner `--param-file` is too late; helper that uses `set_parameters` also too late because `load_controller` triggers initialization before parameters can be set.
-
-2) forward controllers — YAML shape via spawner
-
-- Initial spawner runs with param-file produced `joints parameter was empty` at configure. The YAML file used the controller-name-prefixed shape:
-
-  ```yaml
-  /left_wheel_velocity_controller:
-    ros__parameters:
-      joints: [left_wheel_joint]
-      interface_name: velocity
-  ```
-
-- On Humble, spawner appears to expect a flat shape for the targeted node:
-
-  ```yaml
+```yaml
+controller_manager:
   ros__parameters:
-    joints: [left_wheel_joint]
-    interface_name: velocity
-  ```
+    update_rate: 50
+    use_sim_time: false
 
-- We added a helper (`scripts/activate_forward.py`) to load → set params → activate both controllers with bounded waits. This avoids relying on the spawner’s param timing.
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
 
-## Evidence & Logs (on-device)
+    diff_drive_controller:
+      type: diff_drive_controller/DiffDriveController
+      params_file: /home/alpha_viam/alpha_viam_rover/configs/diff_drive_params.yaml
+```
 
-- Diff drive init-time failure: `log/agent_runs/20250910_091145/drive_min.log` and `.../20250910_103159/drive_min.log` show the “cannot be empty” error during the initialization stage.
-- Hardware OK: Same logs show `RoverSystem` (l298n_hardware) loading, configuring, and activating successfully.
-- Forward controllers via spawner: `log/agent_runs/20250910_104046/drive_forward.log` and `.../20250910_104520/drive_forward_retry.log` show the `joints parameter was empty` at configure using our first YAML shape.
-- AGENTS_PROGRESS.md updated with timestamps and paths to logs/bags.
+2) `configs/diff_drive_params.yaml` contains the controller’s parameters:
 
-## Actions Taken in Repo (branch: `chore/lint-fixes`)
+```yaml
+ros__parameters:
+  left_wheel_names: [left_wheel_joint]
+  right_wheel_names: [right_wheel_joint]
+  wheel_separation: 0.30
+  wheel_radius: 0.06
+  wheels_per_side: 1
+  use_stamped_vel: false
+  cmd_vel_timeout: 0.5
+  publish_rate: 50.0
+  enable_odom_tf: true
+  odom_frame_id: odom
+  base_frame_id: base_link
+  open_loop: true
+```
 
-- Launches (`drive_min`, `base_bringup`):
-  - Deliver `robot_description` via topic (recommended on Humble).
-  - Wrap spawner calls with `timeout` and `--unload-on-kill` to avoid hangs.
-- Controller YAML:
-  - `configs/controllers.yaml` now carries controller types and a nested params block under `controller_manager.diff_drive_controller.ros__parameters` (Humble attempt). We also tested the top-level `diff_drive_controller: ros__parameters: {…}` shape; both yielded the same init-time failure here.
-- Forward path:
-  - `configs/wheels_forward.yaml` and `bringup/.../drive_forward.launch.py` (JSB only; forward controllers handled via helper rather than param at spawn time).
-  - Helper `scripts/activate_forward.py` to load → set params → activate left/right controllers; all waits bounded.
-- Timeouts everywhere: launch spawners, CLI pubs, bag recording, and service waits use explicit time bounds.
-
-## Hypothesis (Humble timing/shape)
-
-- Humble’s `diff_drive_controller` validates required params during the controller’s initialization step. On this build, neither the manager-nested nor top-level YAML forms provided those params at the moment of instantiation. The spawner `--param-file` applies too late (pre-configure but post-init). Hence the consistent init-time failure.
-- For `forward_command_controller`, our first spawner YAML included the controller node name as a top-level key. Humble’s spawner seems to expect a flat `ros__parameters` mapping for that specific target node. Our helper bypasses this by setting params directly before activation.
-
-## Requests for Architect Decision
-
-1) diff drive on Humble — choose path:
-   - A) Approve forward-controller fallback for motion smoke, demos, and dev while we park diff drive until an upgraded distro (Iron/Jazzy) where spawner parameter timing is improved and documented.
-   - B) If we must keep Humble + diff drive, approve a controller activation shim that patches the initial parameter delivery by instantiating the controller with parameters (requires code in or around controller_manager; higher risk/maintenance).
-
-2) Param-file conventions — confirm desired shapes:
-   - For spawner (Humble), use flat `ros__parameters:` files per controller (no prefixed node keys). We can migrate our spawner files accordingly.
-
-3) Topic semantics — confirm preferred cmd_vel entrypoint:
-   - Keep controller-local `~/cmd_vel_unstamped` and provide a small bridge from `/cmd_vel`, or standardize on the controller-local topic for now.
-
-4) Plugin discovery — approve minor environment hardening:
-   - Ensure `install/setup.bash` is sourced in all workflows and that the C++ hardware plugin remains discoverable without manual env exports.
-
-## Proposed Immediate Plan (if approved)
-
-1) Motion today: switch to forward controllers with corrected flat param files and the helper; record a short MCAP; append to AGENTS_PROGRESS.md.
-2) Diff drive later: revisit on Iron/Jazzy or adopt a manager-side enhancement to guarantee init-time parameter presence.
-3) Clean up spawner YAMLs under `configs/spawner/` to the flat `ros__parameters` shape and adjust docs accordingly.
-
-## Acceptance Criteria
-
-- Forward controllers active; small positive/negative velocity bursts produce motion off-ground; MCAP recorded in `bags/samples/`.
-- No hangs during bring-up; all long operations bounded by timeouts.
-- Architect provides guidance on Humble strategy vs. distro upgrade for diff drive.
-
-## Risks
-
-- Continuing on Humble with diff drive may force more bespoke shims around controller_manager that we would later remove when upgrading.
-- L298N + Pi timing: acceptable for demos, but we will consider a motor driver upgrade (MOSFET-based) for efficiency and control headroom.
-
-## Appendix — Commands (bounded)
+3) Launch: spawn JSB and diff drive without `--param-file`:
 
 ```bash
-# Ensure pigpio
+ros2 run controller_manager spawner joint_state_broadcaster \
+  --controller-manager /controller_manager --activate
+
+ros2 run controller_manager spawner diff_drive_controller \
+  --controller-manager /controller_manager --activate --unload-on-kill
+```
+
+## Why this fixes the failure
+
+`diff_drive_controller` validates `left_wheel_names` and `right_wheel_names` during initialization. On Humble, spawner `--param-file` applies parameters before configure, i.e., too late for `on_init`. By using `controller_manager....params_file`, the controller receives parameters at creation and passes initialization.
+
+## Sanity checks
+
+- Absolute path in `params_file` (no CWD assumptions).
+- Controller node parameters present:
+  - `ros2 param get /diff_drive_controller left_wheel_names`
+  - `ros2 param get /diff_drive_controller right_wheel_names`
+- Active controller with velocity interfaces claimed:
+  - `ros2 control list_controllers`
+  - `ros2 control list_hardware_interfaces`
+- Input topic with `use_stamped_vel=false` is `/diff_drive_controller/cmd_vel_unstamped`.
+
+## What to remove/avoid
+
+- Do not nest `diff_drive_controller.ros__parameters` under the manager in the same YAML passed to `ros2_control_node`.
+- Do not pass `--param-file` to the diff-drive spawner on Humble.
+
+## Optional fallback (for demos only)
+
+Forward controllers remain available for quick spins and debugging using `configs/wheels_forward.yaml` and `spawner -p` per-controller; this path is no longer primary.
+
+## Validation sequence (off-ground)
+
+```bash
+# Clean + pigpio
+scripts/ros_clean.sh --force
 sudo systemctl start pigpiod || sudo /usr/local/bin/pigpiod
 
-# Forward path (Terminal A)
+# Launch
 source /opt/ros/humble/setup.bash
 source install/setup.bash
-ros2 launch alpha_viam_bringup drive_forward.launch.py
+ros2 launch alpha_viam_bringup drive_min.launch.py
 
-# Forward activation (Terminal B)
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-python3 scripts/activate_forward.py configs/wheels_forward.yaml
-ros2 control list_controllers
-timeout 2s ros2 topic pub -r 15 /left_wheel_velocity_controller/commands  std_msgs/msg/Float64MultiArray '{data: [2.0]}'
-timeout 2s ros2 topic pub -r 15 /right_wheel_velocity_controller/commands std_msgs/msg/Float64MultiArray '{data: [2.0]}'
+# Sanity: controller params exist on the controller node
+timeout 4s ros2 param get /diff_drive_controller left_wheel_names
+timeout 4s ros2 param get /diff_drive_controller right_wheel_names
+
+# Interfaces claimed
+timeout 4s ros2 control list_controllers
+timeout 4s ros2 control list_hardware_interfaces
+
+# Move (unstamped)
+timeout 2s ros2 topic pub -r 15 /diff_drive_controller/cmd_vel_unstamped geometry_msgs/msg/Twist "{linear: {x: 1.0}, angular: {z: 0.0}}"
+sleep 0.5
+timeout 1s ros2 topic pub --once /diff_drive_controller/cmd_vel_unstamped geometry_msgs/msg/Twist "{linear: {x: 0.0}, angular: {z: 0.0}}"
 ```
+
+## Acceptance checklist
+
+- [x] `controllers.yaml` uses `type` + `params_file` (absolute path).
+- [x] `diff_drive_params.yaml` contains required keys with sane values.
+- [x] JSB spawns; diff drive spawns without `--param-file`.
+- [ ] Controller node shows correct wheel arrays; controller active with velocity interfaces claimed.
+- [ ] Short burst on `/diff_drive_controller/cmd_vel_unstamped` produces motion; MCAP recorded and logged.
 

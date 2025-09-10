@@ -59,23 +59,8 @@ def generate_launch_description():
             )
         )
 
-        # Spawn forward controllers (with timeouts)
-        for ctrl in ("left_wheel_velocity_controller", "right_wheel_velocity_controller"):
-            nodes.append(
-                TimerAction(
-                    period=3.0 if ctrl.startswith("left") else 4.0,
-                    actions=[
-                        ExecuteProcess(
-                            cmd=[
-                                "bash",
-                                "-lc",
-                                f"timeout 20s ros2 run controller_manager spawner {ctrl} --controller-manager /controller_manager --activate --unload-on-kill",
-                            ],
-                            output="screen",
-                        )
-                    ],
-                )
-            )
+        # Note: forward controllers will be loaded, parameterized, and activated by
+        # scripts/activate_forward.py after this launch starts.
         return nodes
 
     return LaunchDescription([OpaqueFunction(function=setup)])

@@ -31,12 +31,14 @@ timeout "${DUR}s" ros2 bag record -s mcap -o "$BAG_DIR/phase3_offground" "${TOPI
 REC_PID=$!
 sleep 3
 
-echo "[drive_smoke] Forward burst"
-timeout 1.6s ros2 topic pub -r 10 /cmd_vel geometry_msgs/msg/Twist '{linear: {x: 0.20}}' || true
+CMD_TOPIC=${CMD_TOPIC:-/diff_drive_controller/cmd_vel_unstamped}
+
+echo "[drive_smoke] Forward burst on ${CMD_TOPIC}"
+timeout 1.6s ros2 topic pub -r 10 "$CMD_TOPIC" geometry_msgs/msg/Twist '{linear: {x: 0.20}}' || true
 sleep 0.6
-echo "[drive_smoke] Reverse burst"
-timeout 1.6s ros2 topic pub -r 10 /cmd_vel geometry_msgs/msg/Twist '{linear: {x: -0.20}}' || true
-timeout 1.2s ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist '{linear: {x: 0.0}}' || true
+echo "[drive_smoke] Reverse burst on ${CMD_TOPIC}"
+timeout 1.6s ros2 topic pub -r 10 "$CMD_TOPIC" geometry_msgs/msg/Twist '{linear: {x: -0.20}}' || true
+timeout 1.2s ros2 topic pub --once "$CMD_TOPIC" geometry_msgs/msg/Twist '{linear: {x: 0.0}}' || true
 
 wait $REC_PID || true
 
@@ -49,4 +51,3 @@ kill -KILL -"$BR_PGID" 2>/dev/null || true
 
 echo "[drive_smoke] Bag at: $BAG_DIR"
 ros2 bag info "$BAG_DIR/phase3_offground" || true
-

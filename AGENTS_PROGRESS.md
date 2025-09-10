@@ -19,6 +19,14 @@ Rules
 
 ---
 
+* 2025-09-10 / agent: codex-cli
+* Phase / Subsystem: Drive / ros2_control (Phase 3)
+* Task ID: ADR-0005 — Humble diff_drive params at load-time
+* Summary of changes: Implemented architect’s fix. Rewrote `configs/controllers.yaml` to use `type` + `params_file` (absolute path) for `diff_drive_controller`. Updated `configs/diff_drive_params.yaml` to canonical keys (wheels_per_side, use_stamped_vel=false, open_loop=true). Launches (`drive_min`, `base_bringup`) already spawn JSB and diff drive without `--param-file`; left as-is with bounded timeouts. Added `scripts/diff_drive_validate.sh` to perform the acceptance sequence (ros_clean, pigpio, launch, param gets, interface lists, burst on `/diff_drive_controller/cmd_vel_unstamped`, MCAP record, teardown). Updated ADR‑0005 to Accepted with TL;DR and checklist.
+* Acceptance test result: Pending on-device — requires off‑ground run to verify params on controller node and motion + MCAP.
+* Evidence links: Will record to `bags/diff_drive_<timestamp>/` via `scripts/diff_drive_validate.sh`.
+* Follow‑ups / Risks: If params not visible on `/diff_drive_controller` after launch, collect first ~50 lines of `/controller_manager` logs and outputs of two `ros2 param get` commands for triage.
+
 * 2025-09-09 / agent: codex-cli
 * Phase / Subsystem: Drive / ros2_control (Phase 3)
 * Task ID: needs-architect — L298N HW + controller bring-up off‑ground
