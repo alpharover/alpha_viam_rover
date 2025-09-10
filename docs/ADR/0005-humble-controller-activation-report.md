@@ -26,10 +26,10 @@ controller_manager:
       params_file: /home/alpha_viam/alpha_viam_rover/configs/diff_drive_params.yaml
 ```
 
-2) `configs/diff_drive_params.yaml` contains the controller’s parameters (Humble parses it as a standard ROS node param file; include the controller node name at the root — unqualified name works best here):
+2) `configs/diff_drive_params.yaml` contains the controller’s parameters. On this Humble image the safest match is the wildcard root (`/**`) so the controller node picks them up at creation:
 
 ```yaml
-diff_drive_controller:
+/**:
   ros__parameters:
     left_wheel_names: [left_wheel_joint]
     right_wheel_names: [right_wheel_joint]
@@ -42,7 +42,7 @@ diff_drive_controller:
     enable_odom_tf: true
     odom_frame_id: odom
     base_frame_id: base_link
-    open_loop: true
+  open_loop: true
 ```
 
 3) Launch: spawn JSB and diff drive without `--param-file`:
