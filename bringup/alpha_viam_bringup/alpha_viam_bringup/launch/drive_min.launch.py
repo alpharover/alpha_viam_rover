@@ -31,9 +31,10 @@ def generate_launch_description():
                 executable="ros2_control_node",
                 name="controller_manager",
                 output="screen",
-                parameters=[
-                    {"robot_description": robot_desc_raw},
-                    os.path.join(os.getcwd(), "configs", "controllers.yaml"),
+                # Pass only the controllers.yaml; get robot_description via topic
+                parameters=[os.path.join(os.getcwd(), "configs", "controllers.yaml")],
+                remappings=[
+                    ("~/robot_description", "/robot_description"),
                 ],
             )
         )
@@ -58,32 +59,10 @@ def generate_launch_description():
             )
         )
 
-        # Use spawner with --param-file so parameters are applied before controller loads
+        # Load and activate diff_drive without --param-file; params are present at load time
         nodes.append(
             TimerAction(
                 period=3.0,
-                actions=[
-                    ExecuteProcess(
-                        cmd=[
-                            "ros2",
-                            "run",
-                            "controller_manager",
-                            "spawner",
-                            "diff_drive_controller",
-                            "--controller-manager",
-                            "/controller_manager",
-                            "--param-file",
-                            os.path.join(os.getcwd(), "configs", "diff_drive_params.yaml"),
-                            "--inactive",
-                        ],
-                        output="screen",
-                    )
-                ],
-            )
-        )
-        nodes.append(
-            TimerAction(
-                period=4.0,
                 actions=[
                     ExecuteProcess(
                         cmd=[

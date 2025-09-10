@@ -168,9 +168,9 @@ def generate_launch_description():
                 executable="ros2_control_node",
                 name="controller_manager",
                 output="screen",
-                parameters=[
-                    {"robot_description": robot_desc_raw},
-                    os.path.join(os.getcwd(), "configs", "controllers.yaml"),
+                parameters=[os.path.join(os.getcwd(), "configs", "controllers.yaml")],
+                remappings=[
+                    ("~/robot_description", "/robot_description"),
                 ],
             ),
             Node(
@@ -228,15 +228,20 @@ def generate_launch_description():
                     ),
                 ],
             ),
-            # Load + param set + activate diff_drive_controller using helper
+            # Load and activate diff_drive without --param-file (params already present)
             TimerAction(
                 period=3.0,
                 actions=[
                     ExecuteProcess(
                         cmd=[
-                            "python3",
-                            os.path.join(os.getcwd(), "scripts", "activate_diff_drive.py"),
-                            os.path.join(os.getcwd(), "configs", "diff_drive.yaml"),
+                            "ros2",
+                            "run",
+                            "controller_manager",
+                            "spawner",
+                            "diff_drive_controller",
+                            "--controller-manager",
+                            "/controller_manager",
+                            "--activate",
                         ],
                         output="screen",
                     ),

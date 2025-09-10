@@ -1,30 +1,34 @@
-# Controller manager and controllers
+# Controller manager + controller types (Humble-safe)
 controller_manager:
   ros__parameters:
     update_rate: 50
+    use_sim_time: false
+
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
+
     diff_drive_controller:
       type: diff_drive_controller/DiffDriveController
-      ros__parameters:
-        left_wheel_names: [left_wheel_joint]
-        right_wheel_names: [right_wheel_joint]
-        wheel_separation: 0.30
-        wheel_radius: 0.06
-        publish_rate: 50
-        enable_odom_tf: true
-        cmd_vel_timeout: 0.5
-        odom_frame_id: odom
-        base_frame_id: base_link
-    left_wheel_velocity_controller:
-      type: forward_command_controller/ForwardCommandController
-      ros__parameters:
-        joints: [left_wheel_joint]
-        interface_name: velocity
-    right_wheel_velocity_controller:
-      type: forward_command_controller/ForwardCommandController
-      ros__parameters:
-        joints: [right_wheel_joint]
-        interface_name: velocity
 
-# Controller-specific parameters
+# Controller parameters applied at load time (required keys present at init)
+diff_drive_controller:
+  ros__parameters:
+    # Required in Humble; must be non-empty
+    left_wheel_names:  [left_wheel_joint]
+    right_wheel_names: [right_wheel_joint]
+
+    # Kinematics (match URDF values)
+    wheel_separation: 0.30
+    wheel_radius: 0.06
+    wheels_per_side: 1
+
+    # Behavior / topics
+    use_stamped_vel: false      # enable ~/cmd_vel_unstamped
+    cmd_vel_timeout: 0.5
+    publish_rate: 50.0
+    enable_odom_tf: true
+    odom_frame_id: odom
+    base_frame_id: base_link
+
+    # Temporary until encoders are wired/clean
+    open_loop: true
