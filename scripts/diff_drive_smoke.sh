@@ -28,11 +28,9 @@ for i in $(seq 1 20); do
   sleep 0.5
 done
 
-echo "[diff_drive_smoke] Spawn JSB"
-timeout 15s ros2 run controller_manager spawner joint_state_broadcaster --controller-manager /controller_manager --activate || true
-
-echo "[diff_drive_smoke] Spawn diff_drive_controller"
-timeout 20s ros2 run controller_manager spawner diff_drive_controller --controller-manager /controller_manager --activate || true
+echo "[diff_drive_smoke] Load + activate controllers via ros2 control"
+timeout 10s ros2 control load_controller --set-state active joint_state_broadcaster || true
+timeout 15s ros2 control load_controller --set-state active diff_drive_controller || true
 
 echo "[diff_drive_smoke] Controllers:" && (ros2 control list_controllers || true)
 echo "[diff_drive_smoke] Interfaces:" && (ros2 control list_hardware_interfaces || true)
