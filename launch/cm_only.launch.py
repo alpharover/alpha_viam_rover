@@ -3,30 +3,19 @@ from __future__ import annotations
 import os
 from launch import LaunchDescription
 from launch_ros.actions import Node
-import yaml
+from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description() -> LaunchDescription:
-    cwd = os.getcwd()
-    urdf_xacro = os.path.join(cwd, "urdf", "rover.urdf.xacro")
-    controllers_yaml = os.path.join(cwd, "configs", "controllers.yaml")
+    share_dir = get_package_share_directory("alpha_viam_bringup")
+    urdf_xacro = os.path.join(share_dir, "urdf", "rover.urdf.xacro")
     try:
         import xacro  # type: ignore
         robot_desc = xacro.process_file(urdf_xacro).toxml()
     except Exception:
         robot_desc = ""
 
-    # Load diff drive params and wrap under the controller name so controller_manager passes them through
-    dd_params_path = os.path.join(cwd, "configs", "diff_drive_params.yaml")
-    dd_controller_params = {}
-    try:
-        with open(dd_params_path, "r", encoding="utf-8") as f:
-            raw = yaml.safe_load(f) or {}
-        # Accept either flat or ros__parameters root
-        ddp = raw.get("ros__parameters", raw)
-        dd_controller_params = {"diff_drive_controller": {"ros__parameters": ddp}}
-    except Exception:
-        dd_controller_params = {}
+    controllers_yaml = os.path.join(share_dir, "configs", "controllers.yaml")
 
     return LaunchDescription(
         [
@@ -42,7 +31,7 @@ def generate_launch_description() -> LaunchDescription:
                 executable="ros2_control_node",
                 name="controller_manager",
                 output="screen",
-                parameters=[{"robot_description": robot_desc}, controllers_yaml, dd_controller_params],
+                parameters=[{"robot_description": robot_desc}, controllers_yaml],
             ),
         ]
     )

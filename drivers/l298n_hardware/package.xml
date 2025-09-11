@@ -17,7 +17,7 @@
   <exec_depend>pigpio</exec_depend>
 
   <export>
-    <hardware_interface plugin="l298n_hardware/l298n_hardware_plugin.xml"/>
+    <!-- Export plugin description for ros2_control hardware_interface -->
+    <hardware_interface plugin="l298n_hardware_plugin.xml"/>
   </export>
 </package>
-

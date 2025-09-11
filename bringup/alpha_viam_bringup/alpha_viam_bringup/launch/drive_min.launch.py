@@ -3,12 +3,14 @@ from launch.actions import OpaqueFunction, TimerAction
 from launch_ros.actions import Node
 from launch.actions import ExecuteProcess
 import os
+from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
     def setup(context, *args, **kwargs):
         nodes = []
-        urdf_xacro = os.path.join(os.getcwd(), "urdf", "rover.urdf.xacro")
+        share_dir = get_package_share_directory("alpha_viam_bringup")
+        urdf_xacro = os.path.join(share_dir, "urdf", "rover.urdf.xacro")
         try:
             import xacro  # type: ignore
             robot_desc_raw = xacro.process_file(urdf_xacro).toxml()
@@ -25,13 +27,21 @@ def generate_launch_description():
                 parameters=[{"robot_description": robot_desc_raw}],
             )
         )
-        # Ensure plugin discovery can find l298n_hardware even if the shell overlay wasn't sourced
-        l298n_prefix = os.path.join(os.getcwd(), "install", "l298n_hardware")
-        l298n_lib = os.path.join(l298n_prefix, "lib")
-        env_patch = {
-            "AMENT_PREFIX_PATH": f"{l298n_prefix}:" + os.environ.get("AMENT_PREFIX_PATH", ""),
-            "LD_LIBRARY_PATH": f"{l298n_lib}:" + os.environ.get("LD_LIBRARY_PATH", ""),
-        }
+        # Patch env for plugin discovery (l298n_hardware) in case overlay wasn't sourced
+        env_patch = {}
+        try:
+            l298n_share = get_package_share_directory("l298n_hardware")
+            l298n_prefix = os.path.dirname(os.path.dirname(l298n_share))
+        except Exception:
+            cwd = os.getcwd()
+            candidate = os.path.join(cwd, "install", "l298n_hardware")
+            l298n_prefix = candidate if os.path.isdir(candidate) else None
+        if l298n_prefix:
+            l298n_lib = os.path.join(l298n_prefix, "lib")
+            env_patch = {
+                "AMENT_PREFIX_PATH": f"{l298n_prefix}:" + os.environ.get("AMENT_PREFIX_PATH", ""),
+                "LD_LIBRARY_PATH": f"{l298n_lib}:" + os.environ.get("LD_LIBRARY_PATH", ""),
+            }
 
         nodes.append(
             Node(
@@ -40,7 +50,7 @@ def generate_launch_description():
                 name="controller_manager",
                 output="screen",
                 # Pass only the controllers.yaml; get robot_description via topic
-                parameters=[os.path.join(os.getcwd(), "configs", "controllers.yaml")],
+                parameters=[os.path.join(share_dir, "configs", "controllers.yaml")],
                 remappings=[
                     ("~/robot_description", "/robot_description"),
                 ],
@@ -68,28 +78,7 @@ def generate_launch_description():
             )
         )
 
-        # Load and activate diff_drive without --param-file; params are present at load time
-        nodes.append(
-            TimerAction(
-                period=3.0,
-                actions=[
-                    ExecuteProcess(
-                        cmd=[
-                            "ros2",
-                            "run",
-                            "controller_manager",
-                            "spawner",
-                            "diff_drive_controller",
-                            "--controller-manager",
-                            "/controller_manager",
-                            "--activate",
-                            "--unload-on-kill",
-                        ],
-                        output="screen",
-                    )
-                ],
-            )
-        )
+        # Diff-drive controller is loaded/parameterized/activated by scripts to guarantee order.
         return nodes
 
     return LaunchDescription([OpaqueFunction(function=setup)])

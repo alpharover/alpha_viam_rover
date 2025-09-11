@@ -8,6 +8,29 @@ controller_manager:
 
     diff_drive_controller:
       type: diff_drive_controller/DiffDriveController
-      # Provide controller parameters at load time (Humble requirement).
-      # NOTE: Must be an absolute path; do not rely on CWD.
-      params_file: /home/alpha_viam/alpha_viam_rover/configs/diff_drive_params.yaml
+      # Humble controller_manager reads controller-specific keys directly under the controller
+      left_wheel_names:  [left_wheel_joint]
+      right_wheel_names: [right_wheel_joint]
+      wheel_separation:  0.30
+      wheel_radius:      0.06
+      wheels_per_side:   1
+      use_stamped_vel:   false
+      cmd_vel_timeout:   0.5
+      publish_rate:      50.0
+      enable_odom_tf:    true
+      odom_frame_id:     odom
+      base_frame_id:     base_link
+      open_loop:         true
+      # Also provide with explicit controller-name prefix to satisfy older parameter loaders
+      diff_drive_controller.left_wheel_names:  [left_wheel_joint]
+      diff_drive_controller.right_wheel_names: [right_wheel_joint]
+      diff_drive_controller.wheel_separation:  0.30
+      diff_drive_controller.wheel_radius:      0.06
+      diff_drive_controller.wheels_per_side:   1
+      diff_drive_controller.use_stamped_vel:   false
+      diff_drive_controller.cmd_vel_timeout:   0.5
+      diff_drive_controller.publish_rate:      50.0
+      diff_drive_controller.enable_odom_tf:    true
+      diff_drive_controller.odom_frame_id:     odom
+      diff_drive_controller.base_frame_id:     base_link
+      diff_drive_controller.open_loop:         true

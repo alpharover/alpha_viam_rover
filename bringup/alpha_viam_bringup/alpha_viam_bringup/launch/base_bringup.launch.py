@@ -6,24 +6,27 @@ from launch.actions import TimerAction
 from launch.actions import ExecuteProcess
 
 import os
+from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
+    share_dir = get_package_share_directory("alpha_viam_bringup")
+
     ekf_params_arg = DeclareLaunchArgument(
         "ekf_params_file",
-        default_value=os.path.join(os.getcwd(), "configs", "ekf.yaml"),
+        default_value=os.path.join(share_dir, "configs", "ekf.yaml"),
         description="Path to robot_localization EKF params YAML.",
     )
 
     urdf_xacro_arg = DeclareLaunchArgument(
         "urdf_xacro",
-        default_value=os.path.join(os.getcwd(), "urdf", "rover.urdf.xacro"),
+        default_value=os.path.join(share_dir, "urdf", "rover.urdf.xacro"),
         description="Path to rover xacro file.",
     )
 
     diagnostics_params_arg = DeclareLaunchArgument(
         "diagnostics_params_file",
-        default_value=os.path.join(os.getcwd(), "configs", "diagnostics.yaml"),
+        default_value=os.path.join(share_dir, "configs", "diagnostics.yaml"),
         description="Path to diagnostic_aggregator params YAML.",
     )
 
@@ -52,11 +55,7 @@ def generate_launch_description():
         try:
             import yaml  # type: ignore
 
-            with open(
-                os.path.join(os.getcwd(), "configs", "power.yaml"),
-                "r",
-                encoding="utf-8",
-            ) as f:
+            with open(os.path.join(share_dir, "configs", "power.yaml"), "r", encoding="utf-8") as f:
                 y = yaml.safe_load(f)
                 if isinstance(y, dict) and "power" in y and isinstance(y["power"], dict):
                     power_params = y["power"]
@@ -69,11 +68,7 @@ def generate_launch_description():
         try:
             import yaml  # type: ignore
 
-            with open(
-                os.path.join(os.getcwd(), "configs", "imu.yaml"),
-                "r",
-                encoding="utf-8",
-            ) as f:
+            with open(os.path.join(share_dir, "configs", "imu.yaml"), "r", encoding="utf-8") as f:
                 y = yaml.safe_load(f)
                 if isinstance(y, dict) and "imu" in y and isinstance(y["imu"], dict):
                     _raw = y["imu"]
@@ -101,11 +96,7 @@ def generate_launch_description():
         try:
             import yaml  # type: ignore
 
-            with open(
-                os.path.join(os.getcwd(), "configs", "network.yaml"),
-                "r",
-                encoding="utf-8",
-            ) as f:
+            with open(os.path.join(share_dir, "configs", "network.yaml"), "r", encoding="utf-8") as f:
                 y = yaml.safe_load(f)
                 if isinstance(y, dict):
                     if "foxglove_ws_port" in y:
@@ -162,25 +153,20 @@ def generate_launch_description():
                     ("imu/data", "/imu/data_fused"),
                 ],
             ),
-            # Controller manager (ros2_control)
-            # controller_manager with plugin discovery env so l298n_hardware is found
+            # Controller manager (ros2_control); patch env for plugin discovery (l298n_hardware)
             Node(
                 package="controller_manager",
                 executable="ros2_control_node",
                 name="controller_manager",
                 output="screen",
-                parameters=[os.path.join(os.getcwd(), "configs", "controllers.yaml")],
+                parameters=[os.path.join(share_dir, "configs", "controllers.yaml")],
                 remappings=[
                     ("~/robot_description", "/robot_description"),
                 ],
-                additional_env={
-                    "AMENT_PREFIX_PATH": os.path.join(os.getcwd(), "install", "l298n_hardware")
-                    + ":"
-                    + os.environ.get("AMENT_PREFIX_PATH", ""),
-                    "LD_LIBRARY_PATH": os.path.join(os.getcwd(), "install", "l298n_hardware", "lib")
-                    + ":"
-                    + os.environ.get("LD_LIBRARY_PATH", ""),
-                },
+                additional_env=(lambda: (lambda share: {
+                    "AMENT_PREFIX_PATH": os.path.dirname(os.path.dirname(share)) + ":" + os.environ.get("AMENT_PREFIX_PATH", ""),
+                    "LD_LIBRARY_PATH": os.path.join(os.path.dirname(os.path.dirname(share)), "lib") + ":" + os.environ.get("LD_LIBRARY_PATH", ""),
+                })(get_package_share_directory("l298n_hardware")))(),
             ),
             Node(
                 package="robot_localization",
@@ -237,7 +223,7 @@ def generate_launch_description():
                     ),
                 ],
             ),
-            # Load and activate diff_drive without --param-file (params already present)
+            # Load and activate diff_drive WITH --param-file (Humble-safe)
             TimerAction(
                 period=3.0,
                 actions=[
@@ -252,6 +238,8 @@ def generate_launch_description():
                             "/controller_manager",
                             "--activate",
                             "--unload-on-kill",
+                            "--param-file",
+                            os.path.join(share_dir, "configs", "diff_drive.params.yaml"),
                         ],
                         output="screen",
                     ),

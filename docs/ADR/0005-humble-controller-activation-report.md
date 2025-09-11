@@ -1,16 +1,16 @@
-# ADR-0005: Humble Controller Activation — params at load-time via params_file
+# ADR-0005: Humble — Controller Params via Spawner Param-File
 
 Status: Accepted
 
-Date: 2025-09-10
+Date: 2025-09-10 (revised per architect guidance)
 
 ## Decision
 
-On ROS 2 Humble, `diff_drive_controller` must receive its required parameters at controller creation time. We will provide those parameters via the controller manager’s `<controller_name>.params_file`, referenced from `configs/controllers.yaml` as an absolute path. We will not pass a param file to the spawner for `diff_drive_controller`.
+On ROS 2 Humble, we will pass `diff_drive_controller` parameters using the supported spawner mechanism with `--param-file`, and we will remove any controller-manager-side `params_file`. The controller parameter file is controller-scoped (root key `diff_drive_controller:`) and installed into the bringup package share for deterministic pathing.
 
 ## TL;DR — Required changes
 
-1) `configs/controllers.yaml` uses controller types and `params_file` (absolute path):
+1) `configs/controllers.yaml` lists only controller types (no `params_file`).
 
 ```yaml
 controller_manager:
@@ -23,45 +23,45 @@ controller_manager:
 
     diff_drive_controller:
       type: diff_drive_controller/DiffDriveController
-      params_file: /home/alpha_viam/alpha_viam_rover/configs/diff_drive_params.yaml
 ```
 
-2) `configs/diff_drive_params.yaml` contains the controller’s parameters. On this Humble image the safest match is the wildcard root (`/**`) so the controller node picks them up at creation:
+2) Controller-scoped param file `configs/diff_drive.params.yaml`:
 
 ```yaml
-/**:
+diff_drive_controller:
   ros__parameters:
-    left_wheel_names: [left_wheel_joint]
+    left_wheel_names:  [left_wheel_joint]
     right_wheel_names: [right_wheel_joint]
-    wheel_separation: 0.30
-    wheel_radius: 0.06
-    wheels_per_side: 1
-    use_stamped_vel: false
-    cmd_vel_timeout: 0.5
-    publish_rate: 50.0
-    enable_odom_tf: true
-    odom_frame_id: odom
-    base_frame_id: base_link
-  open_loop: true
+    wheel_separation:  0.30
+    wheel_radius:      0.06
+    wheels_per_side:   1
+    use_stamped_vel:   false
+    cmd_vel_timeout:   0.5
+    publish_rate:      50.0
+    enable_odom_tf:    true
+    odom_frame_id:     odom
+    base_frame_id:     base_link
+    open_loop:         true
 ```
 
-3) Launch: spawn JSB and diff drive without `--param-file`:
+3) Launch: spawn JSB, then diff drive with `--param-file` and `--unload-on-kill`:
 
 ```bash
 ros2 run controller_manager spawner joint_state_broadcaster \
-  --controller-manager /controller_manager --activate
+  --controller-manager /controller_manager
 
 ros2 run controller_manager spawner diff_drive_controller \
-  --controller-manager /controller_manager --activate --unload-on-kill
+  --controller-manager /controller_manager \
+  --activate --unload-on-kill \
+  --param-file $(ros2 pkg prefix alpha_viam_bringup)/share/alpha_viam_bringup/configs/diff_drive.params.yaml
 ```
 
 ## Why this fixes the failure
 
-`diff_drive_controller` validates `left_wheel_names` and `right_wheel_names` during initialization. On Humble, spawner `--param-file` applies parameters before configure, i.e., too late for `on_init`. By using `controller_manager....params_file`, the controller receives parameters at creation and passes initialization.
+`diff_drive_controller` rejects empty `left_wheel_names/right_wheel_names` during initialization. The Humble spawner loads the controller’s param file into the node before `configure`, satisfying the controller’s requirement when it transitions. Using a controller-scoped root avoids wildcard fragility on Humble.
 
 ## Sanity checks
 
-- Absolute path in `params_file` (no CWD assumptions).
 - Controller node parameters present:
   - `ros2 param get /diff_drive_controller left_wheel_names`
   - `ros2 param get /diff_drive_controller right_wheel_names`
@@ -72,12 +72,9 @@ ros2 run controller_manager spawner diff_drive_controller \
 
 ## What to remove/avoid
 
-- Do not nest `diff_drive_controller.ros__parameters` under the manager in the same YAML passed to `ros2_control_node`.
-- Do not pass `--param-file` to the diff-drive spawner on Humble.
-
-## Optional fallback (for demos only)
-
-Forward controllers remain available for quick spins and debugging using `configs/wheels_forward.yaml` and `spawner -p` per-controller; this path is no longer primary.
+- No `controller_manager.<ctrl>.params_file` in Humble.
+- No wildcard YAML root (`/**:`) for controller params; use controller name root.
+- Avoid ad‑hoc env injection; rely on a sourced overlay and package share paths.
 
 ## Validation sequence (off-ground)
 
@@ -86,18 +83,16 @@ Forward controllers remain available for quick spins and debugging using `config
 scripts/ros_clean.sh --force
 sudo systemctl start pigpiod || sudo /usr/local/bin/pigpiod
 
-# Launch
+# Launch manager
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 ros2 launch alpha_viam_bringup drive_min.launch.py
 
-# Sanity: controller params exist on the controller node
+# Verify params & controllers
 timeout 4s ros2 param get /diff_drive_controller left_wheel_names
 timeout 4s ros2 param get /diff_drive_controller right_wheel_names
-
-# Interfaces claimed
-timeout 4s ros2 control list_controllers
-timeout 4s ros2 control list_hardware_interfaces
+ros2 control list_controllers
+ros2 control list_hardware_interfaces
 
 # Move (unstamped)
 timeout 2s ros2 topic pub -r 15 /diff_drive_controller/cmd_vel_unstamped geometry_msgs/msg/Twist "{linear: {x: 1.0}, angular: {z: 0.0}}"
@@ -107,8 +102,8 @@ timeout 1s ros2 topic pub --once /diff_drive_controller/cmd_vel_unstamped geomet
 
 ## Acceptance checklist
 
-- [x] `controllers.yaml` uses `type` + `params_file` (absolute path).
-- [x] `diff_drive_params.yaml` contains required keys with sane values.
-- [x] JSB spawns; diff drive spawns without `--param-file`.
+- [x] `controllers.yaml` lists controller types only.
+- [x] `diff_drive.params.yaml` is controller-scoped and installed into package share.
+- [x] JSB spawns; diff drive spawns with `--param-file` and unloads on kill.
 - [ ] Controller node shows correct wheel arrays; controller active with velocity interfaces claimed.
 - [ ] Short burst on `/diff_drive_controller/cmd_vel_unstamped` produces motion; MCAP recorded and logged.

@@ -7,9 +7,11 @@ import yaml
 
 import rclpy
 from rclpy.node import Node
-from rcl_interfaces.msg import Parameter as ParamMsg, ParameterValue
-from rcl_interfaces.srv import SetParameters
-from controller_manager_msgs.srv import LoadController, SwitchController, ListControllers
+from rcl_interfaces.msg import Parameter as ParamMsg
+from ros2param.api import call_set_parameters, get_parameter_value
+from controller_manager import set_controller_parameters_from_param_files
+from controller_manager_msgs.srv import LoadController, SwitchController, ListControllers, ConfigureController
+from builtin_interfaces.msg import Duration
 
 
 class ForwardActivator(Node):
@@ -21,6 +23,7 @@ class ForwardActivator(Node):
         self.right = "right_wheel_velocity_controller"
 
         self.cli_load = self.create_client(LoadController, f"{self.cm}/load_controller")
+        self.cli_configure = self.create_client(ConfigureController, f"{self.cm}/configure_controller")
         self.cli_switch = self.create_client(SwitchController, f"{self.cm}/switch_controller")
         self.cli_list = self.create_client(ListControllers, f"{self.cm}/list_controllers")
 
@@ -51,75 +54,56 @@ class ForwardActivator(Node):
             raise RuntimeError(f"load_controller failed for {name}")
 
     @staticmethod
-    def _to_param_msgs(mapping: dict) -> list[ParamMsg]:
+    def _to_param_msgs_with_prefix(ctrl: str, mapping: dict) -> list[ParamMsg]:
         msgs: list[ParamMsg] = []
         for k, v in mapping.items():
-            pv = ParameterValue()
-            if isinstance(v, bool):
-                pv.type = ParameterValue.TYPE_BOOL
-                pv.bool_value = v
-            elif isinstance(v, int):
-                pv.type = ParameterValue.TYPE_INTEGER
-                pv.integer_value = v
-            elif isinstance(v, float):
-                pv.type = ParameterValue.TYPE_DOUBLE
-                pv.double_value = v
-            elif isinstance(v, str):
-                pv.type = ParameterValue.TYPE_STRING
-                pv.string_value = v
-            elif isinstance(v, list) and all(isinstance(x, str) for x in v):
-                pv.type = ParameterValue.TYPE_STRING_ARRAY
-                pv.string_array_value = v
-            elif isinstance(v, list) and all(isinstance(x, float) for x in v):
-                pv.type = ParameterValue.TYPE_DOUBLE_ARRAY
-                pv.double_array_value = v
-            elif isinstance(v, list) and all(isinstance(x, int) for x in v):
-                pv.type = ParameterValue.TYPE_INTEGER_ARRAY
-                pv.integer_array_value = v
-            else:
-                pv.type = ParameterValue.TYPE_STRING
-                pv.string_value = str(v)
             pm = ParamMsg()
-            pm.name = k
-            pm.value = pv
+            pm.name = f"{ctrl}.{k}"
+            # ros2param helper builds a ParameterValue from YAML string
+            import yaml as _yaml
+            s = v if isinstance(v, str) else _yaml.safe_dump(v, default_flow_style=True).strip()
+            pm.value = get_parameter_value(string_value=s)
             msgs.append(pm)
         return msgs
 
-    def set_from_yaml(self, ctrl: str, data: dict) -> None:
-        # Accept either manager-nested or top-level controller params
+    def set_from_yaml(self, ctrl: str, data: dict, yaml_path: str | None = None) -> None:
+        # Accept controller-rooted or manager-nested params
         params: dict
         if ctrl in data and isinstance(data[ctrl], dict):
             inner = data[ctrl]
             params = inner.get("ros__parameters", inner)
-        elif "controller_manager" in data:
-            cm = data["controller_manager"]
-            if isinstance(cm, dict) and "ros__parameters" in cm:
-                rp = cm["ros__parameters"]
-                if isinstance(rp, dict) and ctrl in rp and isinstance(rp[ctrl], dict):
-                    inner = rp[ctrl]
-                    params = inner.get("ros__parameters", inner)
-                else:
-                    params = {}
-            else:
-                params = {}
+        elif "controller_manager" in data and isinstance(data["controller_manager"], dict):
+            rp = data["controller_manager"].get("ros__parameters", {})
+            params = rp.get(ctrl, {}).get("ros__parameters", rp.get(ctrl, {})) if isinstance(rp, dict) else {}
         else:
             params = {}
 
-        cli = self.create_client(SetParameters, f"/{ctrl}/set_parameters")
-        self.wait(f"{ctrl} set_parameters", cli)
-        req = SetParameters.Request()
-        req.parameters = self._to_param_msgs(params)
-        fut = cli.call_async(req)
-        rclpy.spin_until_future_complete(self, fut, timeout_sec=8.0)
-        if not fut.done() or fut.result() is None or not all(r.successful for r in fut.result().results):
-            raise RuntimeError(f"set_parameters failed for {ctrl}")
+        ok = True
+        # Prefer param-file bridge if a path is provided (more Humble-compatible)
+        if yaml_path:
+            ok = set_controller_parameters_from_param_files(self, self.cm, ctrl, [yaml_path])
+        else:
+            req_params = self._to_param_msgs_with_prefix(ctrl, params)
+            resp = call_set_parameters(node=self, node_name=self.cm, parameters=req_params)
+            ok = all(r.successful for r in resp.results)
+        if not ok:
+            raise RuntimeError(f"parameter injection failed for {ctrl}")
 
     def activate_both(self) -> None:
+        # Ensure configured first
+        self.wait("configure_controller", self.cli_configure)
+        for name in [self.left, self.right]:
+            reqc = ConfigureController.Request(); reqc.name = name
+            futc = self.cli_configure.call_async(reqc)
+            rclpy.spin_until_future_complete(self, futc, timeout_sec=6.0)
+            if not futc.done() or futc.result() is None or not futc.result().ok:
+                raise RuntimeError(f"configure_controller failed for {name}")
+
         self.wait("switch_controller", self.cli_switch)
         req = SwitchController.Request()
         req.activate_controllers = [self.left, self.right]
         req.strictness = SwitchController.Request.STRICT
-        req.timeout = 3.0
+        req.timeout = Duration(sec=3, nanosec=0)
         fut = self.cli_switch.call_async(req)
         rclpy.spin_until_future_complete(self, fut, timeout_sec=8.0)
         if not fut.done() or fut.result() is None or not fut.result().ok:
@@ -141,8 +125,16 @@ def main() -> int:
         node.ensure_loaded(node.left)
         node.ensure_loaded(node.right)
         node.get_logger().info("Setting params from YAML…")
-        node.set_from_yaml(node.left, data)
-        node.set_from_yaml(node.right, data)
+        # Prefer controller-scoped spawner file if present
+        spawner_file = yaml_path
+        # If given file is manager-scoped (wheels_forward.yaml), use configs/spawner/forward.yaml if present
+        import os
+        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        spawner_default = os.path.join(repo_root, 'configs', 'spawner', 'forward.yaml')
+        if os.path.exists(spawner_default):
+            spawner_file = spawner_default
+        node.set_from_yaml(node.left, data, spawner_file)
+        node.set_from_yaml(node.right, data, spawner_file)
         node.get_logger().info("Activating controllers…")
         node.activate_both()
         node.get_logger().info("Forward controllers active")
@@ -154,4 +146,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -80,6 +80,7 @@ class L298NSystemHardware : public hardware_interface::SystemInterface {
   bool brake_on_zero_{false};
   unsigned enc_glitch_us_{100};
   double watchdog_s_{0.5};
+  bool debug_{false};
 
   // State/command
   std::array<double, 2> pos_{0.0, 0.0};

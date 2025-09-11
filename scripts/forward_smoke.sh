@@ -8,7 +8,15 @@ warn() { printf "\e[33m%s\e[0m\n" "$*"; }
 err()  { printf "\e[31m%s\e[0m\n" "$*"; }
 
 if ! pgrep -x pigpiod >/dev/null 2>&1; then
-  sudo systemctl start pigpiod || sudo /usr/local/bin/pigpiod || true
+  if sudo -n true 2>/dev/null; then
+    sudo -n systemctl start pigpiod || sudo -n /usr/local/bin/pigpiod -g || sudo -n pigpiod -g || true
+  elif [ -n "${ROVER_SUDO:-}" ]; then
+    printf '%s\n' "$ROVER_SUDO" | sudo -S -p '' systemctl start pigpiod || \
+    printf '%s\n' "$ROVER_SUDO" | sudo -S -p '' /usr/local/bin/pigpiod -g || \
+    printf '%s\n' "$ROVER_SUDO" | sudo -S -p '' pigpiod -g || true
+  else
+    warn "Skipping pigpio start (no non-interactive sudo). Set ROVER_SUDO to enable."
+  fi
   sleep 0.5
 fi
 

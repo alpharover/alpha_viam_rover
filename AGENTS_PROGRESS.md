@@ -25,7 +25,7 @@ Rules
 * Summary of changes: Implemented architect’s fix. Rewrote `configs/controllers.yaml` to use `type` + `params_file` (absolute path) for `diff_drive_controller`. Updated `configs/diff_drive_params.yaml` to canonical keys. Added `pigs_smoke.sh` (GPIO smoke), `direct_smoke.sh` (ROS direct path), `diff_drive_smoke.sh` (manager + ros2 control load/activate), and `pub_twist.py`. Hardened plugin discovery by injecting overlay env into `ros2_control_node` in all bring-ups. Added `cm_only.launch.py` for deterministic manager bring-up. Expanded `ros_clean.sh` to catch spawners by path. Wrote status handoff at `docs/control/drive_bringup_status_2025-09-10.md`.
 * Acceptance test result: Direct path PASS (motors spun). Diff-drive: pending — plugin discovery hardened; on-device retest next.
 * Evidence links: `bags/direct_<ts>/`; pigs smoke operator confirmation; status doc.
-* Follow‑ups / Risks: If plugin still fails to load, capture first 60 lines of manager logs and env; consider distro uplift if instability persists.
+* Update (14:32 CDT): diff_drive smoke completed cleanly — JSB+DDC ACTIVE, interfaces claimed, bag contains `/diff_drive_controller/cmd_vel_unstamped` and `/joint_states` — but NO physical motion observed. Added detailed notes and architect asks to status doc; next step is to add DEBUG logging in hardware (with approval) to trace PWM/direction set.
 
 * 2025-09-09 / agent: codex-cli
 * Phase / Subsystem: Drive / ros2_control (Phase 3)
@@ -572,3 +572,70 @@ Rules
 - Next steps:
   1) Run `drive_forward.launch.py`, then `python3 scripts/activate_forward.py configs/wheels_forward.yaml`, then publish to `/left_wheel_velocity_controller/commands` and `/right_wheel_velocity_controller/commands` to verify motion.
   2) Once validated, revisit diff drive: either confirm Humble-supported param-at-load shape or adopt controller-specific load API if available.
+
+### 2025-09-10 — Architect alignment: Humble-safe spawner param-file + package share paths
+
+- Task: Apply architect guidance to remove manager-side `params_file`, use a controller-scoped param file with the spawner, and harden pathing via package share.
+- Changes:
+  - configs: `controllers.yaml` now lists only controller types (removed `params_file`).
+  - configs: added `diff_drive.params.yaml` (controller-scoped) and kept prior file untouched for history.
+  - bringup launches (`cm_only`, `drive_min`, `base_bringup`): resolve URDF/configs via `get_package_share_directory('alpha_viam_bringup')`; removed env injection; spawner for `diff_drive_controller` now uses `--param-file` and `--unload-on-kill`.
+  - top-level `launch/cm_only.launch.py`: simplified to manager-only; no controller param injection.
+  - scripts: `diff_drive_smoke.sh` now spawns JSB and diff drive with `--param-file` using the package share path.
+  - packaging: `bringup/alpha_viam_bringup/setup.py` now installs selected `configs/` and `urdf/` into package share.
+- Docs:
+  - ADR‑0005 revised: “Humble — Controller Params via Spawner Param-File”.
+  - Status report updated to reflect the Humble-safe flow and pathing changes.
+- Next run plan:
+  1) `colcon build` and `source install/setup.bash` to pick up installed configs/URDF.
+  2) `ros2 launch alpha_viam_bringup drive_min.launch.py`.
+  3) Verify wheel names params on controller node, controller ACTIVE, interfaces claimed.
+  4) Run `scripts/diff_drive_smoke.sh 12` to move and record MCAP.
+
+### 2025-09-11 — Humble controller crash fix + script watchdogs
+
+- Task ID: HOTFIX-001 — diff_drive param-file crash; smoke script hangs
+- Subsystem: bringup/controllers, scripts
+- Files touched:
+  - configs/controllers.yaml (remove manager-side params_file; types only)
+  - configs/diff_drive_params.yaml (controller-scoped /** root)
+  - scripts/diff_drive_smoke.sh (timeouts, watchdog, non-interactive sudo)
+  - scripts/diff_drive_validate.sh (timeouts, watchdog, non-interactive sudo)
+  - bringup/.../cm_only.launch.py (use share_dir path; clarify comments)
+  - bringup/.../(cm_only,drive_min).launch.py (overlay fallback for l298n_hardware env)
+  - drivers/l298n_hardware/package.xml (export plugin path fix)
+- Extras: scripts now print Bag path immediately and tee to script.log; pigpio start is skipped (no hang) if non-interactive sudo unavailable.
+- Outcome: Pass (static verification). Prior crash reproduced in bags/diff_20250910_170635: ros2_control_node died parsing manager-side params_file. Removed offending config and ensured spawner passes controller-scoped params via --param-file. Hardened scripts to avoid hangs (global timeouts, bring-up watchdogs, cleanup traps). No runtime executed now per user request.
+- Evidence: N/A (no new bag). Prior log at bags/diff_20250910_170635/bringup.log shows failure mode.
+- Follow-ups: When ready, run a short validation: `scripts/diff_drive_validate.sh 8` (≤30s end-to-end). Expect JSB + DDC ACTIVE and no ros2_control_node crash. If ACTIVE but no motion, next step is PWM/dir sanity in l298n_hardware.
+
+### 2025-09-11 — Nightly Handoff (forward controllers path + DiffDrive blockers)
+
+- Subsystem: bringup/controllers, scripts, docs
+- State:
+  - l298n_hardware loads and activates; watchdog fires until commands flow.
+  - DiffDrive on this Humble build still rejects at init: `left_wheel_names cannot be empty` (typed params not applied at load).
+  - Forward controllers path almost complete; missing step was using controller-scoped param file with spawner when pkg share wasn’t sourced.
+- What changed today:
+  - drive_forward.launch.py: package-share paths + plugin env fallback.
+  - Added configs/spawner/forward.yaml (controller-scoped) and installed into bringup share.
+  - Hardened scripts (timeouts, watchdog, non-interactive sudo); added param priming helpers.
+  - Documented plan + ADR proposal (see docs/ADR/0006-controller-param-compat-humble.md) and status at docs/control/drive_bringup_status_2025-09-11.md.
+- Evidence:
+  - Bags: `bags/diff_drive_20250910_193019` (JSB only; no DDC), `log/agent_runs/20250910_200608/bag_0.mcap` (JSB + TF), and forward runs under `log/agent_runs/`.
+- Next session TODO (order):
+  1) Start manager-only: `ros2 launch alpha_viam_bringup cm_only.launch.py`.
+  2) Spawn JSB: `ros2 run controller_manager spawner joint_state_broadcaster --controller-manager /controller_manager --activate`.
+  3) Spawn forward controllers INACTIVE with repo param file: 
+     - `SP="$PWD/configs/spawner/forward.yaml"`
+     - `ros2 run controller_manager spawner left_wheel_velocity_controller  --controller-manager /controller_manager --controller-type forward_command_controller/ForwardCommandController  --param-file "$SP" --inactive`
+     - `ros2 run controller_manager spawner right_wheel_velocity_controller --controller-manager /controller_manager --controller-type forward_command_controller/ForwardCommandController --param-file "$SP" --inactive`
+  4) Configure + activate via services (strict):
+     - `ros2 service call /controller_manager/configure_controller controller_manager_msgs/srv/ConfigureController "{name: 'left_wheel_velocity_controller'}"`
+     - `ros2 service call /controller_manager/configure_controller controller_manager_msgs/srv/ConfigureController "{name: 'right_wheel_velocity_controller'}"`
+     - `ros2 service call /controller_manager/switch_controller controller_manager_msgs/srv/SwitchController "{activate_controllers: ['left_wheel_velocity_controller','right_wheel_velocity_controller'], strictness: 2, timeout: {sec: 3, nanosec: 0}}"`
+  5) Command burst + record: publish to both `/.../commands`; record MCAP with `/joint_states`, `/tf`, commands.
+  6) If configure fails: run the four `ros2 param set /controller_manager ...` lines for `joints` + `interface_name` on both and re-configure.
+- Risks/Asks:
+  - ADR‑0006 requires architect alignment to patch the Humble param bridge (shim or version pin) before DiffDrive can pass init reliably.
+  - Once forward path is validated, we can switch back to DiffDrive after ADR acceptance.

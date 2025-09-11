@@ -117,6 +117,7 @@ CallbackReturn L298NSystemHardware::on_init(const hardware_interface::HardwareIn
   brake_on_zero_ = get_b("brake_on_zero", brake_on_zero_);
   enc_glitch_us_ = static_cast<unsigned>(get_i("encoder_glitch_us", static_cast<int>(enc_glitch_us_)));
   watchdog_s_ = get_d("watchdog_s", watchdog_s_);
+  debug_ = get_b("debug", debug_);
 
   // Validate joints: expect exactly 2: left_wheel_joint, right_wheel_joint
   if (info_.joints.size() != 2) {
@@ -270,6 +271,11 @@ void L298NSystemHardware::set_motor(int idx, double cmd_rad_s, double dt) {
     gpio_write(pi_, in_b, 1);
   }
   set_PWM_dutycycle(pi_, pwm_pin, duty);
+  if (debug_ && duty != last_duty_[idx]) {
+    RCLCPP_INFO(rclcpp::get_logger("l298n_hardware"),
+                "motor[%d] cmd=%.3f dir=%s duty=%d/%d (target=%d)",
+                idx, cmd_rad_s, (c >= 0 ? "fwd" : "rev"), duty, pwm_range_, target_duty);
+  }
   last_duty_[idx] = duty;
 }
 
@@ -300,9 +306,18 @@ return_type L298NSystemHardware::write(const rclcpp::Time &time, const rclcpp::D
 
   // Watchdog: if no recent commands within watchdog_s_, stop motors
   auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - last_cmd_tp_).count();
+  static rclcpp::Clock steady_clock{RCL_STEADY_TIME};
   if (elapsed > watchdog_s_) {
+    if (debug_) {
+      RCLCPP_INFO_THROTTLE(rclcpp::get_logger("l298n_hardware"), steady_clock, 2000,
+                           "watchdog tripped (%.3fs > %.3fs); braking", elapsed, watchdog_s_);
+    }
     stop_all(true);
     return return_type::OK;
+  }
+  if (debug_) {
+    RCLCPP_INFO_THROTTLE(rclcpp::get_logger("l298n_hardware"), steady_clock, 500,
+                         "write dt=%.3f cmdL=%.3f cmdR=%.3f", dt, cmd_[0], cmd_[1]);
   }
   set_motor(0, cmd_[0], dt);
   set_motor(1, cmd_[1], dt);

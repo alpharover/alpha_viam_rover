@@ -91,6 +91,7 @@
       <param name="invert_right">false</param>
       <param name="brake_on_zero">false</param>
       <param name="watchdog_s">0.5</param>
+      <param name="debug">true</param>
     </hardware>
     <joint name="left_wheel_joint">
       <command_interface name="velocity"/>

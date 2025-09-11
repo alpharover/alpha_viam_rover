@@ -10,19 +10,29 @@ set -euo pipefail
 # Usage: scripts/diff_drive_validate.sh [record_seconds]
 
 DUR=${1:-12}
+LAUNCH_TTL=$(( DUR + 60 ))
+INFO_TTL=${INFO_TTL:-15}
 TS=$(date +%Y%m%d_%H%M%S)
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BAG_DIR="$ROOT_DIR/bags/diff_drive_${TS}"
 mkdir -p "$BAG_DIR"
+echo "[diff_drive_validate] Bag: $BAG_DIR"
+exec > >(tee -a "$BAG_DIR/script.log") 2>&1
 
 echo "[diff_drive_validate] Cleaning ROS state..."
 "$ROOT_DIR/scripts/ros_clean.sh" --force || true
 
 echo "[diff_drive_validate] Starting pigpio daemon..."
-if command -v systemctl >/dev/null 2>&1; then
-  sudo systemctl start pigpiod || sudo /usr/local/bin/pigpiod || sudo pigpiod || true
-else
-  sudo /usr/local/bin/pigpiod || sudo pigpiod || true
+if ! pgrep -x pigpiod >/dev/null 2>&1; then
+  if sudo -n true 2>/dev/null; then
+    sudo -n systemctl start pigpiod || sudo -n /usr/local/bin/pigpiod -g || sudo -n pigpiod -g || true
+  elif [ -n "${ROVER_SUDO:-}" ]; then
+    printf '%s\n' "$ROVER_SUDO" | sudo -S -p '' systemctl start pigpiod || \
+    printf '%s\n' "$ROVER_SUDO" | sudo -S -p '' /usr/local/bin/pigpiod -g || \
+    printf '%s\n' "$ROVER_SUDO" | sudo -S -p '' pigpiod -g || true
+  else
+    echo "[diff_drive_validate] WARN: skipping pigpio start (no non-interactive sudo). Set ROVER_SUDO to enable."
+  fi
 fi
 
 echo "[diff_drive_validate] Sourcing ROS and overlay..."
@@ -37,9 +47,40 @@ BR_PID=$!
 sleep 6
 BR_PGID=$(ps -o pgid= $BR_PID | tr -d ' ')
 
+cleanup() {
+  local code=$?
+  if [ -n "${BR_PGID:-}" ]; then
+    kill -INT -"$BR_PGID" 2>/dev/null || true; sleep 0.5 || true
+    kill -TERM -"$BR_PGID" 2>/dev/null || true; sleep 0.5 || true
+    kill -KILL -"$BR_PGID" 2>/dev/null || true
+  fi
+  if [ -n "${WD_PID:-}" ] && kill -0 "$WD_PID" 2>/dev/null; then
+    kill "$WD_PID" 2>/dev/null || true
+  fi
+  echo "[diff_drive_validate] Exit code: $code"
+}
+trap cleanup EXIT INT TERM
+
+bringup_watchdog() {
+  local ttl=$1
+  sleep "$ttl"
+  if kill -0 "$BR_PID" 2>/dev/null; then
+    echo "[diff_drive_validate] WATCHDOG: bring-up exceeded ${ttl}s; stopping"
+    kill -INT -"$BR_PGID" 2>/dev/null || true; sleep 0.5 || true
+    kill -TERM -"$BR_PGID" 2>/dev/null || true; sleep 0.5 || true
+    kill -KILL -"$BR_PGID" 2>/dev/null || true
+  fi
+}
+bringup_watchdog "$LAUNCH_TTL" &
+WD_PID=$!
+
+echo "[diff_drive_validate] Priming controller params on manager"
+python3 "$ROOT_DIR/scripts/prime_controller_params.py" diff_drive_controller "$ROOT_DIR/configs/diff_drive.yaml" || true
+echo "[diff_drive_validate] Loading + setting params via activator"
+python3 "$ROOT_DIR/scripts/activate_diff_drive.py" "$ROOT_DIR/configs/diff_drive.yaml" || true
 echo "[diff_drive_validate] Controller parameters (on controller node)"
-timeout 4s ros2 param get /diff_drive_controller left_wheel_names || true
-timeout 4s ros2 param get /diff_drive_controller right_wheel_names || true
+timeout 6s ros2 param get /diff_drive_controller left_wheel_names || true
+timeout 6s ros2 param get /diff_drive_controller right_wheel_names || true
 
 echo "[diff_drive_validate] Controllers and hardware interfaces"
 timeout 4s ros2 control list_controllers || true
@@ -66,7 +107,6 @@ kill -KILL -"$BR_PGID" 2>/dev/null || true
 "$ROOT_DIR/scripts/ros_clean.sh" --force || true
 
 echo "[diff_drive_validate] Bag at: $BAG_DIR"
-ros2 bag info "$BAG_DIR/diff_drive_run" || true
+timeout "${INFO_TTL}s" ros2 bag info "$BAG_DIR/diff_drive_run" || true
 
 echo "[diff_drive_validate] Done."
-
