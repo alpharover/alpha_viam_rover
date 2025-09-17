@@ -655,3 +655,11 @@ Rules
 * Acceptance test result: Fail — controller manager terminates when JSB load fails; forward/diff controllers remain untested.
 * Evidence links: `/home/alpha_viam/.ros/log/2025-09-17-16-19-48-902172-alpha-viam-9418/`, `/tmp/cm_only.log` (local), updated status doc.
 * Follow-ups / Risks: Need architect guidance on JSB plugin discovery (check installed `controllers.yaml`, plugin exports, ament index). Without JSB, parameter shim work remains blocked.
+
+* 2025-03-05 / agent: openai-assistant
+* Phase / Subsystem: Bringup / ros2_control (Phase 3)
+* Task ID: TASK-DEP-ROS2CTRL — bringup package.xml dependency refresh
+* Summary of changes: Added controller manager and ros2_control controller exec dependencies to `bringup/alpha_viam_bringup/package.xml`. Bootstrapped tooling (`rosdep`, `colcon`) in the container, resolved controller packages to `ros-humble-*`, and built the Python bringup package to confirm metadata integrity.
+* Acceptance test result: Blocked — ROS 2 Humble binaries (ros2 CLI, controller plugins) are unavailable on this Ubuntu Noble container; could not launch `cm_only.launch.py` to capture a successful JSB bring-up.
+* Evidence links: `rosdep resolve` console output in session log; no MCAP/log capture due to missing ROS 2 runtime.
+* Follow-ups / Risks: Requires Jammy-based environment with ROS 2 Humble installed to exercise controller_manager launches and record logs.
