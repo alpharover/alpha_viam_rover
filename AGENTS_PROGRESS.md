@@ -647,3 +647,11 @@ Rules
 * Acceptance test result: Direct path PASS (motors spun, bag at `bags/direct_20250917_145040/`). Forward/diff controllers still FAIL on configure (expected until shim).
 * Evidence links: `log/agent_runs/20250917_145040/`, `bags/direct_20250917_145040/direct_run_0.mcap`, `docs/control/drive_bringup_status_2025-09-17.md`.
 * Follow-ups / Risks: Implement SetControllerParameters shim or version pin to unblock `configure_controller`; capture param dumps post-activator; diff drive validation pending shim.
+
+* 2025-09-17 / agent: codex-cli
+* Phase / Subsystem: Drive / ros2_control (Phase 3)
+* Task ID: INVEST-001 — controller manager launch diagnostics
+* Summary of changes: Attempted manual bring-up via `cm_only.launch.py` and CLI controller loading; observed consistent failure loading `joint_state_broadcaster` (pluginlib missing class) causing `/controller_manager` to exit before parameter services come up. Documented blocker in `docs/control/drive_bringup_status_2025-09-17.md` and captured logs for architect review.
+* Acceptance test result: Fail — controller manager terminates when JSB load fails; forward/diff controllers remain untested.
+* Evidence links: `/home/alpha_viam/.ros/log/2025-09-17-16-19-48-902172-alpha-viam-9418/`, `/tmp/cm_only.log` (local), updated status doc.
+* Follow-ups / Risks: Need architect guidance on JSB plugin discovery (check installed `controllers.yaml`, plugin exports, ament index). Without JSB, parameter shim work remains blocked.

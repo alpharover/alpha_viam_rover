@@ -13,11 +13,13 @@ What works now
 What’s blocked
 - `ros2 control configure_controller` still reports "'joints' parameter was empty" for forward controllers even after param injection.
 - `diff_drive_controller` path blocked on same issue; controller remains `unconfigured` and hardware watchdog keeps braking.
+- New today: controller manager refuses to load `joint_state_broadcaster` via spawner or CLI (pluginlib reports the class is missing). When that happens, `/controller_manager` exits, taking parameter services down before the activator can run.
 
 Plan
 1. Instrument parameter state: after activator runs, capture `ros2 param get /controller_manager <controller>.joints` and include in ADR-0006.
-2. Implement shim to call the low-level SetControllerParameters service (bypassing the broken bridge) or pin controller_manager to a patched release; request architect review.
-3. Once parameters hold, rerun `scripts/forward_smoke.sh` and `scripts/diff_drive_validate.sh` to collect MCAP evidence and update `AGENTS_PROGRESS.md`.
+2. Investigate JSB load failure: diff `configs/controllers.yaml` vs installed copy, confirm plugin exports, and capture pluginlib debug output.
+3. Implement shim to call the low-level SetControllerParameters service (bypassing the broken bridge) or pin controller_manager to a patched release; request architect review.
+4. Once parameters hold, rerun `scripts/forward_smoke.sh` and `scripts/diff_drive_validate.sh` to collect MCAP evidence and update `AGENTS_PROGRESS.md`.
 
 Evidence
 - `log/agent_runs/20250917_145040/` (direct smoke) with clean shutdown logs.
