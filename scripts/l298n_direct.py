@@ -78,20 +78,37 @@ class L298NDirect(Node):
 
     def set_motor(self, left: float, right: float) -> None:
         # left/right in m/s
+        if self.pi is None or not getattr(self.pi, "connected", False):
+            return
+
         def drive(pwm_pin: int, a: int, b: int, v: float, invert: bool) -> None:
+            if self.pi is None or not getattr(self.pi, "connected", False):
+                return
             sign = -1.0 if invert else 1.0
             v *= sign
             if abs(v) < self.deadband:
-                self.pi.write(a, 0); self.pi.write(b, 0)
-                self.pi.set_PWM_dutycycle(pwm_pin, 0)
+                try:
+                    self.pi.write(a, 0); self.pi.write(b, 0)
+                    self.pi.set_PWM_dutycycle(pwm_pin, 0)
+                except Exception:  # pigpio disconnect during shutdown
+                    pass
                 return
             mag = min(abs(v) / max(1e-6, self.max_mps), 1.0)
             duty = int(round(mag * self.range))
             if v >= 0:
-                self.pi.write(a, 1); self.pi.write(b, 0)
+                try:
+                    self.pi.write(a, 1); self.pi.write(b, 0)
+                except Exception:
+                    return
             else:
-                self.pi.write(a, 0); self.pi.write(b, 1)
-            self.pi.set_PWM_dutycycle(pwm_pin, duty)
+                try:
+                    self.pi.write(a, 0); self.pi.write(b, 1)
+                except Exception:
+                    return
+            try:
+                self.pi.set_PWM_dutycycle(pwm_pin, duty)
+            except Exception:
+                pass
 
         drive(self.pins.left_pwm, self.pins.left_in1, self.pins.left_in2, left, self.invert_left)
         drive(self.pins.right_pwm, self.pins.right_in3, self.pins.right_in4, right, self.invert_right)
@@ -110,7 +127,10 @@ class L298NDirect(Node):
             self.set_motor(0.0, 0.0)
         finally:
             if self.pi is not None:
-                self.pi.stop()
+                try:
+                    self.pi.stop()
+                finally:
+                    self.pi = None
 
 
 def main() -> int:
@@ -127,4 +147,3 @@ def main() -> int:
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
-

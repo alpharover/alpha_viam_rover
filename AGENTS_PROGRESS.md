@@ -639,3 +639,11 @@ Rules
 - Risks/Asks:
   - ADR‑0006 requires architect alignment to patch the Humble param bridge (shim or version pin) before DiffDrive can pass init reliably.
   - Once forward path is validated, we can switch back to DiffDrive after ADR acceptance.
+
+* 2025-09-17 / agent: codex-cli
+* Phase / Subsystem: Drive / ros2_control (Phase 3)
+* Task ID: HOTFIX-002 — Direct motor smoke + controller param shim groundwork
+* Summary of changes: Hardened `scripts/l298n_direct.py` against pigpio disconnects so direct smoke exits cleanly. Enhanced `scripts/activate_forward.py` to prime/reapply controller params and tolerate flaky load responses. Validated motion via `scripts/direct_smoke.sh` and manual `pigs` bursts (fwd/rev/opposed). Logged status in `docs/control/drive_bringup_status_2025-09-17.md` with next steps for controller shim.
+* Acceptance test result: Direct path PASS (motors spun, bag at `bags/direct_20250917_145040/`). Forward/diff controllers still FAIL on configure (expected until shim).
+* Evidence links: `log/agent_runs/20250917_145040/`, `bags/direct_20250917_145040/direct_run_0.mcap`, `docs/control/drive_bringup_status_2025-09-17.md`.
+* Follow-ups / Risks: Implement SetControllerParameters shim or version pin to unblock `configure_controller`; capture param dumps post-activator; diff drive validation pending shim.
