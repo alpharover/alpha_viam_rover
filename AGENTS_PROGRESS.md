@@ -663,3 +663,23 @@ Rules
 * Acceptance test result: Blocked — ROS 2 Humble binaries (ros2 CLI, controller plugins) are unavailable on this Ubuntu Noble container; could not launch `cm_only.launch.py` to capture a successful JSB bring-up.
 * Evidence links: `rosdep resolve` console output in session log; no MCAP/log capture due to missing ROS 2 runtime.
 * Follow-ups / Risks: Requires Jammy-based environment with ROS 2 Humble installed to exercise controller_manager launches and record logs.
+
+---
+
+* 2025-12-26 / agent: codex-cli
+* Phase / Subsystem: Ops / Remote dev + access
+* Task ID: #remote-dev-quickstart — Document rover contact + sync workflow
+* Summary: Confirmed rover reachable on LAN via mDNS `alpha-viam.local`; SSH user `alpha_viam` works; repo present at `~/alpha_viam_rover` with origin `git@github.com:alpharover/alpha_viam_rover.git`. Added quickstart doc for future sessions.
+* Files touched: `docs/remote_dev_quickstart.md`
+* Outcome: Pass (doc created; connectivity verified)
+* Evidence: SSH `hostname` -> `alpha-viam`; `git status -sb` on rover shows branch `chore/lint-fixes`.
+* Follow-ups / Risks: For cross-machine ROS 2 CLI discovery, ensure matching `ROS_DOMAIN_ID` (config suggests `20`).
+
+* 2025-12-26 / agent: codex-ide
+* Phase / Subsystem: Drive / Smoke scripts (Phase 3)
+* Task ID: (no issue) — Auto-detect controller cmd/odom topics
+* Summary of changes: Updated smoke scripts to auto-detect the cmd topic and record both possible odom topics. `diff_drive_validate.sh` no longer assumes controller node params are queryable.
+* Acceptance test result: Local `bash -n` OK; on-device run pending.
+* Evidence links: N/A (no new bag captured in this repo session).
+* Follow-ups / Risks: If cmd/odom topics are still missing on-device, inspect `ros2 topic list` and controller_manager logs; consider adding `shellcheck` validation.
+

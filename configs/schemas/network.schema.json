@@ -6,7 +6,8 @@
   "properties": {
     "rover_hostname": {"type": "string"},
     "foxglove_ws_port": {"type": "integer", "minimum": 1, "maximum": 65535},
-    "ros_domain_id": {"type": "integer", "minimum": 0, "maximum": 232}
+    "ros_domain_id": {"type": "integer", "minimum": 0, "maximum": 232},
+    "wifi_iface": {"type": "string"}
   },
   "required": ["rover_hostname", "foxglove_ws_port"]
 }

@@ -3,6 +3,9 @@ set -euo pipefail
 
 DUR=${1:-8}
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
 pass() { printf "\e[32m%s\e[0m\n" "$*"; }
 warn() { printf "\e[33m%s\e[0m\n" "$*"; }
 err()  { printf "\e[31m%s\e[0m\n" "$*"; }
@@ -36,9 +39,9 @@ if ! timeout 20s python3 scripts/activate_forward.py configs/wheels_forward.yaml
   warn "activate_forward helper reported a non-zero exit; continuing"
 fi
 
-if ! timeout 4s ros2 control list_controllers | rg -q "left_wheel_velocity_controller.*active"; then
+if ! timeout 4s ros2 control list_controllers | grep -Eq "left_wheel_velocity_controller.*active"; then
   err "Left controller not active"; fi
-if ! timeout 4s ros2 control list_controllers | rg -q "right_wheel_velocity_controller.*active"; then
+if ! timeout 4s ros2 control list_controllers | grep -Eq "right_wheel_velocity_controller.*active"; then
   err "Right controller not active"; fi
 
 setsid timeout ${DUR}s ros2 bag record -s mcap -o "$LOGDIR/bag" \

@@ -4,7 +4,7 @@ set -euo pipefail
 # Minimal validation for diff_drive_controller on ROS 2 Humble
 # - Ensures controller parameters are present at controller init via params_file
 # - Verifies controllers active and velocity interfaces claimed
-# - Publishes short burst on /diff_drive_controller/cmd_vel_unstamped
+# - Publishes short burst on detected cmd topic
 # - Records a short MCAP for evidence
 #
 # Usage: scripts/diff_drive_validate.sh [record_seconds]
@@ -14,10 +14,14 @@ LAUNCH_TTL=$(( DUR + 60 ))
 INFO_TTL=${INFO_TTL:-15}
 TS=$(date +%Y%m%d_%H%M%S)
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
 BAG_DIR="$ROOT_DIR/bags/diff_drive_${TS}"
 mkdir -p "$BAG_DIR"
 echo "[diff_drive_validate] Bag: $BAG_DIR"
 exec > >(tee -a "$BAG_DIR/script.log") 2>&1
+
+CMD_TOPIC_OVERRIDE=${CMD_TOPIC:-}
+LINEAR_X=${LINEAR_X:-0.6}
 
 echo "[diff_drive_validate] Cleaning ROS state..."
 "$ROOT_DIR/scripts/ros_clean.sh" --force || true
@@ -86,16 +90,44 @@ echo "[diff_drive_validate] Controllers and hardware interfaces"
 timeout 4s ros2 control list_controllers || true
 timeout 4s ros2 control list_hardware_interfaces || true
 
+detect_topic() {
+  local attempt topics candidate
+  for attempt in $(seq 1 20); do
+    topics="$(timeout 2s ros2 topic list 2>/dev/null || true)"
+    for candidate in "$@"; do
+      if echo "$topics" | grep -Fxq "$candidate"; then
+        echo "$candidate"
+        return 0
+      fi
+    done
+    sleep 0.25
+  done
+  return 1
+}
+
+if [[ -z "$CMD_TOPIC_OVERRIDE" ]]; then
+  CMD_TOPIC="$(detect_topic /diff_drive_controller/cmd_vel_unstamped /controller_manager/cmd_vel_unstamped /cmd_vel_unstamped /cmd_vel || true)"
+  if [[ -n "$CMD_TOPIC" ]]; then
+    echo "[diff_drive_validate] Auto-detected CMD_TOPIC=$CMD_TOPIC"
+  else
+    CMD_TOPIC="/diff_drive_controller/cmd_vel_unstamped"
+    echo "[diff_drive_validate] WARN: could not auto-detect cmd topic; using $CMD_TOPIC"
+  fi
+else
+  CMD_TOPIC="$CMD_TOPIC_OVERRIDE"
+  echo "[diff_drive_validate] Using CMD_TOPIC override: $CMD_TOPIC"
+fi
+
 echo "[diff_drive_validate] Recording MCAP for ${DUR}s..."
-TOPICS=(/diff_drive_controller/cmd_vel_unstamped /joint_states /tf /tf_static /odometry/filtered /diff_drive_controller/odom)
+TOPICS=("$CMD_TOPIC" /joint_states /tf /tf_static /odometry/filtered /controller_manager/odom /diff_drive_controller/odom)
 timeout "${DUR}s" ros2 bag record -s mcap -o "$BAG_DIR/diff_drive_run" "${TOPICS[@]}" &
 REC_PID=$!
 sleep 2
 
 echo "[diff_drive_validate] Drive burst (forward, then stop)"
-timeout 1.8s ros2 topic pub -r 15 /diff_drive_controller/cmd_vel_unstamped geometry_msgs/msg/Twist '{linear: {x: 0.6}, angular: {z: 0.0}}' || true
+python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$CMD_TOPIC" --duration 1.6 --rate 15 --linear_x "$LINEAR_X" || true
 sleep 0.5
-timeout 1s ros2 topic pub --once /diff_drive_controller/cmd_vel_unstamped geometry_msgs/msg/Twist '{linear: {x: 0.0}, angular: {z: 0.0}}' || true
+python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$CMD_TOPIC" --duration 0.2 --rate 3 --linear_x 0.0 || true
 
 wait $REC_PID || true
 

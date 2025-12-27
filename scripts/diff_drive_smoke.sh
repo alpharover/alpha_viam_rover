@@ -9,8 +9,12 @@ BUILD_TTL=${BUILD_TTL:-900}
 INFO_TTL=${INFO_TTL:-15}
 TS=$(date +%Y%m%d_%H%M%S)
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
 BAG_DIR="$ROOT_DIR/bags/diff_${TS}"
 mkdir -p "$BAG_DIR"
+
+CMD_TOPIC_OVERRIDE=${CMD_TOPIC:-}
+LINEAR_X=${LINEAR_X:-0.8}
 
 # Announce bag path early and capture script logs
 echo "[diff_drive_smoke] Bag: $BAG_DIR"
@@ -125,23 +129,65 @@ echo "[diff_drive_smoke] Param sanity (wheel names on controller node)"
 timeout 4s ros2 param get /diff_drive_controller left_wheel_names || true
 timeout 4s ros2 param get /diff_drive_controller right_wheel_names || true
 
-echo "[diff_drive_smoke] Subscriber sanity for cmd_vel_unstamped"
-ros2 topic info /diff_drive_controller/cmd_vel_unstamped || true
+detect_topic() {
+  local attempt topics candidate
+  for attempt in $(seq 1 20); do
+    topics="$(timeout 2s ros2 topic list 2>/dev/null || true)"
+    for candidate in "$@"; do
+      if echo "$topics" | grep -Fxq "$candidate"; then
+        echo "$candidate"
+        return 0
+      fi
+    done
+    sleep 0.25
+  done
+  return 1
+}
+
+if [[ -z "$CMD_TOPIC_OVERRIDE" ]]; then
+  CMD_TOPIC="$(detect_topic /diff_drive_controller/cmd_vel_unstamped /controller_manager/cmd_vel_unstamped /cmd_vel_unstamped /cmd_vel || true)"
+  if [[ -n "$CMD_TOPIC" ]]; then
+    echo "[diff_drive_smoke] Auto-detected CMD_TOPIC=$CMD_TOPIC"
+  else
+    CMD_TOPIC="/diff_drive_controller/cmd_vel_unstamped"
+    echo "[diff_drive_smoke] WARN: could not auto-detect cmd topic; using $CMD_TOPIC"
+  fi
+else
+  CMD_TOPIC="$CMD_TOPIC_OVERRIDE"
+  echo "[diff_drive_smoke] Using CMD_TOPIC override: $CMD_TOPIC"
+fi
+
+STAMPED_TOPIC="$(detect_topic /diff_drive_controller/cmd_vel /controller_manager/cmd_vel || true)"
+if [[ -n "$STAMPED_TOPIC" ]]; then
+  echo "[diff_drive_smoke] Also detected STAMPED_TOPIC=$STAMPED_TOPIC"
+fi
+
+echo "[diff_drive_smoke] Subscriber sanity for cmd topics"
+timeout 2s ros2 topic info "$CMD_TOPIC" || true
+if [[ -n "$STAMPED_TOPIC" ]]; then
+  timeout 2s ros2 topic info "$STAMPED_TOPIC" || true
+fi
 
 echo "[diff_drive_smoke] Recording ${DUR}s MCAP..."
-timeout "${DUR}s" ros2 bag record -s mcap -o "$BAG_DIR/diff_run" /diff_drive_controller/cmd_vel_unstamped /diff_drive_controller/cmd_vel /joint_states /tf /tf_static /rosout || true &
+TOPICS=("$CMD_TOPIC" /joint_states /tf /tf_static /rosout /controller_manager/odom /diff_drive_controller/odom)
+if [[ -n "$STAMPED_TOPIC" ]]; then
+  TOPICS+=("$STAMPED_TOPIC")
+fi
+timeout "${DUR}s" ros2 bag record -s mcap -o "$BAG_DIR/diff_run" "${TOPICS[@]}" || true &
 REC_PID=$!
 sleep 1
 
-echo "[diff_drive_smoke] Forward burst (try unstamped + stamped)"
-# Try unstamped first
-python3 "$ROOT_DIR/scripts/pub_twist.py" --topic /diff_drive_controller/cmd_vel_unstamped --duration 1.6 --rate 15 --linear_x 0.8 || true
-# Also try stamped in case controller is using stamped input
-python3 "$ROOT_DIR/scripts/pub_twist.py" --topic /diff_drive_controller/cmd_vel --duration 1.6 --rate 15 --linear_x 0.8 --stamped || true
+echo "[diff_drive_smoke] Forward burst on ${CMD_TOPIC} (linear_x=${LINEAR_X})"
+python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$CMD_TOPIC" --duration 1.6 --rate 15 --linear_x "$LINEAR_X" || true
+if [[ -n "$STAMPED_TOPIC" ]]; then
+  python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$STAMPED_TOPIC" --duration 1.6 --rate 15 --linear_x "$LINEAR_X" --stamped || true
+fi
 sleep 0.5
 echo "[diff_drive_smoke] Stop"
-python3 "$ROOT_DIR/scripts/pub_twist.py" --topic /diff_drive_controller/cmd_vel_unstamped --duration 0.2 --rate 3 --linear_x 0.0 || true
-python3 "$ROOT_DIR/scripts/pub_twist.py" --topic /diff_drive_controller/cmd_vel --duration 0.2 --rate 3 --linear_x 0.0 --stamped || true
+python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$CMD_TOPIC" --duration 0.2 --rate 3 --linear_x 0.0 || true
+if [[ -n "$STAMPED_TOPIC" ]]; then
+  python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$STAMPED_TOPIC" --duration 0.2 --rate 3 --linear_x 0.0 --stamped || true
+fi
 
 wait $REC_PID || true
 
@@ -159,6 +205,8 @@ timeout "${INFO_TTL}s" ros2 bag info "$BAG_DIR/diff_run" || true
 {
   echo "timestamp=$(date -Iseconds)"
   echo "bag_dir=$BAG_DIR"
+  echo "cmd_topic=${CMD_TOPIC:-}"
+  echo "stamped_topic=${STAMPED_TOPIC:-}"
   echo "param_left=$(ros2 param get /diff_drive_controller left_wheel_names 2>/dev/null | tr -d '\n')"
   echo "param_right=$(ros2 param get /diff_drive_controller right_wheel_names 2>/dev/null | tr -d '\n')"
   echo "controllers=$(ros2 control list_controllers 2>/dev/null | tr '\n' ';')"

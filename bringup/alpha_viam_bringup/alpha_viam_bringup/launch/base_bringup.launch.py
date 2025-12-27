@@ -223,34 +223,39 @@ def generate_launch_description():
                     ),
                 ],
             ),
-            # Load and activate diff_drive WITH --param-file (Humble-safe)
-            TimerAction(
-                period=3.0,
-                actions=[
-                    ExecuteProcess(
-                        cmd=[
-                            "ros2",
-                            "run",
-                            "controller_manager",
-                            "spawner",
-                            "diff_drive_controller",
-                            "--controller-manager",
-                            "/controller_manager",
-                            "--activate",
-                            "--unload-on-kill",
-                            "--param-file",
-                            os.path.join(share_dir, "configs", "diff_drive.params.yaml"),
-                        ],
-                        output="screen",
-                    ),
-                ],
-            ),
         ]
 
-        # Optionally gate diff drive activation (helper already loads/activates both controllers)
-        # If spawn_drive is false, controllers will still load but not be activated; keep default false for safety.
-        if LaunchConfiguration("spawn_drive").perform(context).lower() in ("false", "0", "no"):
-            pass
+        spawn_drive = LaunchConfiguration("spawn_drive").perform(context).lower() in (
+            "true",
+            "1",
+            "yes",
+            "on",
+        )
+        if spawn_drive:
+            # Load and activate diff_drive WITH --param-file (Humble-safe)
+            nodes.append(
+                TimerAction(
+                    period=3.0,
+                    actions=[
+                        ExecuteProcess(
+                            cmd=[
+                                "ros2",
+                                "run",
+                                "controller_manager",
+                                "spawner",
+                                "diff_drive_controller",
+                                "--controller-manager",
+                                "/controller_manager",
+                                "--activate",
+                                "--unload-on-kill",
+                                "--param-file",
+                                os.path.join(share_dir, "configs", "diff_drive.params.yaml"),
+                            ],
+                            output="screen",
+                        ),
+                    ],
+                )
+            )
 
         return nodes
 

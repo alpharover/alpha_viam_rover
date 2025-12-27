@@ -1,13 +1,23 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
+
 from launch import LaunchDescription
-from launch.actions import TimerAction, ExecuteProcess
+from launch.actions import ExecuteProcess, TimerAction
 from launch_ros.actions import Node
 
 
+def _find_repo_root() -> Path:
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "configs").is_dir() and (parent / "urdf").is_dir():
+            return parent
+    return Path.cwd()
+
+
 def generate_launch_description() -> LaunchDescription:
-    cwd = os.getcwd()
+    cwd = str(_find_repo_root())
     controllers_yaml = os.path.join(cwd, "configs", "controllers.yaml")
     diffdrive_yaml = os.path.join(cwd, "configs", "diff_drive.yaml")
     urdf_xacro = os.path.join(cwd, "urdf", "rover.urdf.xacro")
