@@ -26,6 +26,7 @@ class QuadEncoder {
   QuadEncoder();
   void attach(int pi_handle, int pin_a, int pin_b, unsigned glitch_us);
   void detach();
+  void set_direction(int dir);
   int64_t ticks() const { return ticks_; }
   void reset_ticks(int64_t v = 0) { ticks_ = v; }
 
@@ -38,6 +39,8 @@ class QuadEncoder {
   int pin_b_ = -1;
   volatile int64_t ticks_ = 0;
   int last_state_ = 0;
+  volatile int dir_ = 1;
+  bool single_channel_ = false;
   bool attached_ = false;
   unsigned cb_id_a_ = 0;
   unsigned cb_id_b_ = 0;
@@ -81,6 +84,13 @@ class L298NSystemHardware : public hardware_interface::SystemInterface {
   unsigned enc_glitch_us_{100};
   double watchdog_s_{0.5};
   bool debug_{false};
+
+  bool use_speed_control_{true};
+  double speed_kp_duty_per_rad_s_{6.0};
+  double speed_ki_duty_per_rad_{12.0};
+  double speed_i_max_duty_{120.0};
+  std::array<double, 2> speed_i_duty_{0.0, 0.0};
+  std::array<int, 2> cmd_sign_prev_{1, 1};
 
   // State/command
   std::array<double, 2> pos_{0.0, 0.0};

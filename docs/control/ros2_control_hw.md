@@ -1,6 +1,6 @@
 # ros2_control Hardware Interface (L298N + Encoders)
 
-This rover uses an L298N dual H‑bridge for the base drive and quadrature encoders on each wheel. We expose a ros2_control `SystemInterface` so `diff_drive_controller` can command wheel velocities and read joint states (position/velocity) from encoders.
+This rover uses an L298N dual H‑bridge for the base drive and wheel encoders on each wheel (Rover v2: single‑channel Hall signals). We expose a ros2_control `SystemInterface` so `diff_drive_controller` can command wheel velocities and read joint states (position/velocity) from encoders.
 
 Package: `drivers/l298n_hardware` (C++ / ament_cmake)
 
@@ -11,7 +11,8 @@ Pin Map (default; BCM numbering)
 
 - Left motor: `ENA/PWM=GPIO26`, `IN1=GPIO19`, `IN2=GPIO13`
 - Right motor: `ENB/PWM=GPIO22`, `IN3=GPIO6`, `IN4=GPIO5`
-- Encoders: config via URDF params `left_enc_a/b`, `right_enc_a/b` (set to `-1` to disable)
+- Encoders (Rover v2 single-channel): `left_enc_a=GPIO20` (P38), `right_enc_a=GPIO21` (P40). Set `*_enc_b=-1`.
+  - Config via URDF params `left_enc_a/b`, `right_enc_a/b` (set to `-1` to disable).
 
 URDF Wiring
 
@@ -23,9 +24,12 @@ Control & Safety
 - Scaling: commanded wheel velocity (rad/s) is linearly mapped to PWM based on `max_wheel_rad_s`. Start conservative (e.g., `≤ 20 rad/s`).
 - Deadband: small deadband around zero (`deadband_rad_s`, default 0.1 rad/s) to avoid stiction buzzing.
 - Slew limiting: duty change limited by `slew_duty_per_s` (default 50 duty/sec) to avoid current spikes.
+- Speed control (optional): per‑wheel PI trim on top of the feedforward PWM mapping using encoder velocity feedback.
+  - Params: `use_speed_control`, `speed_kp`, `speed_ki`, `speed_i_max`.
 - Direction: sign sets `INx` polarity; per‑wheel inversion via `invert_left/right`.
 - Brake/Coast: `brake_on_zero=false` (coast) by default; set `true` to drive both inputs high on zero command (L298N brake).
-- Encoders: quadrature decoded with a small state table, `encoder_glitch_us=100` default. Set `ticks_per_rev` to your measured value (post‑gear, including any quadrature multiplication effect).
+- Encoders: Rover v2 uses single‑channel Hall signals (direction inferred from the commanded wheel direction). `encoder_glitch_us=100` default.
+  - For Rover v2, `ticks_per_rev=192` (rising edges per wheel revolution).
 - Watchdog: hardware layer clamps outputs to zero if no writes occur within `watchdog_s` (default `0.5`). Controller adds `cmd_vel_timeout` as a second guard.
 
 Controller Parameters
@@ -66,6 +70,7 @@ Parameters (URDF <ros2_control><hardware>)
 - `left_pwm`, `left_in1`, `left_in2`, `right_pwm`, `right_in3`, `right_in4`
 - `left_enc_a`, `left_enc_b`, `right_enc_a`, `right_enc_b`
 - `ticks_per_rev`, `encoder_glitch_us`
+- `use_speed_control`, `speed_kp`, `speed_ki`, `speed_i_max`
 - `max_wheel_rad_s`, `pwm_freq`, `pwm_range`
 - `deadband_rad_s` (default 0.1), `slew_duty_per_s` (default 50)
 - `invert_left`, `invert_right`, `brake_on_zero`, `watchdog_s`

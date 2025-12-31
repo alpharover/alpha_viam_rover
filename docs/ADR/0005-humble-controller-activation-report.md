@@ -1,12 +1,16 @@
 # ADR-0005: Humble — Controller Params via Spawner Param-File
 
-Status: Accepted
+Status: Superseded (see ADR-0006)
 
-Date: 2025-09-10 (revised per architect guidance)
+Date: 2025-09-10 (revised per architect guidance; superseded 2025-12-26)
 
 ## Decision
 
 On ROS 2 Humble, we will pass `diff_drive_controller` parameters using the supported spawner mechanism with `--param-file`, and we will remove any controller-manager-side `params_file`. The controller parameter file is controller-scoped (root key `diff_drive_controller:`) and installed into the bringup package share for deterministic pathing.
+
+## Update (2025-12-26)
+
+On the alpha-viam rover Humble image, the diff-drive controller is namespaced under `/controller_manager/*` and controller-scoped YAML via spawner `--param-file` did not apply as expected. The working solution is captured in ADR-0006 (set `/controller_manager` param `diff_drive_controller.params_file` to the wildcard YAML `configs/diff_drive_params.yaml`, then spawn without `--param-file`).
 
 ## TL;DR — Required changes
 

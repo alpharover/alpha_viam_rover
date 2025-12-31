@@ -49,4 +49,8 @@ install(FILES l298n_hardware_plugin.xml
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(FILES hook/ament_prefix_path.dsv
+  DESTINATION share/${PROJECT_NAME}/hook
+)
+
 ament_package()

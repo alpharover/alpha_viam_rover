@@ -13,11 +13,11 @@
     <param name="address" value="$(var ws_address)"/>
   </node>
 
-  <!-- Optional: Keyboard teleop (publishes /cmd_vel) -->
+  <!-- Optional: Keyboard teleop (publishes to /controller_manager/cmd_vel_unstamped) -->
   <node if="$(var use_teleop)" pkg="teleop_twist_keyboard" exec="teleop_twist_keyboard" name="teleop_twist_keyboard" output="screen">
     <param name="speed" value="0.5"/>
     <param name="turn" value="1.0"/>
-    <remap from="/cmd_vel" to="/cmd_vel"/>
+    <remap from="cmd_vel" to="/controller_manager/cmd_vel_unstamped"/>
   </node>
 
 </launch>

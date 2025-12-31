@@ -6,6 +6,8 @@ gpio:
   in2: 13
   in3: 6
   in4: 5
+  enc_left: 20
+  enc_right: 21
 
 i2c:
   bus: 1

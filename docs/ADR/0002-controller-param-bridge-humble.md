@@ -1,29 +1,27 @@
 # ADR-0002: Controller Parameter Bridge for Humble (Spawner Param Quirk)
 
-Status: Proposed (2025-09-09)
+Status: Superseded (see ADR-0006)
+Date: 2025-09-09 (superseded 2025-12-26)
 
-Context
-- On the rover’s ROS 2 Humble image, using `ros2 run controller_manager spawner <controller> --param-file <file.yaml>` sets a string parameter `params_file` on the controller node but does not apply the YAML contents as controller parameters. As a result controllers fail to configure:
+## Context
+
+- On the rover’s ROS 2 Humble image, early bring-up attempts using `ros2 run controller_manager spawner <controller> --param-file <file.yaml>` did not result in typed controller parameters being present at controller init/configure time.
+- Controllers failed to configure:
   - `diff_drive_controller`: "left_wheel_names cannot be empty"
   - `forward_command_controller`: "'joints' parameter was empty"
-- Controller parameters under `/controller_manager` also are not propagated to controllers during `load_controller` on this image.
 
-Decision
-- Introduce a small helper (node/script) which:
-  1. Calls `/controller_manager/load_controller` for the target controller.
-  2. Calls `/<controller>/set_parameters` with the YAML content (maps to typed values).
-  3. Calls `/controller_manager/switch_controller` to activate the controller.
-- Keep YAMLs in `configs/` as the source of truth; the helper reads them and sets parameters directly.
+## Proposed decision (historical)
 
-Consequences
-- Works across Humble variants and avoids reliance on spawner param-file semantics.
-- Adds one small utility maintained in repo (`scripts/activate_diff_drive.py`).
+Introduce a small helper (node/script) which:
 
-Alternatives Considered
-- Embedding parameters under `controller_manager.ros__parameters.<controller>`: still not applied to controller at load time on this image.
-- Using spawner `--param-file` only: not reliable on this image.
+1) Calls `/controller_manager/load_controller` for the target controller.
+2) Calls `/<controller>/set_parameters` with the YAML content (typed values).
+3) Calls `/controller_manager/switch_controller` to activate the controller.
 
-Follow-ups
-- Implement a generic `activate_controller.py` that accepts controller name and param YAML for reuse.
-- Document this quirk in bring-up docs.
+Keep YAMLs in `configs/` as the source of truth; the helper reads them and sets parameters directly.
 
+## Update (2025-12-26)
+
+On the alpha-viam rover, the issue was resolved without a parameter bridge by setting `/controller_manager` parameter `diff_drive_controller.params_file` to the installed wildcard YAML `configs/diff_drive_params.yaml` and spawning diff drive without `--param-file` (see ADR-0006).
+
+The helper scripts remain useful as a fallback for other Humble variants, but are not required to achieve wheel spin on this rover as of 2025-12-26.
