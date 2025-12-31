@@ -7,6 +7,8 @@
   <license>Proprietary</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
+  <!-- Build order guard: ensure bringup installs first (avoids stale egg-link issues) -->
+  <build_depend>alpha_viam_bringup</build_depend>
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
@@ -16,4 +18,3 @@
     <build_type>ament_python</build_type>
   </export>
 </package>
-

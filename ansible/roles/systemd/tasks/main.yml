@@ -10,6 +10,7 @@
       [Service]
       Type=simple
       User=alpha_viam
+      WorkingDirectory=/home/alpha_viam/alpha_viam_rover
       EnvironmentFile=-/etc/default/rover-bringup
       ExecStart=/usr/bin/bash -lc 'source /opt/ros/humble/setup.bash; \
       if [ -n "${ROS_OVERLAY:-}" ] && [ -f "$ROS_OVERLAY" ]; then source "$ROS_OVERLAY"; fi; \
@@ -25,6 +26,6 @@
     dest: /etc/default/rover-bringup
     content: |
       # Default environment for rover bringup service
-      ROS_OVERLAY=/home/alpha_viam/ros_ws/install/setup.bash
+      ROS_OVERLAY=/home/alpha_viam/alpha_viam_rover/install/setup.bash
       LAUNCH_PKG=alpha_viam_bringup
       LAUNCH_FILE=base_bringup.launch.py

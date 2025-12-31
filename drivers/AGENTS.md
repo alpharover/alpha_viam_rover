@@ -5,7 +5,7 @@ Hardware map (RPi4)
 
 * I²C: SDA=GPIO2, SCL=GPIO3 → MPU‑6050 (0x68/0x69), INA219
 * Motors (L298N): ENA=GPIO26 (PWM), IN1=GPIO19, IN2=GPIO13, IN3=GPIO6, IN4=GPIO5, ENB=GPIO22 (PWM)
-* Encoders: Left A/B → GPIO TBD, Right A/B → GPIO TBD (use interrupt‑friendly pins; apply glitch filtering)
+* Encoders (single-channel): Left=GPIO20 (P38), Right=GPIO21 (P40) (use glitch filtering)
 
 Packages & patterns
 

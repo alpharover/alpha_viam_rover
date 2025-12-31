@@ -1,0 +1,11 @@
+<library path="l298n_hardware">
+  <class
+    name="l298n_hardware/L298NSystemHardware"
+    type="l298n_hardware::L298NSystemHardware"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>
+      ros2_control SystemInterface for L298N dual H-bridge with pigpio PWM and quadrature encoders.
+    </description>
+  </class>
+</library>
+

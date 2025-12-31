@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ALPHA_VIAM_ROVER // DRIVER_STATION</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="terminal-overlay" aria-hidden="true"></div>
+
+    <header class="hud-top hud-panel hud-panel--header">
+        <div class="hud-brand">
+            <div class="hud-brand__title">
+                <h1>ALPHA_VIAM_ROVER <span class="blink">_</span></h1>
+                <div class="hud-brand__sub">REMOTE_OPERATIONS_INTERFACE_V3</div>
+            </div>
+        </div>
+
+        <div class="hud-status">
+            <div class="hud-brand__meta">CAM FEED ONLINE // LAB ENV</div>
+            <div class="hud-status__item">
+                <div class="hud-status__label">LINK</div>
+                <div id="status-link" class="value offline">DISCONNECTED</div>
+            </div>
+            <div class="hud-status__item">
+                <div class="hud-status__label">SYSTEM</div>
+                <div id="status-armed" class="value disarmed">SAFE</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="hud-grid">
+        <!-- LEFT: MINI PANELS -->
+        <section class="hud-left">
+            <div class="hud-panel">
+                <div class="hud-panel__title">// CAMERA_VIEW</div>
+                <div class="hud-panel__body">
+                    <div class="waveform" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <div class="hud-mini-text">ANALYZING...</div>
+                </div>
+            </div>
+
+            <div class="hud-panel">
+                <div class="hud-panel__title">// SENSOR_DATA</div>
+                <div class="hud-panel__body">
+                    <div class="stat-row">
+                        <span class="label">CPU_TEMP</span>
+                        <span class="value"><span id="val-cpu-temp">--</span> C</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">WIFI_SIGNAL</span>
+                        <span class="value"><span id="val-wifi-sig">--</span> dBm</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">MEM_USED</span>
+                        <span class="value"><span id="val-mem">--</span> MB</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-panel">
+                <div class="hud-panel__title">// ROVER_STATUS</div>
+                <div class="hud-panel__body">
+                    <div class="status-chip">MOTOR_READY</div>
+                    <div class="status-chip status-chip--dim">STANDBY_MODE</div>
+                    <div class="hud-mini-text">SAFETY: OFF-GROUND FIRST</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CENTER: VIDEO -->
+        <section class="hud-video">
+            <div class="hud-panel hud-panel--fill">
+                <div class="hud-panel__title hud-panel__title--overlay">
+                    <span>PRIMARY_OPTIC</span>
+                    <div class="optic-controls">
+                        <button id="btn-optic-raw" class="optic-btn" type="button">RAW: OFF</button>
+                        <button id="btn-optic-mode" class="optic-btn" type="button">MODE: VIDEO</button>
+                    </div>
+                </div>
+
+                <div class="video-frame">
+                    <img id="video-stream" src="" alt="NO_SIGNAL" />
+                    <pre id="ascii-stream" class="ascii-stream" hidden></pre>
+                    <div class="video-crosshair" aria-hidden="true"></div>
+                    <div class="video-hud" aria-hidden="true">
+                        <div class="video-hud__top-left">CAM_FEED_ONLINE</div>
+                        <div class="video-hud__top-right">OPTIC_01</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT: TELEMETRY -->
+        <section class="hud-right">
+            <div class="hud-panel">
+                <div class="hud-panel__title">// DRIVE_TELEMETRY</div>
+                <div class="hud-panel__body">
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">ODOM_LIN_X</span>
+                        <span class="value"><span id="val-odom-vx">--.--</span> m/s</span>
+                    </div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">ODOM_ANG_Z</span>
+                        <span class="value"><span id="val-odom-wz">--.--</span> rad/s</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">WHEEL_L</span>
+                        <span class="value"><span id="val-wheel-l">--.--</span> rad/s</span>
+                    </div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">WHEEL_R</span>
+                        <span class="value"><span id="val-wheel-r">--.--</span> rad/s</span>
+                    </div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">WHEEL_DIFF</span>
+                        <span class="value"><span id="val-wheel-diff">--.--</span> rad/s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-panel">
+                <div class="hud-panel__title">// POWER_SYSTEMS</div>
+                <div class="hud-panel__body">
+                    <div class="stat-row">
+                        <span class="label">BUS_VOLTAGE</span>
+                        <span class="value"><span id="val-bus-v">--.--</span> V</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">CURRENT</span>
+                        <span class="value"><span id="val-curr">--.--</span> A</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="label">POWER</span>
+                        <span class="value"><span id="val-power">--.--</span> W</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-panel">
+                <div class="hud-panel__title">// CONTROL_LIMITS</div>
+                <div class="hud-panel__body">
+                    <div class="slider-control">
+                        <label for="slider-speed">MAX_VEL <span id="disp-speed">0.0</span></label>
+                        <input type="range" id="slider-speed" min="0" max="2.0" step="0.01" value="1.0">
+                    </div>
+                    <div class="slider-control">
+                        <label for="slider-turn">MAX_ANG <span id="disp-turn">6.50</span></label>
+                        <input type="range" id="slider-turn" min="0" max="12.0" step="0.01" value="6.50">
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-panel hud-panel--hint">
+                <div class="hud-panel__title">// QUICK_HINTS</div>
+                <div class="hud-panel__body">
+                    <div class="hud-mini-text">ARM: click/tap toggle</div>
+                    <div class="hud-mini-text">VIDEO: hover for raw feed</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BOTTOM LEFT: CONTROLS -->
+        <section class="hud-controls">
+            <div class="hud-panel hud-panel--controls">
+                <div class="hud-panel__title">// DRIVE_CONTROL</div>
+                <div class="hud-panel__body hud-controls__body">
+                    <button id="btn-drive-hold" class="arm-btn" type="button">
+                        <span class="btn-text">ARM SYSTEM</span>
+                        <span class="btn-sub">CLICK TO TOGGLE</span>
+                    </button>
+
+                    <div id="joystick-zone" class="joystick-container">
+                        <div class="joystick-base">
+                            <div id="joystick-knob" class="joystick-knob"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BOTTOM CENTER: RADAR -->
+        <section class="hud-radar">
+            <div class="hud-panel hud-panel--radar">
+                <div class="hud-panel__title">// VECT_RETICLE</div>
+                <div class="hud-panel__body radar-body">
+                    <div class="radar" aria-hidden="true"></div>
+                    <div class="radar-readouts">
+                        <div class="radar-readout">
+                            <div class="label">LIN_X</div>
+                            <div id="cmd-lin" class="radar-value">0.00</div>
+                        </div>
+                        <div class="radar-readout">
+                            <div class="label">ANG_Z</div>
+                            <div id="cmd-ang" class="radar-value">0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BOTTOM RIGHT: LIDAR PLACEHOLDER -->
+        <section class="hud-lidar">
+            <div class="hud-panel hud-panel--lidar" id="lidar-voxel">
+                <div class="hud-panel__title">// VOXEL_MAP_3D_LIDAR (PLACEHOLDER)</div>
+                <div class="hud-panel__body hud-panel__body--fill">
+                    <div id="lidar-viewport" class="lidar-viewport" aria-hidden="true">
+                        <div class="lidar-axes">
+                            <span class="axis axis-x">X</span>
+                            <span class="axis axis-y">Y</span>
+                            <span class="axis axis-z">Z</span>
+                        </div>
+                        <div class="lidar-placeholder">LIDAR_OFFLINE</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="/static/app.js"></script>
+</body>
+</html>

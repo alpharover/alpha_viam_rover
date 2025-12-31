@@ -6,24 +6,27 @@ from launch.actions import TimerAction
 from launch.actions import ExecuteProcess
 
 import os
+from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
+    share_dir = get_package_share_directory("alpha_viam_bringup")
+
     ekf_params_arg = DeclareLaunchArgument(
         "ekf_params_file",
-        default_value=os.path.join(os.getcwd(), "configs", "ekf.yaml"),
+        default_value=os.path.join(share_dir, "configs", "ekf.yaml"),
         description="Path to robot_localization EKF params YAML.",
     )
 
     urdf_xacro_arg = DeclareLaunchArgument(
         "urdf_xacro",
-        default_value=os.path.join(os.getcwd(), "urdf", "rover.urdf.xacro"),
+        default_value=os.path.join(share_dir, "urdf", "rover.urdf.xacro"),
         description="Path to rover xacro file.",
     )
 
     diagnostics_params_arg = DeclareLaunchArgument(
         "diagnostics_params_file",
-        default_value=os.path.join(os.getcwd(), "configs", "diagnostics.yaml"),
+        default_value=os.path.join(share_dir, "configs", "diagnostics.yaml"),
         description="Path to diagnostic_aggregator params YAML.",
     )
 
@@ -33,10 +36,17 @@ def generate_launch_description():
         description=("Whether to spawn diff_drive_controller " "(set true once params are valid)"),
     )
 
+    wheel_odom_topic_arg = DeclareLaunchArgument(
+        "wheel_odom_topic",
+        default_value="/controller_manager/odom",
+        description="Wheel odometry topic for EKF fusion (override for different namespaces).",
+    )
+
     def launch_setup(context, *args, **kwargs):
         ekf_params = LaunchConfiguration("ekf_params_file").perform(context)
         urdf_xacro = LaunchConfiguration("urdf_xacro").perform(context)
         diagnostics_params = LaunchConfiguration("diagnostics_params_file").perform(context)
+        wheel_odom_topic = LaunchConfiguration("wheel_odom_topic").perform(context)
 
         # Build robot_description from xacro at runtime
         try:
@@ -52,11 +62,7 @@ def generate_launch_description():
         try:
             import yaml  # type: ignore
 
-            with open(
-                os.path.join(os.getcwd(), "configs", "power.yaml"),
-                "r",
-                encoding="utf-8",
-            ) as f:
+            with open(os.path.join(share_dir, "configs", "power.yaml"), "r", encoding="utf-8") as f:
                 y = yaml.safe_load(f)
                 if isinstance(y, dict) and "power" in y and isinstance(y["power"], dict):
                     power_params = y["power"]
@@ -69,11 +75,7 @@ def generate_launch_description():
         try:
             import yaml  # type: ignore
 
-            with open(
-                os.path.join(os.getcwd(), "configs", "imu.yaml"),
-                "r",
-                encoding="utf-8",
-            ) as f:
+            with open(os.path.join(share_dir, "configs", "imu.yaml"), "r", encoding="utf-8") as f:
                 y = yaml.safe_load(f)
                 if isinstance(y, dict) and "imu" in y and isinstance(y["imu"], dict):
                     _raw = y["imu"]
@@ -102,9 +104,7 @@ def generate_launch_description():
             import yaml  # type: ignore
 
             with open(
-                os.path.join(os.getcwd(), "configs", "network.yaml"),
-                "r",
-                encoding="utf-8",
+                os.path.join(share_dir, "configs", "network.yaml"), "r", encoding="utf-8"
             ) as f:
                 y = yaml.safe_load(f)
                 if isinstance(y, dict):
@@ -114,6 +114,32 @@ def generate_launch_description():
                         net_params["wifi_iface"] = str(y["wifi_iface"])  # type: ignore[arg-type]
         except Exception as e:
             print(f"[alpha_viam_bringup] network.yaml parse failed: {e}")
+
+        # Resolve l298n_hardware prefix for pluginlib discovery.
+        # In isolated colcon installs, l298n_hardware may not be on AMENT_PREFIX_PATH.
+        env_patch: dict[str, str] = {}
+        l298n_prefix = ""
+        try:
+            l298n_share = get_package_share_directory("l298n_hardware")
+            l298n_prefix = os.path.dirname(os.path.dirname(l298n_share))
+        except Exception:
+            bringup_prefix = os.path.dirname(os.path.dirname(share_dir))
+            install_root = os.path.dirname(bringup_prefix)
+            candidate = os.path.join(install_root, "l298n_hardware")
+            if os.path.isdir(candidate):
+                l298n_prefix = candidate
+
+        if l298n_prefix:
+            env_patch = {
+                "AMENT_PREFIX_PATH": l298n_prefix + ":" + os.environ.get("AMENT_PREFIX_PATH", ""),
+                "LD_LIBRARY_PATH": os.path.join(l298n_prefix, "lib")
+                + ":"
+                + os.environ.get("LD_LIBRARY_PATH", ""),
+            }
+        else:
+            print(
+                "[alpha_viam_bringup] WARN: l298n_hardware prefix not found; plugin discovery may fail"
+            )
 
         nodes = [
             Node(
@@ -162,23 +188,31 @@ def generate_launch_description():
                     ("imu/data", "/imu/data_fused"),
                 ],
             ),
-            # Controller manager (ros2_control)
+            # Controller manager (ros2_control); patch env for plugin discovery (l298n_hardware)
             Node(
                 package="controller_manager",
                 executable="ros2_control_node",
                 name="controller_manager",
                 output="screen",
                 parameters=[
-                    {"robot_description": robot_desc_raw},
-                    os.path.join(os.getcwd(), "configs", "controllers.yaml"),
+                    os.path.join(share_dir, "configs", "controllers.yaml"),
+                    {
+                        "diff_drive_controller.params_file": [
+                            os.path.join(share_dir, "configs", "diff_drive_params.yaml")
+                        ]
+                    },
                 ],
+                remappings=[
+                    ("~/robot_description", "/robot_description"),
+                ],
+                additional_env=env_patch,
             ),
             Node(
                 package="robot_localization",
                 executable="ekf_node",
                 name="ekf_filter_node",
                 output="screen",
-                parameters=[ekf_params],
+                parameters=[ekf_params, {"odom0": wheel_odom_topic}],
             ),
             Node(
                 package="diagnostic_aggregator",
@@ -210,7 +244,7 @@ def generate_launch_description():
                     }
                 ],
             ),
-            # Spawn controllers (after controller_manager is up)
+            # Spawn joint_state_broadcaster using spawner (no params needed)
             TimerAction(
                 period=2.0,
                 actions=[
@@ -230,15 +264,17 @@ def generate_launch_description():
             ),
         ]
 
-        # Optionally spawn diff_drive_controller (gated until parameters are finalized)
-        if LaunchConfiguration("spawn_drive").perform(context).lower() in (
+        spawn_drive = LaunchConfiguration("spawn_drive").perform(context).lower() in (
             "true",
             "1",
             "yes",
-        ):
+            "on",
+        )
+        if spawn_drive:
+            # Load and activate diff_drive (params_file set on /controller_manager)
             nodes.append(
                 TimerAction(
-                    period=2.5,
+                    period=3.0,
                     actions=[
                         ExecuteProcess(
                             cmd=[
@@ -249,9 +285,11 @@ def generate_launch_description():
                                 "diff_drive_controller",
                                 "--controller-manager",
                                 "/controller_manager",
+                                "--activate",
+                                "--unload-on-kill",
                             ],
                             output="screen",
-                        )
+                        ),
                     ],
                 )
             )
@@ -266,6 +304,7 @@ def generate_launch_description():
             urdf_xacro_arg,
             diagnostics_params_arg,
             spawn_drive_arg,
+            wheel_odom_topic_arg,
             OpaqueFunction(function=launch_setup),
         ]
     )

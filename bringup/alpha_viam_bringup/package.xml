@@ -17,6 +17,10 @@
   <exec_depend>xacro</exec_depend>
   <exec_depend>robot_localization</exec_depend>
   <exec_depend>foxglove_bridge</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>diff_drive_controller</exec_depend>
+  <exec_depend>forward_command_controller</exec_depend>
 
   <!-- Testing / linting can be added later -->
 

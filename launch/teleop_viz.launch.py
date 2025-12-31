@@ -6,6 +6,7 @@ from typing import Any, Dict
 import yaml
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -23,7 +24,7 @@ def _load_network_cfg() -> Dict[str, Any]:
 def generate_launch_description() -> LaunchDescription:
     cfg = _load_network_cfg()
     default_port = str(cfg.get("foxglove_ws_port", 8765))
-    default_addr = cfg.get("rover_hostname", "0.0.0.0")
+    default_addr = str(cfg.get("foxglove_ws_address", "0.0.0.0"))
 
     use_teleop = DeclareLaunchArgument("use_teleop", default_value="false")
     ws_port = DeclareLaunchArgument("ws_port", default_value=default_port)
@@ -43,15 +44,13 @@ def generate_launch_description() -> LaunchDescription:
     )
 
     teleop = Node(
-        condition=lambda context: context.perform_substitution(LaunchConfiguration("use_teleop"))
-        .lower()
-        .startswith("t"),
+        condition=IfCondition(LaunchConfiguration("use_teleop")),
         package="teleop_twist_keyboard",
         executable="teleop_twist_keyboard",
         name="teleop_twist_keyboard",
         output="screen",
         parameters=[{"speed": 0.5, "turn": 1.0}],
-        remappings=[("/cmd_vel", "/cmd_vel")],
+        remappings=[("cmd_vel", "/controller_manager/cmd_vel_unstamped")],
     )
 
     return LaunchDescription([use_teleop, ws_port, ws_address, foxglove, teleop])

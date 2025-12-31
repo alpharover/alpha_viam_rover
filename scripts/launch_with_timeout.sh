@@ -22,6 +22,13 @@ if [[ -f "install/setup.bash" ]]; then
   set -u
 fi
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Ensure ament index can see C++ plugins (e.g., l298n_hardware)
+if [[ -d "$ROOT_DIR/install/l298n_hardware" ]]; then
+  export AMENT_PREFIX_PATH="$ROOT_DIR/install/l298n_hardware:${AMENT_PREFIX_PATH:-}"
+fi
+
 echo "[launch_with_timeout] Starting $PKG $LAUNCH for ${DUR}s..."
 set +e
 setsid ros2 launch "$PKG" "$LAUNCH" "$@" &

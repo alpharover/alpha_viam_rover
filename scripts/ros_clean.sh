@@ -17,6 +17,17 @@ PATS=(
   "ina219_monitor"
   "mpu6050_node"
   "/opt/ros/.*/lib/controller_manager/ros2_control_node"
+  # helper scripts and spawners
+  "activate_diff_drive.py"
+  "activate_controllers.py"
+  # controller spawners (various forms)
+  "controller_manager spawner"
+  "/controller_manager/spawner"
+  "/opt/ros/.*/lib/controller_manager/spawner"
+  "python3 .*/controller_manager/spawner"
+  "ros2 run controller_manager spawner"
+  "ros2 launch alpha_viam_bringup base_bringup.launch.py"
+  "ros2 launch alpha_viam_bringup drive_min.launch.py"
 )
 
 FOUND_PIDS=()
@@ -58,4 +69,3 @@ if [[ "${FORCE}" == "--force" ]]; then
 fi
 
 echo "[ros_clean] Done."
-

@@ -1,0 +1,944 @@
+:root {
+    --hud-bg: #040605;
+    --hud-panel-bg: rgba(0, 10, 6, 0.82);
+    --hud-panel-bg-strong: rgba(0, 10, 6, 0.92);
+
+    --hud-green: #00ff41;
+    --hud-green-bright: #ccffcc;
+    --hud-green-dim: rgba(0, 255, 65, 0.55);
+    --hud-green-faint: rgba(0, 255, 65, 0.12);
+
+    --hud-alert: #ff3333;
+    --hud-red: #ff3333;
+    --hud-red-glow: rgba(255, 51, 51, 0.65);
+
+    --font-stack: "Consolas", "Monaco", "Courier New", monospace;
+
+    --gap: 12px;
+    --cut: 12px;
+    --panel-corner: rgba(0, 255, 65, 0.55);
+    --panel-border: rgba(0, 255, 65, 0.22);
+    --panel-shadow: rgba(0, 255, 65, 0.12);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    background: radial-gradient(circle at 50% 15%, rgba(0, 255, 65, 0.10), transparent 55%), var(--hud-bg);
+    color: var(--hud-green);
+    font-family: var(--font-stack);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+    position: relative;
+}
+
+/* --- GLOBAL FX --- */
+.scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.22),
+        rgba(0, 0, 0, 0.22) 1px,
+        transparent 1px,
+        transparent 3px
+    );
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.35;
+}
+
+.terminal-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 900;
+    background-image:
+        /* Major grid */
+        repeating-linear-gradient(90deg, rgba(0, 255, 65, 0.06) 0 1px, transparent 1px 40px),
+        repeating-linear-gradient(0deg, rgba(0, 255, 65, 0.06) 0 1px, transparent 1px 40px),
+        /* Minor grid */
+        repeating-linear-gradient(90deg, rgba(0, 255, 65, 0.035) 0 1px, transparent 1px 10px),
+        repeating-linear-gradient(0deg, rgba(0, 255, 65, 0.035) 0 1px, transparent 1px 10px),
+        /* Vignette */
+        radial-gradient(circle at 50% 20%, rgba(0, 0, 0, 0) 0 55%, rgba(0, 0, 0, 0.86) 100%);
+    opacity: 0.28;
+}
+
+.blink {
+    animation: blinker 1s steps(2) infinite;
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* --- LAYOUT --- */
+.hud-top {
+    margin: var(--gap);
+    margin-bottom: 0;
+    padding: 6px 12px;
+    min-height: 42px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--gap);
+}
+
+.hud-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 260px 1fr 320px;
+    grid-template-rows: 1fr 310px;
+    grid-template-areas:
+        "left video right"
+        "controls radar lidar";
+    gap: var(--gap);
+    padding: var(--gap);
+    min-height: 0;
+    z-index: 10;
+}
+
+.hud-left {
+    grid-area: left;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    min-height: 0;
+}
+
+.hud-video {
+    grid-area: video;
+    min-height: 0;
+}
+
+.hud-right {
+    grid-area: right;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    min-height: 0;
+}
+
+.hud-controls {
+    grid-area: controls;
+    min-height: 0;
+}
+
+.hud-radar {
+    grid-area: radar;
+    min-height: 0;
+}
+
+.hud-lidar {
+    grid-area: lidar;
+    min-height: 0;
+}
+
+/* --- PANELS --- */
+.hud-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--hud-panel-bg);
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 0 0 1px rgba(0, 255, 65, 0.08), 0 0 18px var(--panel-shadow);
+    overflow: hidden;
+    min-height: 0;
+    clip-path: polygon(
+        var(--cut) 0,
+        calc(100% - var(--cut)) 0,
+        100% var(--cut),
+        100% calc(100% - var(--cut)),
+        calc(100% - var(--cut)) 100%,
+        var(--cut) 100%,
+        0 calc(100% - var(--cut)),
+        0 var(--cut)
+    );
+}
+
+.hud-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        /* Corner brackets */
+        linear-gradient(var(--panel-corner), var(--panel-corner)) top left / 14px 2px no-repeat,
+        linear-gradient(var(--panel-corner), var(--panel-corner)) top left / 2px 14px no-repeat,
+        linear-gradient(var(--panel-corner), var(--panel-corner)) top right / 14px 2px no-repeat,
+        linear-gradient(var(--panel-corner), var(--panel-corner)) top right / 2px 14px no-repeat,
+        linear-gradient(var(--panel-corner), var(--panel-corner)) bottom left / 14px 2px no-repeat,
+        linear-gradient(var(--panel-corner), var(--panel-corner)) bottom left / 2px 14px no-repeat,
+        linear-gradient(var(--panel-corner), var(--panel-corner)) bottom right / 14px 2px no-repeat,
+        linear-gradient(var(--panel-corner), var(--panel-corner)) bottom right / 2px 14px no-repeat,
+        /* Subtle panel grid */
+        repeating-linear-gradient(90deg, rgba(0, 255, 65, 0.03) 0 1px, transparent 1px 24px),
+        repeating-linear-gradient(0deg, rgba(0, 255, 65, 0.03) 0 1px, transparent 1px 24px);
+    opacity: 0.55;
+}
+
+.hud-panel__title,
+.hud-panel__body {
+    position: relative;
+    z-index: 1;
+}
+
+.hud-panel__title {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--hud-green-bright);
+    background: rgba(0, 255, 65, 0.06);
+    border-bottom: 1px solid rgba(0, 255, 65, 0.12);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.hud-panel__title--overlay {
+    background: transparent;
+    border-bottom: none;
+}
+
+.hud-panel__body {
+    padding: 10px;
+    flex: 1;
+    min-height: 0;
+}
+
+.hud-panel__body--fill {
+    padding: 0;
+}
+
+.hud-panel--fill {
+    height: 100%;
+}
+
+.hud-panel--header {
+    background: var(--hud-panel-bg-strong);
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hud-mini-text {
+    font-size: 0.7rem;
+    color: rgba(0, 255, 65, 0.70);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+/* --- HEADER --- */
+.hud-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.hud-brand__title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.hud-brand__title h1 {
+    font-size: 1.0rem;
+    font-weight: normal;
+    letter-spacing: 2px;
+    line-height: 1;
+}
+
+.hud-brand__sub {
+    font-size: 0.65rem;
+    color: rgba(0, 255, 65, 0.65);
+    letter-spacing: 1.2px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.hud-brand__meta {
+    font-size: 0.65rem;
+    color: rgba(0, 255, 65, 0.55);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.hud-status {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.hud-status__item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding-left: 10px;
+    border-left: 1px solid rgba(0, 255, 65, 0.20);
+    white-space: nowrap;
+}
+
+.hud-status__label {
+    font-size: 0.65rem;
+    color: rgba(0, 255, 65, 0.55);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 0;
+}
+
+.value {
+    font-weight: bold;
+}
+
+.value.offline {
+    color: var(--hud-alert);
+}
+
+.value.online {
+    color: var(--hud-green);
+    text-shadow: 0 0 6px rgba(0, 255, 65, 0.75);
+}
+
+.value.disarmed {
+    color: var(--hud-alert);
+}
+
+.value.armed {
+    color: #000;
+    background: var(--hud-green);
+    padding: 0 6px;
+    text-shadow: none;
+}
+
+/* Keep compatibility with app.js (adds blink class to status-armed). */
+.value.armed.blink {
+    animation: blinker 1s steps(2) infinite;
+}
+
+/* --- LEFT MINI PANELS --- */
+.waveform {
+    height: 52px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    padding: 8px 2px 2px;
+}
+
+.waveform span {
+    width: 4px;
+    background: rgba(0, 255, 65, 0.45);
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.18);
+    transform-origin: bottom;
+    animation: wave 1.2s ease-in-out infinite;
+}
+
+.waveform span:nth-child(3n) { animation-delay: 0.12s; }
+.waveform span:nth-child(4n) { animation-delay: 0.22s; }
+.waveform span:nth-child(5n) { animation-delay: 0.31s; }
+
+.waveform span:nth-child(1) { height: 10px; }
+.waveform span:nth-child(2) { height: 24px; }
+.waveform span:nth-child(3) { height: 16px; }
+.waveform span:nth-child(4) { height: 34px; }
+.waveform span:nth-child(5) { height: 14px; }
+.waveform span:nth-child(6) { height: 28px; }
+.waveform span:nth-child(7) { height: 20px; }
+.waveform span:nth-child(8) { height: 40px; }
+.waveform span:nth-child(9) { height: 18px; }
+.waveform span:nth-child(10) { height: 30px; }
+.waveform span:nth-child(11) { height: 12px; }
+.waveform span:nth-child(12) { height: 36px; }
+.waveform span:nth-child(13) { height: 22px; }
+.waveform span:nth-child(14) { height: 26px; }
+.waveform span:nth-child(15) { height: 14px; }
+.waveform span:nth-child(16) { height: 32px; }
+.waveform span:nth-child(17) { height: 12px; }
+.waveform span:nth-child(18) { height: 38px; }
+.waveform span:nth-child(19) { height: 20px; }
+.waveform span:nth-child(20) { height: 28px; }
+.waveform span:nth-child(21) { height: 16px; }
+.waveform span:nth-child(22) { height: 34px; }
+.waveform span:nth-child(23) { height: 18px; }
+.waveform span:nth-child(24) { height: 30px; }
+
+@keyframes wave {
+    0%,
+    100% {
+        transform: scaleY(0.65);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scaleY(1.0);
+        opacity: 1;
+    }
+}
+
+.status-chip {
+    display: inline-block;
+    padding: 6px 8px;
+    border: 1px solid rgba(0, 255, 65, 0.22);
+    background: rgba(0, 255, 65, 0.06);
+    color: var(--hud-green-bright);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    margin-right: 8px;
+    margin-bottom: 8px;
+}
+
+.status-chip--dim {
+    color: rgba(0, 255, 65, 0.55);
+    border-color: rgba(0, 255, 65, 0.14);
+}
+
+/* --- STATS + SLIDERS --- */
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: baseline;
+    margin-bottom: 8px;
+}
+
+.stat-row--compact {
+    margin-bottom: 3px;
+}
+
+.stat-divider {
+    height: 1px;
+    background: rgba(0, 255, 65, 0.15);
+    margin: 6px 0;
+}
+
+.label {
+    color: rgba(0, 255, 65, 0.55);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.slider-control {
+    margin-top: 12px;
+}
+
+.slider-control label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: rgba(0, 255, 65, 0.65);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 14px;
+    width: 10px;
+    border-radius: 0;
+    background: var(--hud-green);
+    cursor: pointer;
+    margin-top: -6px;
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.35);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 2px;
+    cursor: pointer;
+    background: rgba(0, 255, 65, 0.35);
+}
+
+/* --- VIDEO --- */
+.video-frame {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+#video-stream {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: sepia(100%) hue-rotate(55deg) saturate(320%) contrast(1.15);
+}
+
+.hud-video.is-raw #video-stream {
+    filter: none;
+    object-fit: contain;
+}
+
+.ascii-stream {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    color: var(--hud-green);
+    font-family: var(--font-stack);
+    /* font-size and line-height set dynamically in JS */
+    white-space: pre;
+    overflow: hidden;
+    display: none;
+}
+
+.hud-video.is-ascii #video-stream {
+    display: none;
+}
+
+.hud-video.is-ascii .ascii-stream {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.optic-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.optic-btn {
+    background: rgba(0, 255, 65, 0.10);
+    border: 1px solid rgba(0, 255, 65, 0.30);
+    color: var(--hud-green-bright);
+    font-family: var(--font-stack);
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.optic-btn:active {
+    background: var(--hud-green);
+    border-color: var(--hud-green);
+    color: #000;
+}
+
+.optic-btn[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.video-crosshair {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+.video-crosshair::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff6b6b;
+    transform: translate(-50%, -62%);
+    box-shadow:
+        0 0 10px rgba(255, 255, 255, 0.75),
+        0 0 22px rgba(255, 51, 51, 0.95),
+        0 0 50px rgba(255, 51, 51, 0.55),
+        -14px 24px 0 #ff6b6b,
+        -14px 24px 10px rgba(255, 255, 255, 0.75),
+        -14px 24px 22px rgba(255, 51, 51, 0.95),
+        -14px 24px 50px rgba(255, 51, 51, 0.55),
+        14px 24px 0 #ff6b6b,
+        14px 24px 10px rgba(255, 255, 255, 0.75),
+        14px 24px 22px rgba(255, 51, 51, 0.95),
+        14px 24px 50px rgba(255, 51, 51, 0.55);
+    filter: drop-shadow(0 0 30px rgba(255, 51, 51, 1.0));
+    animation: reticle-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes reticle-pulse {
+    0%,
+    100% {
+        opacity: 0.78;
+    }
+    50% {
+        opacity: 1.0;
+    }
+}
+
+.video-hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.video-hud__top-left,
+.video-hud__top-right {
+    position: absolute;
+    top: 8px;
+    font-size: 0.7rem;
+    background: rgba(0, 0, 0, 0.55);
+    padding: 2px 6px;
+    border-left: 2px solid rgba(0, 255, 65, 0.45);
+    color: rgba(0, 255, 65, 0.75);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.video-hud__top-left {
+    left: 8px;
+}
+
+.video-hud__top-right {
+    right: 8px;
+}
+
+/* --- CONTROLS --- */
+.hud-controls__body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.arm-btn {
+    width: 100%;
+    height: 64px;
+    background:
+        repeating-linear-gradient(
+            135deg,
+            rgba(0, 255, 65, 0.12) 0 10px,
+            rgba(0, 0, 0, 0.00) 10px 20px
+        ),
+        rgba(0, 0, 0, 0.65);
+    border: 2px solid rgba(0, 255, 65, 0.28);
+    color: var(--hud-green-bright);
+    font-family: var(--font-stack);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.arm-btn:active {
+    border-color: rgba(0, 255, 65, 0.6);
+    box-shadow: 0 0 16px rgba(0, 255, 65, 0.22);
+}
+
+.arm-btn.active {
+    background: var(--hud-green);
+    color: #000;
+    border-color: var(--hud-green);
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.50);
+}
+
+.btn-text {
+    font-size: 1.05rem;
+    font-weight: bold;
+}
+
+.btn-sub {
+    font-size: 0.65rem;
+    opacity: 0.9;
+}
+
+.joystick-container {
+    width: 180px;
+    height: 180px;
+    position: relative;
+    touch-action: none;
+}
+
+.joystick-base {
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(0, 255, 65, 0.28);
+    border-radius: 50%;
+    position: relative;
+    background:
+        radial-gradient(circle at 50% 50%, rgba(0, 255, 65, 0.08) 0%, rgba(0, 0, 0, 0.95) 70%),
+        repeating-linear-gradient(90deg, rgba(0, 255, 65, 0.06) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(0deg, rgba(0, 255, 65, 0.06) 0 1px, transparent 1px 18px);
+}
+
+.joystick-base::before,
+.joystick-base::after {
+    content: "";
+    position: absolute;
+    background: rgba(0, 255, 65, 0.22);
+    opacity: 0.6;
+}
+
+.joystick-base::before {
+    top: 50%;
+    left: 10px;
+    right: 10px;
+    height: 1px;
+    transform: translateY(-50%);
+}
+
+.joystick-base::after {
+    left: 50%;
+    top: 10px;
+    bottom: 10px;
+    width: 1px;
+    transform: translateX(-50%);
+}
+
+.joystick-knob {
+    width: 56px;
+    height: 56px;
+    border: 2px solid rgba(0, 255, 65, 0.75);
+    background: rgba(0, 255, 65, 0.12);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    cursor: grab;
+    box-shadow: 0 0 18px rgba(0, 255, 65, 0.18);
+}
+
+/* --- RADAR --- */
+.radar-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.radar {
+    width: min(210px, 100%);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 255, 65, 0.28);
+    background:
+        radial-gradient(circle at 50% 50%, rgba(0, 255, 65, 0.10) 0%, rgba(0, 0, 0, 0.92) 62%),
+        repeating-radial-gradient(circle at 50% 50%, transparent 0 22px, rgba(0, 255, 65, 0.12) 22px 23px),
+        repeating-linear-gradient(90deg, rgba(0, 255, 65, 0.06) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(0deg, rgba(0, 255, 65, 0.06) 0 1px, transparent 1px 18px);
+    position: relative;
+    overflow: hidden;
+}
+
+.radar::before {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    background: conic-gradient(from 0deg, rgba(0, 255, 65, 0.30) 0 35deg, transparent 35deg 360deg);
+    animation: radar-spin 4s linear infinite;
+    border-radius: 50%;
+    opacity: 0.9;
+}
+
+.radar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 50% 50%, transparent 0 48%, rgba(0, 255, 65, 0.18) 48% 49%, transparent 49% 100%),
+        conic-gradient(from 0deg, transparent 0 89deg, rgba(0, 255, 65, 0.18) 89deg 90deg, transparent 90deg 179deg, rgba(0, 255, 65, 0.18) 179deg 180deg, transparent 180deg 269deg, rgba(0, 255, 65, 0.18) 269deg 270deg, transparent 270deg 360deg);
+    opacity: 0.35;
+}
+
+@keyframes radar-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.radar-readouts {
+    display: flex;
+    gap: 16px;
+}
+
+.radar-readout {
+    min-width: 110px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(0, 255, 65, 0.18);
+    padding: 8px 10px;
+}
+
+.radar-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--hud-green-bright);
+}
+
+/* --- LIDAR PLACEHOLDER --- */
+.lidar-viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+    background:
+        radial-gradient(circle at 60% 30%, rgba(0, 255, 65, 0.12), rgba(0, 0, 0, 0.95) 60%),
+        repeating-linear-gradient(90deg, rgba(0, 255, 65, 0.05) 0 1px, transparent 1px 24px),
+        repeating-linear-gradient(0deg, rgba(0, 255, 65, 0.05) 0 1px, transparent 1px 24px);
+    overflow: hidden;
+}
+
+.lidar-viewport::before {
+    content: "";
+    position: absolute;
+    left: -30%;
+    bottom: -55%;
+    width: 160%;
+    height: 160%;
+    background-image:
+        linear-gradient(rgba(0, 255, 65, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 65, 0.18) 1px, transparent 1px);
+    background-size: 20px 20px;
+    transform: perspective(700px) rotateX(68deg);
+    opacity: 0.22;
+}
+
+.lidar-viewport::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(0, 255, 65, 0.16) 48%, rgba(0, 255, 65, 0.25) 50%, rgba(0, 255, 65, 0.16) 52%, transparent 100%);
+    animation: lidar-sweep 2.8s linear infinite;
+    opacity: 0.35;
+}
+
+@keyframes lidar-sweep {
+    from {
+        transform: translateX(-120%);
+    }
+    to {
+        transform: translateX(120%);
+    }
+}
+
+.lidar-axes {
+    position: absolute;
+    inset: 10px;
+    pointer-events: none;
+    color: rgba(0, 255, 65, 0.55);
+    font-size: 0.75rem;
+}
+
+.axis {
+    position: absolute;
+}
+
+.axis-x {
+    right: 0;
+    top: 0;
+}
+
+.axis-y {
+    left: 0;
+    top: 0;
+}
+
+.axis-z {
+    left: 0;
+    bottom: 0;
+}
+
+.lidar-placeholder {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 6px 10px;
+    border: 1px solid rgba(0, 255, 65, 0.22);
+    background: rgba(0, 0, 0, 0.75);
+    color: rgba(0, 255, 65, 0.80);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 1100px) {
+    .hud-grid {
+        grid-template-columns: 240px 1fr;
+        grid-template-rows: 1fr 310px 260px;
+        grid-template-areas:
+            "left video"
+            "right controls"
+            "radar lidar";
+    }
+}
+
+@media (max-width: 760px) {
+    body {
+        overflow: hidden;
+    }
+
+    .hud-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .hud-status {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .hud-grid {
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .hud-left,
+    .hud-right {
+        flex-direction: column;
+    }
+
+    .video-frame {
+        height: 320px;
+    }
+
+    .lidar-viewport {
+        min-height: 200px;
+    }
+
+    .joystick-container {
+        width: 160px;
+        height: 160px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .blink,
+    .waveform span,
+    .video-crosshair::before,
+    .radar::before,
+    .lidar-viewport::after {
+        animation: none !important;
+    }
+}

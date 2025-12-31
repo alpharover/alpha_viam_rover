@@ -1,13 +1,41 @@
-# robot_localization EKF parameters (minimal placeholder)
+# robot_localization EKF parameters
+# Fuses wheel odometry (velocities) + IMU (angular velocities)
 ekf_filter_node:
   ros__parameters:
     frequency: 30.0
     two_d_mode: true
+    publish_tf: true
+
+
+    # Frame configuration (REP-105 compliant)
     map_frame: map
     odom_frame: odom
     base_link_frame: base_link
     world_frame: odom
-    # Wire IMU (use angular velocity only for now)
+
+
+    # Wheel odometry from diff_drive_controller
+    # Config: [x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]
+    # Fuse vx, vy only - let IMU provide vyaw for smoother heading
+    # vy=0 provides nonholonomic constraint for diff drive
+    odom0: /controller_manager/odom
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true, true, false,
+                   false, false, false,
+                   false, false, false]
+    odom0_queue_size: 10
+    odom0_differential: false
+    odom0_relative: false
+
+
+    # IMU sensor - provides yaw rate for smoother heading estimation
+    # Wheel odom provides linear velocities, IMU provides angular velocity
     imu0: /imu/data
-    imu0_config: [false, false, false, false, false, false, false, false, false, true, true, true, false, false, false]
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
     imu0_queue_size: 10
+    imu0_remove_gravitational_acceleration: true

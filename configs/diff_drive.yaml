@@ -1,9 +1,16 @@
 # diff_drive_controller parameters (ros2_control)
 diff_drive_controller:
-  type: diff_drive_controller/DiffDriveController
-  left_wheel_names: [left_wheel_joint]
-  right_wheel_names: [right_wheel_joint]
-  wheel_separation: 0.30
-  wheel_radius: 0.06
-  publish_rate: 50
-  enable_odom_tf: true
+  ros__parameters:
+    # Provide both legacy and new key names for compatibility
+    left_wheel_names: [left_wheel_joint]
+    right_wheel_names: [right_wheel_joint]
+    left_wheels: [left_wheel_joint]
+    right_wheels: [right_wheel_joint]
+    wheel_separation: 0.30
+    wheel_radius: 0.06
+    publish_rate: 50
+    enable_odom_tf: false
+    cmd_vel_timeout: 0.5
+    odom_frame_id: odom
+    base_frame_id: base_link
+    open_loop: false
