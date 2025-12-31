@@ -15,6 +15,10 @@ mkdir -p "$BAG_DIR"
 
 CMD_TOPIC_OVERRIDE=${CMD_TOPIC:-}
 LINEAR_X=${LINEAR_X:-0.8}
+FWD_SEC=${FWD_SEC:-1.6}
+REV_SEC=${REV_SEC:-1.6}
+STOP_SEC=${STOP_SEC:-0.2}
+BURST_RATE=${BURST_RATE:-15}
 
 if command -v systemctl >/dev/null 2>&1; then
   echo "[drive_smoke] Checking pigpio daemon..."
@@ -74,14 +78,14 @@ timeout "${DUR}s" ros2 bag record -s mcap -o "$BAG_DIR/phase3_offground" "${TOPI
 REC_PID=$!
 sleep 3
 
-echo "[drive_smoke] Forward burst on ${CMD_TOPIC} (linear_x=${LINEAR_X})"
-python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$CMD_TOPIC" --duration 1.6 --rate 15 --linear_x "$LINEAR_X" || true
+echo "[drive_smoke] Forward burst on ${CMD_TOPIC} (linear_x=${LINEAR_X}, ${FWD_SEC}s)"
+python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$CMD_TOPIC" --duration "$FWD_SEC" --rate "$BURST_RATE" --linear_x "$LINEAR_X" || true
 sleep 0.6
-echo "[drive_smoke] Reverse burst on ${CMD_TOPIC} (linear_x=-${LINEAR_X})"
-python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$CMD_TOPIC" --duration 1.6 --rate 15 --linear_x "-${LINEAR_X}" || true
+echo "[drive_smoke] Reverse burst on ${CMD_TOPIC} (linear_x=-${LINEAR_X}, ${REV_SEC}s)"
+python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$CMD_TOPIC" --duration "$REV_SEC" --rate "$BURST_RATE" --linear_x "-${LINEAR_X}" || true
 sleep 0.3
 echo "[drive_smoke] Stop"
-python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$CMD_TOPIC" --duration 0.2 --rate 3 --linear_x 0.0 || true
+python3 "$ROOT_DIR/scripts/pub_twist.py" --topic "$CMD_TOPIC" --duration "$STOP_SEC" --rate 3 --linear_x 0.0 || true
 
 wait $REC_PID || true
 

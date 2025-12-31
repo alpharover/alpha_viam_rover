@@ -99,7 +99,11 @@ class ControllerActivator(Node):
         req.parameters = [to_param_msg(k, v) for k, v in params.items()]
         fut = cli.call_async(req)
         rclpy.spin_until_future_complete(self, fut, timeout_sec=8.0)
-        if not fut.done() or fut.result() is None or not all(r.successful for r in fut.result().results):
+        if (
+            not fut.done()
+            or fut.result() is None
+            or not all(r.successful for r in fut.result().results)
+        ):
             raise RuntimeError("diff_drive set_parameters failed")
 
     def activate(self) -> None:
@@ -137,4 +141,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

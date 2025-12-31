@@ -10,7 +10,12 @@ from rclpy.node import Node
 from rcl_interfaces.msg import Parameter as ParamMsg
 from ros2param.api import call_set_parameters
 from controller_manager import set_controller_parameters_from_param_files
-from controller_manager_msgs.srv import LoadController, SwitchController, ListControllers, ConfigureController
+from controller_manager_msgs.srv import (
+    LoadController,
+    SwitchController,
+    ListControllers,
+    ConfigureController,
+)
 from controller_manager_msgs.msg import ControllerState
 from builtin_interfaces.msg import Duration
 from rclpy.parameter import Parameter
@@ -25,7 +30,9 @@ class ForwardActivator(Node):
         self.right = "right_wheel_velocity_controller"
 
         self.cli_load = self.create_client(LoadController, f"{self.cm}/load_controller")
-        self.cli_configure = self.create_client(ConfigureController, f"{self.cm}/configure_controller")
+        self.cli_configure = self.create_client(
+            ConfigureController, f"{self.cm}/configure_controller"
+        )
         self.cli_switch = self.create_client(SwitchController, f"{self.cm}/switch_controller")
         self.cli_list = self.create_client(ListControllers, f"{self.cm}/list_controllers")
 
@@ -65,7 +72,9 @@ class ForwardActivator(Node):
         rclpy.spin_until_future_complete(self, fut, timeout_sec=8.0)
         ok = fut.done() and fut.result() is not None and fut.result().ok
         if not ok:
-            self.get_logger().warn(f"load_controller returned not-ok for {name}; verifying via list_controllers")
+            self.get_logger().warn(
+                f"load_controller returned not-ok for {name}; verifying via list_controllers"
+            )
         if self._controller_loaded(name, timeout=4.0):
             return
         raise RuntimeError(f"load_controller failed for {name}")
@@ -87,7 +96,11 @@ class ForwardActivator(Node):
             params = inner.get("ros__parameters", inner)
         elif "controller_manager" in data and isinstance(data["controller_manager"], dict):
             rp = data["controller_manager"].get("ros__parameters", {})
-            params = rp.get(ctrl, {}).get("ros__parameters", rp.get(ctrl, {})) if isinstance(rp, dict) else {}
+            params = (
+                rp.get(ctrl, {}).get("ros__parameters", rp.get(ctrl, {}))
+                if isinstance(rp, dict)
+                else {}
+            )
         else:
             params = {}
 
@@ -103,7 +116,9 @@ class ForwardActivator(Node):
             resp = call_set_parameters(node=self, node_name=self.cm, parameters=req_params)
             failures = [res for res in resp.results if not res.successful]
             if failures:
-                self.get_logger().error(f"Setting typed parameters for {ctrl} failed: {[res.reason for res in failures]}")
+                self.get_logger().error(
+                    f"Setting typed parameters for {ctrl} failed: {[res.reason for res in failures]}"
+                )
             ok = ok and not failures
         if not ok:
             raise RuntimeError(f"parameter injection failed for {ctrl}")
@@ -112,7 +127,8 @@ class ForwardActivator(Node):
         # Ensure configured first
         self.wait("configure_controller", self.cli_configure)
         for name in [self.left, self.right]:
-            reqc = ConfigureController.Request(); reqc.name = name
+            reqc = ConfigureController.Request()
+            reqc.name = name
             futc = self.cli_configure.call_async(reqc)
             rclpy.spin_until_future_complete(self, futc, timeout_sec=6.0)
             if not futc.done() or futc.result() is None or not futc.result().ok:
@@ -145,8 +161,9 @@ def main() -> int:
         spawner_file = yaml_path
         # If given file is manager-scoped (wheels_forward.yaml), use configs/spawner/forward.yaml if present
         import os
+
         repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        spawner_default = os.path.join(repo_root, 'configs', 'spawner', 'forward.yaml')
+        spawner_default = os.path.join(repo_root, "configs", "spawner", "forward.yaml")
         if os.path.exists(spawner_default):
             spawner_file = spawner_default
         node.set_from_yaml(node.left, data, spawner_file)

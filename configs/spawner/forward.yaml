@@ -7,4 +7,3 @@ right_wheel_velocity_controller:
   ros__parameters:
     joints: [right_wheel_joint]
     interface_name: velocity
-

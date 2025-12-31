@@ -43,7 +43,8 @@ class DiffDriveActivator(Node):
                         return
         except Exception:
             pass
-        req = LoadController.Request(); req.name = name
+        req = LoadController.Request()
+        req.name = name
         fut = self.cli_load.call_async(req)
         rclpy.spin_until_future_complete(self, fut, timeout_sec=8.0)
         if not fut.done() or fut.result() is None or not fut.result().ok:
@@ -55,22 +56,32 @@ class DiffDriveActivator(Node):
         for k, v in mapping.items():
             pv = ParameterValue()
             if isinstance(v, bool):
-                pv.type = ParameterValue.TYPE_BOOL; pv.bool_value = v
+                pv.type = ParameterValue.TYPE_BOOL
+                pv.bool_value = v
             elif isinstance(v, int):
-                pv.type = ParameterValue.TYPE_INTEGER; pv.integer_value = v
+                pv.type = ParameterValue.TYPE_INTEGER
+                pv.integer_value = v
             elif isinstance(v, float):
-                pv.type = ParameterValue.TYPE_DOUBLE; pv.double_value = v
+                pv.type = ParameterValue.TYPE_DOUBLE
+                pv.double_value = v
             elif isinstance(v, str):
-                pv.type = ParameterValue.TYPE_STRING; pv.string_value = v
+                pv.type = ParameterValue.TYPE_STRING
+                pv.string_value = v
             elif isinstance(v, list) and all(isinstance(x, str) for x in v):
-                pv.type = ParameterValue.TYPE_STRING_ARRAY; pv.string_array_value = v
+                pv.type = ParameterValue.TYPE_STRING_ARRAY
+                pv.string_array_value = v
             elif isinstance(v, list) and all(isinstance(x, float) for x in v):
-                pv.type = ParameterValue.TYPE_DOUBLE_ARRAY; pv.double_array_value = v
+                pv.type = ParameterValue.TYPE_DOUBLE_ARRAY
+                pv.double_array_value = v
             elif isinstance(v, list) and all(isinstance(x, int) for x in v):
-                pv.type = ParameterValue.TYPE_INTEGER_ARRAY; pv.integer_array_value = v
+                pv.type = ParameterValue.TYPE_INTEGER_ARRAY
+                pv.integer_array_value = v
             else:
-                pv.type = ParameterValue.TYPE_STRING; pv.string_value = str(v)
-            pm = ParamMsg(); pm.name = k; pm.value = pv
+                pv.type = ParameterValue.TYPE_STRING
+                pv.string_value = str(v)
+            pm = ParamMsg()
+            pm.name = k
+            pm.value = pv
             msgs.append(pm)
         return msgs
 
@@ -88,10 +99,15 @@ class DiffDriveActivator(Node):
 
         cli = self.create_client(SetParameters, f"/{self.ctrl}/set_parameters")
         self.wait(f"{self.ctrl} set_parameters", cli)
-        req = SetParameters.Request(); req.parameters = self._to_param_msgs(params)
+        req = SetParameters.Request()
+        req.parameters = self._to_param_msgs(params)
         fut = cli.call_async(req)
         rclpy.spin_until_future_complete(self, fut, timeout_sec=8.0)
-        if not fut.done() or fut.result() is None or not all(r.successful for r in fut.result().results):
+        if (
+            not fut.done()
+            or fut.result() is None
+            or not all(r.successful for r in fut.result().results)
+        ):
             raise RuntimeError(f"set_parameters failed for {self.ctrl}")
 
     def activate(self) -> None:
@@ -132,4 +148,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

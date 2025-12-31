@@ -34,4 +34,4 @@ Follow-ups
 
 - Measure actual `ticks_per_rev` and signs; update params.
 - Optionally implement PI velocity control per wheel.
-- Add endurance test and thermal/voltage monitoring overlayed in Foxglove.
+- Add endurance test and thermal/voltage monitoring overlaid in Foxglove.

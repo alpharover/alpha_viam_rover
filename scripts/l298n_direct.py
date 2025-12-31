@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import sys
 import time
 import signal
 from dataclasses import dataclass
@@ -12,7 +11,7 @@ from geometry_msgs.msg import Twist
 
 try:
     import pigpio  # type: ignore
-except Exception as e:  # pragma: no cover
+except Exception:  # pragma: no cover
     pigpio = None
 
 
@@ -41,13 +40,27 @@ class L298NDirect(Node):
             right_in3=self.declare_parameter("right_in3", 6).get_parameter_value().integer_value,
             right_in4=self.declare_parameter("right_in4", 5).get_parameter_value().integer_value,
         )
-        self.freq = int(self.declare_parameter("pwm_freq", 20000).get_parameter_value().integer_value)
-        self.range = int(self.declare_parameter("pwm_range", 255).get_parameter_value().integer_value)
-        self.deadband = float(self.declare_parameter("deadband_mps", 0.05).get_parameter_value().double_value)
-        self.max_mps = float(self.declare_parameter("max_linear_mps", 1.2).get_parameter_value().double_value)
-        self.invert_left = bool(self.declare_parameter("invert_left", False).get_parameter_value().bool_value)
-        self.invert_right = bool(self.declare_parameter("invert_right", False).get_parameter_value().bool_value)
-        self.watchdog_s = float(self.declare_parameter("watchdog_s", 0.5).get_parameter_value().double_value)
+        self.freq = int(
+            self.declare_parameter("pwm_freq", 20000).get_parameter_value().integer_value
+        )
+        self.range = int(
+            self.declare_parameter("pwm_range", 255).get_parameter_value().integer_value
+        )
+        self.deadband = float(
+            self.declare_parameter("deadband_mps", 0.05).get_parameter_value().double_value
+        )
+        self.max_mps = float(
+            self.declare_parameter("max_linear_mps", 1.2).get_parameter_value().double_value
+        )
+        self.invert_left = bool(
+            self.declare_parameter("invert_left", False).get_parameter_value().bool_value
+        )
+        self.invert_right = bool(
+            self.declare_parameter("invert_right", False).get_parameter_value().bool_value
+        )
+        self.watchdog_s = float(
+            self.declare_parameter("watchdog_s", 0.5).get_parameter_value().double_value
+        )
 
         # Guard: refuse to run if controller_manager is active (avoid GPIO contention)
         from subprocess import run, PIPE
@@ -88,7 +101,8 @@ class L298NDirect(Node):
             v *= sign
             if abs(v) < self.deadband:
                 try:
-                    self.pi.write(a, 0); self.pi.write(b, 0)
+                    self.pi.write(a, 0)
+                    self.pi.write(b, 0)
                     self.pi.set_PWM_dutycycle(pwm_pin, 0)
                 except Exception:  # pigpio disconnect during shutdown
                     pass
@@ -97,12 +111,14 @@ class L298NDirect(Node):
             duty = int(round(mag * self.range))
             if v >= 0:
                 try:
-                    self.pi.write(a, 1); self.pi.write(b, 0)
+                    self.pi.write(a, 1)
+                    self.pi.write(b, 0)
                 except Exception:
                     return
             else:
                 try:
-                    self.pi.write(a, 0); self.pi.write(b, 1)
+                    self.pi.write(a, 0)
+                    self.pi.write(b, 1)
                 except Exception:
                     return
             try:
@@ -111,7 +127,9 @@ class L298NDirect(Node):
                 pass
 
         drive(self.pins.left_pwm, self.pins.left_in1, self.pins.left_in2, left, self.invert_left)
-        drive(self.pins.right_pwm, self.pins.right_in3, self.pins.right_in4, right, self.invert_right)
+        drive(
+            self.pins.right_pwm, self.pins.right_in3, self.pins.right_in4, right, self.invert_right
+        )
 
     def cb_twist(self, msg: Twist) -> None:
         v = float(msg.linear.x)

@@ -2,4 +2,3 @@ left_wheel_velocity_controller:
   ros__parameters:
     joints: [left_wheel_joint]
     interface_name: velocity
-

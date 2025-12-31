@@ -5,6 +5,7 @@ from launch.actions import ExecuteProcess
 import os
 from ament_index_python.packages import get_package_share_directory
 
+
 def generate_launch_description():
     def setup(context, *args, **kwargs):
         nodes = []
@@ -12,6 +13,7 @@ def generate_launch_description():
         urdf_xacro = os.path.join(share_dir, "urdf", "rover.urdf.xacro")
         try:
             import xacro  # type: ignore
+
             robot_desc_raw = xacro.process_file(urdf_xacro).toxml()
         except Exception as e:
             robot_desc_raw = ""

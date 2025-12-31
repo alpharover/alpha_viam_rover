@@ -71,6 +71,8 @@ Notes:
 - Control publishes to `/controller_manager/cmd_vel_unstamped` and enforces a deadman + linear stiction floor (`0.72 m/s`).
 - Turning is continuous (no angular stiction floor); use the `MAX_ANG` slider to tune how aggressively it sweeps.
 - The UI shows drive telemetry (encoder-derived wheel speeds + odom); `WHEEL_DIFF` near `0` indicates matched wheel speed in straight-line motion.
+- Optic controls: use `MODE: VIDEO/ASCII` to toggle between live MJPEG and ASCII rendering; `RAW: ON/OFF` toggles the CRT-style filter (video mode only).
+- ASCII mode dynamically scales to fill the same area as the video feed and centers in the viewport.
 - ASCII preview mode still exists in the SSH TUI: `scripts/teleop_session.sh --video-mode ascii`
 
 Troubleshooting:

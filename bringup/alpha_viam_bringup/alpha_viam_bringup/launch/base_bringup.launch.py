@@ -36,10 +36,17 @@ def generate_launch_description():
         description=("Whether to spawn diff_drive_controller " "(set true once params are valid)"),
     )
 
+    wheel_odom_topic_arg = DeclareLaunchArgument(
+        "wheel_odom_topic",
+        default_value="/controller_manager/odom",
+        description="Wheel odometry topic for EKF fusion (override for different namespaces).",
+    )
+
     def launch_setup(context, *args, **kwargs):
         ekf_params = LaunchConfiguration("ekf_params_file").perform(context)
         urdf_xacro = LaunchConfiguration("urdf_xacro").perform(context)
         diagnostics_params = LaunchConfiguration("diagnostics_params_file").perform(context)
+        wheel_odom_topic = LaunchConfiguration("wheel_odom_topic").perform(context)
 
         # Build robot_description from xacro at runtime
         try:
@@ -96,7 +103,9 @@ def generate_launch_description():
         try:
             import yaml  # type: ignore
 
-            with open(os.path.join(share_dir, "configs", "network.yaml"), "r", encoding="utf-8") as f:
+            with open(
+                os.path.join(share_dir, "configs", "network.yaml"), "r", encoding="utf-8"
+            ) as f:
                 y = yaml.safe_load(f)
                 if isinstance(y, dict):
                     if "foxglove_ws_port" in y:
@@ -128,7 +137,9 @@ def generate_launch_description():
                 + os.environ.get("LD_LIBRARY_PATH", ""),
             }
         else:
-            print("[alpha_viam_bringup] WARN: l298n_hardware prefix not found; plugin discovery may fail")
+            print(
+                "[alpha_viam_bringup] WARN: l298n_hardware prefix not found; plugin discovery may fail"
+            )
 
         nodes = [
             Node(
@@ -201,7 +212,7 @@ def generate_launch_description():
                 executable="ekf_node",
                 name="ekf_filter_node",
                 output="screen",
-                parameters=[ekf_params],
+                parameters=[ekf_params, {"odom0": wheel_odom_topic}],
             ),
             Node(
                 package="diagnostic_aggregator",
@@ -293,6 +304,7 @@ def generate_launch_description():
             urdf_xacro_arg,
             diagnostics_params_arg,
             spawn_drive_arg,
+            wheel_odom_topic_arg,
             OpaqueFunction(function=launch_setup),
         ]
     )

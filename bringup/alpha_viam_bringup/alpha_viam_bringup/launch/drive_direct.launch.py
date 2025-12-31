@@ -3,8 +3,6 @@ from launch.actions import OpaqueFunction, ExecuteProcess
 from launch_ros.actions import Node
 from pathlib import Path
 
-import os
-
 
 def _find_repo_root() -> Path:
     here = Path(__file__).resolve()
@@ -21,6 +19,7 @@ def generate_launch_description():
         urdf_xacro = str(repo_root / "urdf" / "rover.urdf.xacro")
         try:
             import xacro  # type: ignore
+
             robot_desc_raw = xacro.process_file(urdf_xacro).toxml()
         except Exception as e:
             robot_desc_raw = ""
@@ -45,4 +44,3 @@ def generate_launch_description():
         return nodes
 
     return LaunchDescription([OpaqueFunction(function=setup)])
-

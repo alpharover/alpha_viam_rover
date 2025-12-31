@@ -12,6 +12,7 @@ def generate_launch_description():
         urdf_xacro = os.path.join(share_dir, "urdf", "rover.urdf.xacro")
         try:
             import xacro  # type: ignore
+
             robot_desc_raw = xacro.process_file(urdf_xacro).toxml()
         except Exception as e:
             robot_desc_raw = ""

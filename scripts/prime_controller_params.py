@@ -76,14 +76,21 @@ def main() -> int:
     try:
         params = []
         for name, val in flat.items():
-            pm = ParamMsg(); pm.name = name; pm.value = to_param_value(val)
+            pm = ParamMsg()
+            pm.name = name
+            pm.value = to_param_value(val)
             params.append(pm)
         resp = call_set_parameters(node=node, node_name="/controller_manager", parameters=params)
         ok = all(r.successful for r in resp.results)
-        print(("primed " + str(len(params)) + " params on /controller_manager for " + ctrl) if ok else "set_parameters returned failure")
+        print(
+            ("primed " + str(len(params)) + " params on /controller_manager for " + ctrl)
+            if ok
+            else "set_parameters returned failure"
+        )
         return 0 if ok else 6
     finally:
-        node.destroy_node(); rclpy.shutdown()
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":

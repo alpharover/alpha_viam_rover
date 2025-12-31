@@ -19,7 +19,6 @@ def _find_repo_root() -> Path:
 def generate_launch_description() -> LaunchDescription:
     cwd = str(_find_repo_root())
     controllers_yaml = os.path.join(cwd, "configs", "controllers.yaml")
-    diffdrive_yaml = os.path.join(cwd, "configs", "diff_drive.yaml")
     urdf_xacro = os.path.join(cwd, "urdf", "rover.urdf.xacro")
 
     nodes = [
@@ -28,7 +27,9 @@ def generate_launch_description() -> LaunchDescription:
             executable="robot_state_publisher",
             name="robot_state_publisher",
             output="screen",
-            parameters=[{"robot_description": __import__("xacro").process_file(urdf_xacro).toxml()}],
+            parameters=[
+                {"robot_description": __import__("xacro").process_file(urdf_xacro).toxml()}
+            ],
         ),
         Node(
             package="controller_manager",
