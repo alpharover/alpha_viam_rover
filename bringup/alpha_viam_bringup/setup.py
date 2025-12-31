@@ -25,6 +25,7 @@ setup(
         ("share/" + package_name + "/configs", [
             _cfg("controllers.yaml"),
             _cfg("diff_drive.params.yaml"),
+            _cfg("diff_drive_params.yaml"),
             _cfg("wheels_forward.yaml"),
             _cfg("ekf.yaml"),
             _cfg("diagnostics.yaml"),

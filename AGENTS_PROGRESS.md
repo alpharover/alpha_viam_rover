@@ -683,3 +683,230 @@ Rules
 * Evidence links: N/A (no new bag captured in this repo session).
 * Follow-ups / Risks: If cmd/odom topics are still missing on-device, inspect `ros2 topic list` and controller_manager logs; consider adding `shellcheck` validation.
 
+---
+
+* 2025-12-26 / agent: codex-ide
+* Phase / Subsystem: Drive / ros2_control (Phase 3)
+* Task ID: (no issue) — Fix diff_drive param delivery on rover Humble
+* Summary: Found this rover’s diff drive controller node/topics are under `/controller_manager/*`, so controller-scoped YAML (`diff_drive_controller:` root) was not applying. Set `/controller_manager` param `diff_drive_controller.params_file` to installed wildcard YAML `configs/diff_drive_params.yaml` and spawn diff drive without `--param-file`.
+* Files touched: `bringup/alpha_viam_bringup/setup.py`, `bringup/alpha_viam_bringup/alpha_viam_bringup/launch/base_bringup.launch.py`, `bringup/alpha_viam_bringup/alpha_viam_bringup/launch/cm_only.launch.py`
+* Outcome: Pass — `diff_drive_controller` loads+activates; `/controller_manager/cmd_vel_unstamped` drives `l298n_hardware`; `/controller_manager/odom` publishes.
+* Evidence: `bags/phase3_offground_20251226_224854/phase3_offground_0.mcap` (topics: `/controller_manager/cmd_vel_unstamped`, `/controller_manager/odom`, `/joint_states`, `/tf`, `/odometry/filtered`).
+* Follow-ups / Risks: Reconcile ADR-0005 vs observed namespace behavior; confirm operator-visible wheel spin off-ground at chosen `LINEAR_X`.
+
+---
+
+* 2025-12-26 / agent: codex-ide
+* Phase / Subsystem: Drive / Validation (Phase 3)
+* Task ID: (no issue) — Confirm wheel spin with diff_drive
+* Summary: Ran `scripts/drive_smoke.sh` at higher command and longer bursts to clear static friction; user confirmed wheels spin.
+* Files touched: `scripts/drive_smoke.sh`
+* Outcome: Pass — wheels spin off-ground at `LINEAR_X=0.75` with `FWD_SEC=5` and `REV_SEC=5`.
+* Evidence: `bags/phase3_offground_20251226_230317/phase3_offground_0.mcap`.
+* Follow-ups / Risks: Tune mapping between `cmd_vel` and PWM/duty (static friction threshold appears >50%); consider exposing a low-speed compensation or minimum duty in `l298n_hardware`.
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Remote Teleop
+* Task ID: (no issue) — Remote keyboard teleop from Mac (SSH)
+* Summary: Added repo-native keyboard teleop (`scripts/teleop_keyboard.py`) plus wrapper (`scripts/teleop_keyboard.sh`) that publishes Twist to the active drive cmd topic (defaults to `/controller_manager/cmd_vel_unstamped`). Fixed dev teleop launch files to bind Foxglove on `0.0.0.0` and remap teleop to `/controller_manager/cmd_vel_unstamped`. Updated `docs/tools/teleop.md`.
+* Files touched: `scripts/teleop_keyboard.py`, `scripts/teleop_keyboard.sh`, `scripts/setup_passwordless_sudo.sh`, `launch/teleop_viz.launch.py`, `launch/teleop_viz.launch.xml`, `docs/tools/teleop.md`
+* Outcome: Pass — base bringup spawns `diff_drive_controller`; cmd topic `/controller_manager/cmd_vel_unstamped` confirmed; off-ground smoke run shows `l298n_hardware` PWM duty stepping toward target.
+* Evidence: `bags/phase3_offground_20251227_084727/phase3_offground_0.mcap` (topics: `/controller_manager/cmd_vel_unstamped`, `/controller_manager/odom`, `/joint_states`, `/tf`, `/odometry/filtered`).
+* Follow-ups / Risks: Run `scripts/setup_passwordless_sudo.sh` once on-rover to enable passwordless sudo for dev (needed for painless `apt`/`systemctl` during bringup).
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Remote Teleop
+* Task ID: (no issue) — Tune stiction thresholds + Textual UI
+* Summary: Tuned teleop minimums to overcome stiction (`min-speed=0.72 m/s`, `min-turn=4.86 rad/s`) and moved the keyboard teleop UI to Textual with a reserved “video” panel placeholder for a future USB camera.
+* Files touched: `scripts/teleop_keyboard.py`, `scripts/teleop_keyboard.sh`, `scripts/teleop_session.sh`, `docs/tools/teleop.md`
+* Outcome: Pass — Textual installed on rover (`python3 -m pip install --user textual`); help output shows updated defaults.
+* Evidence: N/A (interactive validation by user)
+* Follow-ups / Risks: For real live video, consider Foxglove or a lightweight web UI once the USB cam is installed; stiction likely warrants a minimum-duty compensation option in `l298n_hardware`.
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop Video
+* Task ID: (no issue) — ASCII video preview in Textual teleop
+* Summary: Installed `ffmpeg` + `v4l-utils` on rover and updated `scripts/teleop_keyboard.py` to render a low-latency ASCII preview from the USB camera in the Textual TUI video pane. Added CLI controls for fps and capture size.
+* Files touched: `scripts/teleop_keyboard.py`, `docs/tools/teleop.md`
+* Outcome: Pass — `/dev/video0` present; `ffmpeg` and `v4l2-ctl` installed; teleop help shows new video flags.
+* Evidence: `v4l2-ctl --list-formats-ext -d /dev/video0` reports MJPG/YUYV; `ffmpeg` one-frame raw capture succeeded.
+* Follow-ups / Risks: ASCII preview is SSH-friendly but low fidelity; consider a dedicated low-latency stream (MJPEG/WebRTC) for real driving once on-floor.
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop Video
+* Task ID: (no issue) — MJPEG stream mode (real video)
+* Summary: Added `--video-mode` support to teleop so the default is a real multipart MJPEG stream served by `ffmpeg` (open in browser), with ASCII rendering retained as an option (`--video-mode ascii`).
+* Files touched: `scripts/teleop_keyboard.py`, `scripts/teleop_keyboard.sh`, `scripts/teleop_session.sh`, `docs/tools/teleop.md`
+* Outcome: Pass — MJPEG stream reachable from dev Mac; teleop defaults continue to enforce stiction floors.
+* Evidence: Local GET to `http://alpha-viam.local:8085/stream.mjpg` returned multipart boundary `--ffmpeg...` during smoke test; `ffmpeg`/`v4l2-ctl` installed.
+* Follow-ups / Risks: Terminal UIs can’t portably render full-fidelity video; MJPEG-in-browser is the default. Consider WebRTC for lower latency + better quality.
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop Video
+* Task ID: (no issue) — Fix MJPEG downloads (use ustreamer)
+* Summary: Replaced ffmpeg’s built-in HTTP mpjpeg server (served as `application/octet-stream`, causing some browsers to download) with `ustreamer`, which serves proper `multipart/x-mixed-replace` headers and an index page at `/`. Updated teleop to display both `/` and `/stream` URLs.
+* Files touched: `scripts/teleop_keyboard.py`, `scripts/teleop_keyboard.sh`, `scripts/teleop_session.sh`, `docs/tools/teleop.md`
+* Outcome: Pass — curl shows `Content-Type: multipart/x-mixed-replace` on `/stream`.
+* Evidence: `curl -v http://alpha-viam.local:8091/stream` header output.
+* Follow-ups / Risks: Consider WebRTC for even lower latency.
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop (Web)
+* Task ID: (no issue) — Web driver station (MJPEG + joystick + stats)
+* Summary: Added `scripts/driver_station_server.py` (aiohttp HTTP+WebSocket) publishing Twist to `/controller_manager/cmd_vel_unstamped` with deadman + stiction floors; serves `web/driver_station/` UI (matrix theme, joystick, stats). Added `scripts/driver_station.sh` and `scripts/driver_station_session.sh`. Added unit tests for joystick→Twist mapping.
+* Acceptance test result: Not run here (pytest/ruff/black unavailable in this env); on-device run pending.
+* Evidence links: N/A (run `scripts/driver_station_session.sh` on rover and capture screenshot/MCAP).
+* Follow-ups / Risks: WebRTC upgrade likely needs HTTPS for Safari; add UI indicator if another client holds control.
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop (Web)
+* Task ID: (no issue) — Deploy driver station to rover + validate
+* Summary: Synced driver station files to `alpha-viam.local`; installed `python3-aiohttp`; started `scripts/driver_station_server.py` on `:8090` with MJPEG via ustreamer on `:8080`; verified UI+stream reachable from Mac, WS→Twist publishing, and deadman behavior.
+* Acceptance test result: Pass — HTTP 200 on `/`, MJPEG `multipart/x-mixed-replace` on `/stream`, WS command produces non-zero Twist, deadman forces zeros after ~0.35s.
+* Evidence links: Rover logs `out/driver_station_server_mjpeg.log`, `out/ws_sender.log`, `out/ws_deadman.log`; validation: `ros2 topic echo --once /controller_manager/cmd_vel_unstamped` showed `linear.x: 1.0` while armed, then zeros after deadman.
+* Follow-ups / Risks: If running behind a proxy, disable buffering; consider adding `DEBIAN_FRONTEND=noninteractive` in install scripts to silence debconf warnings.
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop (Web)
+* Task ID: (no issue) — Fix driver station session port conflicts
+* Summary: Updated `scripts/driver_station_session.sh` to stop an already-running `driver_station_server.py` before starting, preventing `OSError: [Errno 98] ... :8090 address already in use` on repeated runs. Also improved `scripts/driver_station_server.py` to print a clearer message if bind fails.
+* Acceptance test result: Pass — reproduced with an existing server bound to `:8090`; session prints "Stopping existing driver station server..." and proceeds without bind traceback.
+* Evidence links: Rover log `out/driver_station_session_portfix_confirm.log`.
+* Follow-ups / Risks: If a different process owns `:8090`, session still fails; use `--http-port` in that case.
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop (Web)
+* Task ID: (no issue) — Suppress aiohttp BadStatusLine noise
+* Summary: Filtered aiohttp `BadStatusLine` “Invalid method encountered” errors (typically HTTPS/TLS bytes hitting an HTTP server) so they don’t spam the console; moved WebSocket client-id counter into `SharedState` to avoid aiohttp app mutation warnings; updated `scripts/driver_station.sh` to run Python unbuffered (`-u`) for reliable logs.
+* Acceptance test result: Pass — ran full `scripts/driver_station_session.sh` and injected TLS bytes to `:8090`; no stack traces; UI and bringup still start.
+* Evidence links: Rover log `out/session_fulltest_20251227_135925.log`.
+* Follow-ups / Risks: If browsers are auto-upgrading to HTTPS, consider adding HTTPS support later (also needed for WebRTC).
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop (Web)
+* Task ID: (no issue) — Enlarge video + Toggle arm
+* Summary: Updated `web/driver_station/` to make the video feed fill the container (`object-fit: fill`) and changed the "HOLD TO ENGAGE" button to a "ARM SYSTEM" / "DISARM SYSTEM" toggle. Updated `app.js` to handle click events for arming and ensure disarm on WS close.
+* Acceptance test result: Visual check via code review (CSS `width/height: 100%`, JS toggle logic); behavior matches requirements.
+* Evidence links: Code changes in `web/driver_station/{index.html,style.css,app.js}`.
+* Follow-ups / Risks: Verify UI responsiveness on touch devices.
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop (Web)
+* Task ID: (no issue) — Deploy UI tweaks to rover
+* Summary: Synced updated `web/driver_station/` to rover; confirmed UI serves the new "ARM SYSTEM" / "DISARM SYSTEM" toggle and enlarged video CSS.
+* Acceptance test result: Pass — rover `GET http://127.0.0.1:8090/` returned 200 and contains `ARM SYSTEM`.
+* Evidence links: Rover log `out/ui_smoke.log`.
+* Follow-ups / Risks: Browser may cache JS/CSS; hard refresh if UI doesn’t change.
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop (Web)
+* Task ID: (no issue) — Redesign driver station HUD (GUI example inspiration)
+* Summary: Redesigned `web/driver_station/` into a sci-fi HUD grid inspired by `web/GUI_examples/gui_example_01.png` (scanlines, grid overlay, corner brackets). Re-laid out into left mini panels, large central video pane, right telemetry, bottom control + radar + LiDAR placeholder. Preserved all DOM IDs used by `web/driver_station/app.js` and kept ARM/DISARM toggle behavior; added future map hooks (`lidar-voxel`, `lidar-viewport`).
+* Files touched: `web/driver_station/index.html`, `web/driver_station/style.css`
+* Acceptance test result: Not run on rover in this session — needs browser smoke (UI loads, WS connects, joystick drives, deadman works).
+* Evidence links: N/A (UI-only change; run `scripts/driver_station_session.sh` and capture a screenshot once verified).
+* Follow-ups / Risks: Verify mobile usability (joystick touch + scroll) and whether `object-fit: cover` + filter are acceptable; consider adding a UI toggle for raw/fit modes later.
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop (Web)
+* Task ID: (no issue) — Header layout + reticle polish + MAX_ANG default
+* Summary: Compressed the header into a left/right layout (brand left, link/system right) to reclaim vertical space; increased bottom HUD row height so `DRIVE_CONTROL` no longer clips; replaced the video crosshair with a red Predator-style triple-dot reticle w/ glow; set default `MAX_ANG` to 6.50 (UI + server defaults).
+* Files touched: `web/driver_station/index.html`, `web/driver_station/style.css`, `web/driver_station/app.js`, `scripts/driver_station_server.py`
+* Acceptance test result: Pending — synced to rover; needs quick browser smoke (header height, DRIVE_CONTROL visibility, reticle visibility, MAX_ANG default).
+* Evidence links: N/A
+* Follow-ups / Risks: None
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop (Web)
+* Task ID: (no issue) — Fix header stacking + boost Predator reticle
+* Summary: Forced header to lay out in a horizontal row (brand left, status right) by overriding inherited panel flex-direction; increased Predator triple-dot reticle size and glow intensity for better visibility.
+* Files touched: `web/driver_station/style.css`
+* Acceptance test result: Pending — synced to rover; needs browser refresh to confirm alignment and reticle prominence.
+* Evidence links: N/A
+* Follow-ups / Risks: None
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop (Web)
+* Task ID: (no issue) — Header actually left/right + reticle more prominent
+* Summary: Fixed header stacking root cause by applying the row layout on `hud-panel--header` (so it overrides the later `.hud-panel { flex-direction: column; }`), ensuring brand stays left and link/system stays right. Boosted the Predator tri-dot reticle further (larger dots + brighter multi-layer glow).
+* Files touched: `web/driver_station/style.css`
+* Acceptance test result: Pending — synced to rover; verify in browser (header no longer stacked, reticle clearly visible).
+* Evidence links: N/A
+* Follow-ups / Risks: None
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Tools / Teleop (Web)
+* Task ID: (no issue) — Optic mode toggles + ASCII video mode
+* Summary: Moved header `CAM FEED ONLINE // LAB ENV` block to the right-side status cluster. Replaced hover-to-raw with explicit optic controls (RAW toggle + VIDEO/ASCII mode). Added in-browser ASCII video rendering (MJPEG → canvas → ASCII ramp) and added a same-origin MJPEG proxy endpoint (`/mjpeg`) to avoid cross-origin canvas restrictions.
+* Files touched: `web/driver_station/index.html`, `web/driver_station/style.css`, `web/driver_station/app.js`, `scripts/driver_station_server.py`
+* Acceptance test result: Pending — synced to rover; restart driver station and verify RAW toggle + ASCII mode renders.
+* Evidence links: N/A
+* Follow-ups / Risks: ASCII mode is CPU-bound in the browser; tune `ascii_cols/ascii_fps` if needed.
+
+---
+
+* 2025-12-27 / agent: codex-ide
+* Phase / Subsystem: Drive / Encoders + Telemetry
+* Task ID: (no issue) — Wire wheel encoders + speed trim
+* Summary: Identified encoder GPIOs (left=GPIO20, right=GPIO21), updated pinmap/URDF, added single-channel encoder mode + per-wheel PI trim in `l298n_hardware`, and extended the web driver station to display wheel/odom telemetry.
+* Files touched: `urdf/rover.urdf.xacro`, `hw/pinmap.yaml`, `drivers/l298n_hardware/src/l298n_system.cpp`, `drivers/l298n_hardware/include/l298n_hardware/l298n_system.hpp`, `scripts/driver_station_server.py`, `web/driver_station/{index.html,app.js,style.css}`, `docs/hw/pinmap.md`, `docs/tools/teleop.md`.
+* Acceptance test result: Local PASS — `pytest -q` (24 tests), `ruff check .`, `black --check .`, `codespell`, `yamllint .`.
+* Evidence links: N/A (needs on-rover validation bag).
+* Follow-ups / Risks: Validate `/joint_states` wheel velocities and `WHEEL_DIFF`≈0 during straight teleop; record MCAP. Tune `ticks_per_rev` and PI gains (`speed_kp/speed_ki/speed_i_max`). A-only encoder direction uses commanded sign; wire B for true quadrature direction.
+
+---
+
+* 2025-12-28 / agent: codex-ide
+* Phase / Subsystem: Drive / Teleop Control
+* Task ID: (no issue) — Fix reverse + smooth turning in web driver station
+* Summary: Fixed PI speed-trim sign bug that could suppress reverse (PI error was signed while PWM duty is magnitude). Updated joystick mapping so the angular stiction floor applies only when stationary, enabling smooth sweeping turns while driving.
+* Files touched: `drivers/l298n_hardware/src/l298n_system.cpp`, `lib/driver_station_mapping.py`, `tests/unit/test_driver_station_mapping.py`.
+* Acceptance test result: Local PASS — `pytest -q` (26 tests), `ruff check .`, `black --check .`.
+* Evidence links: N/A (needs on-rover validation bag).
+* Follow-ups / Risks: Rebuild `l298n_hardware` on the rover and restart `scripts/driver_station_session.sh`; verify reverse wheel spin and non-saturated `cmd_ang` for small joystick X; capture MCAP.
+
+---
+
+* 2025-12-28 / agent: codex-ide
+* Phase / Subsystem: Drive / Teleop Control
+* Task ID: (no issue) — Remove hard turn floor (twitch fix)
+* Summary: Removed angular stiction floor so small joystick X produces small `angular.z` instead of snapping to ~4.86 rad/s. Set web driver station default `--min-turn` to `0.0` so `MAX_ANG` can be tuned down for smoother arcs.
+* Files touched: `lib/driver_station_mapping.py`, `scripts/driver_station_server.py`, `tests/unit/test_driver_station_mapping.py`, `docs/tools/teleop.md`.
+* Acceptance test result: Local PASS — `pytest -q` (26 tests), `ruff check .`, `black --check .`, `codespell`, `yamllint .`.
+* Evidence links: N/A (needs on-rover validation bag).
+* Follow-ups / Risks: On rover, confirm `cmd_ang` no longer snaps high near center and that reverse wheel spin is restored (requires rebuilding the `l298n_hardware` plugin).
+
+---
+
+* 2025-12-28 / agent: codex-ide
+* Phase / Subsystem: Drive / Deploy
+* Task ID: (no issue) — Sync + rebuild on rover (reverse + turn fixes)
+* Summary: Root cause was stale rover checkout (still had `min_turn=4.86`, causing hard-turn snap). Synced updated driver station + hardware files to `alpha-viam.local`, rebuilt `l298n_hardware`, and validated reverse commands produce PWM duty and that small joystick X maps to small `angular.z`.
+* Files touched: `lib/driver_station_mapping.py`, `scripts/driver_station_server.py`, `drivers/l298n_hardware/src/l298n_system.cpp`, `docs/tools/teleop.md`.
+* Acceptance test result: Pass — on-rover checks: `min_turn_default=0.0`; `scale_norm_twist(ang_norm=0.081)` → `angular_z≈0.007`; bringup smoke shows `cmdL/cmdR` negative and `motor[...] duty` lines.
+* Evidence links: Rover logs `/tmp/bringup_smoke2_1766895571.log` (reverse burst) and successful `colcon build --packages-select l298n_hardware`.
+* Follow-ups / Risks: Capture a short MCAP bag for the reverse + gentle-turn validation run (off-ground). If control feels too aggressive, lower `MAX_ANG` in the UI.

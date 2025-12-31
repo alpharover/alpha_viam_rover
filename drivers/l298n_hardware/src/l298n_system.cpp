@@ -19,22 +19,42 @@ void QuadEncoder::attach(int pi_handle, int pin_a, int pin_b, unsigned glitch_us
   pin_b_ = pin_b;
   ticks_ = 0;
   last_state_ = 0;
-  if (pin_a_ >= 0 && pin_b_ >= 0) {
-    set_mode(pi_, pin_a_, PI_INPUT);
+
+  if (pin_a_ < 0) {
+    return;
+  }
+
+  set_mode(pi_, pin_a_, PI_INPUT);
+  set_pull_up_down(pi_, pin_a_, PI_PUD_UP);
+  if (glitch_us > 0) {
+    set_glitch_filter(pi_, pin_a_, glitch_us);
+  }
+
+  if (pin_b_ >= 0) {
+    single_channel_ = false;
     set_mode(pi_, pin_b_, PI_INPUT);
-    set_pull_up_down(pi_, pin_a_, PI_PUD_UP);
     set_pull_up_down(pi_, pin_b_, PI_PUD_UP);
     if (glitch_us > 0) {
-      set_glitch_filter(pi_, pin_a_, glitch_us);
       set_glitch_filter(pi_, pin_b_, glitch_us);
     }
+
     int a = gpio_read(pi_, pin_a_);
     int b = gpio_read(pi_, pin_b_);
     last_state_ = ((a & 1) << 1) | (b & 1);
+
     cb_id_a_ = callback_ex(pi_, pin_a_, EITHER_EDGE, &QuadEncoder::cb_func_ex, this);
     cb_id_b_ = callback_ex(pi_, pin_b_, EITHER_EDGE, &QuadEncoder::cb_func_ex, this);
     attached_ = true;
+    return;
   }
+
+  single_channel_ = true;
+  cb_id_a_ = callback_ex(pi_, pin_a_, RISING_EDGE, &QuadEncoder::cb_func_ex, this);
+  attached_ = true;
+}
+
+void QuadEncoder::set_direction(int dir) {
+  dir_ = (dir >= 0) ? 1 : -1;
 }
 
 void QuadEncoder::detach() {
@@ -42,7 +62,10 @@ void QuadEncoder::detach() {
     if (cb_id_a_) callback_cancel(cb_id_a_);
     if (cb_id_b_) callback_cancel(cb_id_b_);
   }
+  cb_id_a_ = 0;
+  cb_id_b_ = 0;
   attached_ = false;
+  single_channel_ = false;
 }
 
 void QuadEncoder::cb_func_ex(int pi, unsigned user_gpio, unsigned level, uint32_t tick, void *userdata) {
@@ -53,6 +76,12 @@ void QuadEncoder::cb_func_ex(int pi, unsigned user_gpio, unsigned level, uint32_
 
 void QuadEncoder::handle_edge(int /*pi*/, unsigned /*user_gpio*/, unsigned level, uint32_t /*tick*/) {
   if (level < 0) return;
+
+  if (single_channel_) {
+    if (level == 1) ticks_ += dir_;
+    return;
+  }
+
   int a = gpio_read(pi_, pin_a_);
   int b = gpio_read(pi_, pin_b_);
   int state = ((a & 1) << 1) | (b & 1);
@@ -118,6 +147,11 @@ CallbackReturn L298NSystemHardware::on_init(const hardware_interface::HardwareIn
   enc_glitch_us_ = static_cast<unsigned>(get_i("encoder_glitch_us", static_cast<int>(enc_glitch_us_)));
   watchdog_s_ = get_d("watchdog_s", watchdog_s_);
   debug_ = get_b("debug", debug_);
+
+  use_speed_control_ = get_b("use_speed_control", use_speed_control_);
+  speed_kp_duty_per_rad_s_ = std::max(0.0, get_d("speed_kp", speed_kp_duty_per_rad_s_));
+  speed_ki_duty_per_rad_ = std::max(0.0, get_d("speed_ki", speed_ki_duty_per_rad_));
+  speed_i_max_duty_ = std::max(0.0, get_d("speed_i_max", speed_i_max_duty_));
 
   // Validate joints: expect exactly 2: left_wheel_joint, right_wheel_joint
   if (info_.joints.size() != 2) {
@@ -192,6 +226,8 @@ CallbackReturn L298NSystemHardware::on_activate(const rclcpp_lifecycle::State & 
   vel_[0] = vel_[1] = 0.0;
   cmd_[0] = cmd_[1] = 0.0;
   last_duty_[0] = last_duty_[1] = 0;
+  speed_i_duty_[0] = speed_i_duty_[1] = 0.0;
+  cmd_sign_prev_[0] = cmd_sign_prev_[1] = 1;
   last_cmd_tp_ = std::chrono::steady_clock::now();
   return CallbackReturn::SUCCESS;
 }
@@ -235,9 +271,10 @@ void L298NSystemHardware::set_motor(int idx, double cmd_rad_s, double dt) {
   const int in_a = (idx == 0 ? left_in1_ : right_in3_);
   const int in_b = (idx == 0 ? left_in2_ : right_in4_);
 
-  double c = invert ? -cmd_rad_s : cmd_rad_s;
-  // Deadband near zero to avoid buzz/stiction
-  if (std::fabs(c) < deadband_rad_s_) {
+  const double cmd = cmd_rad_s;
+  const double out = invert ? -cmd : cmd;
+
+  if (std::fabs(cmd) < deadband_rad_s_) {
     if (brake_on_zero_) {
       gpio_write(pi_, in_a, 1);
       gpio_write(pi_, in_b, 1);
@@ -247,13 +284,42 @@ void L298NSystemHardware::set_motor(int idx, double cmd_rad_s, double dt) {
     }
     set_PWM_dutycycle(pi_, pwm_pin, 0);
     last_duty_[idx] = 0;
+    speed_i_duty_[idx] = 0.0;
     return;
   }
 
-  double mag = std::min(std::fabs(c) / std::max(1e-6, max_wheel_rad_s_), 1.0);
-  int target_duty = static_cast<int>(std::round(mag * pwm_range_));
+  const int cmd_sign = (cmd >= 0.0) ? 1 : -1;
+  if (idx == 0) {
+    enc_left_.set_direction(cmd_sign);
+  } else {
+    enc_right_.set_direction(cmd_sign);
+  }
 
-  // Slew rate limit on duty change (duty units per second)
+  if (cmd_sign_prev_[idx] != cmd_sign) {
+    cmd_sign_prev_[idx] = cmd_sign;
+    speed_i_duty_[idx] = 0.0;
+  }
+
+  double mag = std::min(std::fabs(cmd) / std::max(1e-6, max_wheel_rad_s_), 1.0);
+  int ff_duty = static_cast<int>(std::round(mag * pwm_range_));
+  int target_duty = ff_duty;
+
+  const bool encoder_enabled = (ticks_per_rev_ > 0.0) && ((idx == 0 ? left_enc_.a : right_enc_.a) >= 0);
+
+  if (use_speed_control_ && encoder_enabled) {
+    const double cmd_mag = std::fabs(cmd);
+    const double meas_mag = std::fabs(vel_[idx]);
+    const double err = cmd_mag - meas_mag;
+    const double p_duty = speed_kp_duty_per_rad_s_ * err;
+    speed_i_duty_[idx] += speed_ki_duty_per_rad_ * err * dt;
+    if (speed_i_max_duty_ > 0.0) {
+      speed_i_duty_[idx] = std::clamp(speed_i_duty_[idx], -speed_i_max_duty_, speed_i_max_duty_);
+    }
+    const double u_duty = p_duty + speed_i_duty_[idx];
+    target_duty = static_cast<int>(std::round(static_cast<double>(ff_duty) + u_duty));
+    target_duty = std::max(0, std::min(pwm_range_, target_duty));
+  }
+
   int max_step = static_cast<int>(std::round(std::max(0.0, slew_duty_per_s_) * std::max(1e-3, dt)));
   int duty = target_duty;
   if (max_step > 0) {
@@ -262,19 +328,19 @@ void L298NSystemHardware::set_motor(int idx, double cmd_rad_s, double dt) {
     if (duty < prev - max_step) duty = prev - max_step;
   }
 
-  // Direction
-  if (c >= 0) {
+  if (out >= 0.0) {
     gpio_write(pi_, in_a, 1);
     gpio_write(pi_, in_b, 0);
   } else {
     gpio_write(pi_, in_a, 0);
     gpio_write(pi_, in_b, 1);
   }
+
   set_PWM_dutycycle(pi_, pwm_pin, duty);
   if (debug_ && duty != last_duty_[idx]) {
     RCLCPP_INFO(rclcpp::get_logger("l298n_hardware"),
-                "motor[%d] cmd=%.3f dir=%s duty=%d/%d (target=%d)",
-                idx, cmd_rad_s, (c >= 0 ? "fwd" : "rev"), duty, pwm_range_, target_duty);
+                "motor[%d] cmd=%.3f meas=%.3f duty=%d/%d (ff=%d target=%d)",
+                idx, cmd, vel_[idx], duty, pwm_range_, ff_duty, target_duty);
   }
   last_duty_[idx] = duty;
 }

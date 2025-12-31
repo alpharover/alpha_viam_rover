@@ -74,14 +74,18 @@
       <param name="right_pwm">22</param>
       <param name="right_in3">6</param>
       <param name="right_in4">5</param>
-      <!-- Encoders: set to your GPIOs or -1 to disable -->
-      <param name="left_enc_a">-1</param>
+      <!-- Encoders: single-channel signals on BCM GPIOs -->
+      <param name="left_enc_a">20</param>
       <param name="left_enc_b">-1</param>
-      <param name="right_enc_a">-1</param>
+      <param name="right_enc_a">21</param>
       <param name="right_enc_b">-1</param>
       <!-- Encoder + control params -->
-      <param name="ticks_per_rev">20</param>
+      <param name="ticks_per_rev">192</param>
       <param name="encoder_glitch_us">100</param>
+      <param name="use_speed_control">true</param>
+      <param name="speed_kp">6.0</param>
+      <param name="speed_ki">12.0</param>
+      <param name="speed_i_max">120.0</param>
       <param name="max_wheel_rad_s">20.0</param>
       <param name="pwm_freq">20000</param>
       <param name="pwm_range">255</param>

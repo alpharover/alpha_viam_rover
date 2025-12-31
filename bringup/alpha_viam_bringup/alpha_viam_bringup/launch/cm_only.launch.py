@@ -50,8 +50,15 @@ def generate_launch_description():
                 executable="ros2_control_node",
                 name="controller_manager",
                 output="screen",
-                # Load controllers list from package share; controller params are passed via spawner later
-                parameters=[os.path.join(share_dir, "configs", "controllers.yaml")],
+                # Load controllers list from package share; set diff drive params_file for load-time injection
+                parameters=[
+                    os.path.join(share_dir, "configs", "controllers.yaml"),
+                    {
+                        "diff_drive_controller.params_file": [
+                            os.path.join(share_dir, "configs", "diff_drive_params.yaml")
+                        ]
+                    },
+                ],
                 remappings=[
                     ("~/robot_description", "/robot_description"),
                 ],

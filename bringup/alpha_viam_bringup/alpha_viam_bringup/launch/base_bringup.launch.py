@@ -106,6 +106,30 @@ def generate_launch_description():
         except Exception as e:
             print(f"[alpha_viam_bringup] network.yaml parse failed: {e}")
 
+        # Resolve l298n_hardware prefix for pluginlib discovery.
+        # In isolated colcon installs, l298n_hardware may not be on AMENT_PREFIX_PATH.
+        env_patch: dict[str, str] = {}
+        l298n_prefix = ""
+        try:
+            l298n_share = get_package_share_directory("l298n_hardware")
+            l298n_prefix = os.path.dirname(os.path.dirname(l298n_share))
+        except Exception:
+            bringup_prefix = os.path.dirname(os.path.dirname(share_dir))
+            install_root = os.path.dirname(bringup_prefix)
+            candidate = os.path.join(install_root, "l298n_hardware")
+            if os.path.isdir(candidate):
+                l298n_prefix = candidate
+
+        if l298n_prefix:
+            env_patch = {
+                "AMENT_PREFIX_PATH": l298n_prefix + ":" + os.environ.get("AMENT_PREFIX_PATH", ""),
+                "LD_LIBRARY_PATH": os.path.join(l298n_prefix, "lib")
+                + ":"
+                + os.environ.get("LD_LIBRARY_PATH", ""),
+            }
+        else:
+            print("[alpha_viam_bringup] WARN: l298n_hardware prefix not found; plugin discovery may fail")
+
         nodes = [
             Node(
                 package="robot_state_publisher",
@@ -159,14 +183,18 @@ def generate_launch_description():
                 executable="ros2_control_node",
                 name="controller_manager",
                 output="screen",
-                parameters=[os.path.join(share_dir, "configs", "controllers.yaml")],
+                parameters=[
+                    os.path.join(share_dir, "configs", "controllers.yaml"),
+                    {
+                        "diff_drive_controller.params_file": [
+                            os.path.join(share_dir, "configs", "diff_drive_params.yaml")
+                        ]
+                    },
+                ],
                 remappings=[
                     ("~/robot_description", "/robot_description"),
                 ],
-                additional_env=(lambda: (lambda share: {
-                    "AMENT_PREFIX_PATH": os.path.dirname(os.path.dirname(share)) + ":" + os.environ.get("AMENT_PREFIX_PATH", ""),
-                    "LD_LIBRARY_PATH": os.path.join(os.path.dirname(os.path.dirname(share)), "lib") + ":" + os.environ.get("LD_LIBRARY_PATH", ""),
-                })(get_package_share_directory("l298n_hardware")))(),
+                additional_env=env_patch,
             ),
             Node(
                 package="robot_localization",
@@ -232,7 +260,7 @@ def generate_launch_description():
             "on",
         )
         if spawn_drive:
-            # Load and activate diff_drive WITH --param-file (Humble-safe)
+            # Load and activate diff_drive (params_file set on /controller_manager)
             nodes.append(
                 TimerAction(
                     period=3.0,
@@ -248,8 +276,6 @@ def generate_launch_description():
                                 "/controller_manager",
                                 "--activate",
                                 "--unload-on-kill",
-                                "--param-file",
-                                os.path.join(share_dir, "configs", "diff_drive.params.yaml"),
                             ],
                             output="screen",
                         ),
