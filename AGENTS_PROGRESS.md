@@ -910,3 +910,13 @@ Rules
 * Acceptance test result: Pass — on-rover checks: `min_turn_default=0.0`; `scale_norm_twist(ang_norm=0.081)` → `angular_z≈0.007`; bringup smoke shows `cmdL/cmdR` negative and `motor[...] duty` lines.
 * Evidence links: Rover logs `/tmp/bringup_smoke2_1766895571.log` (reverse burst) and successful `colcon build --packages-select l298n_hardware`.
 * Follow-ups / Risks: Capture a short MCAP bag for the reverse + gentle-turn validation run (off-ground). If control feels too aggressive, lower `MAX_ANG` in the UI.
+
+---
+
+* 2025-12-31 / agent: codex-ide
+* Phase / Subsystem: Drive / Velocity Tuning + Merge
+* Task ID: PR #32 — drive: stabilize Humble ros2_control bring-up
+* Summary of changes: Merged PR #32 to main (92 files, +7948 lines). Fixed CI failures (yamllint trailing spaces in `configs/ekf.yaml`, `configs/diff_drive_params.yaml`). Resolved `.yamllint` merge conflict. Tuned diff_drive velocity limits: `linear.x.max_velocity` 0.8→1.0 m/s, `angular.z.max_velocity` 3.0→4.0 rad/s. Root cause of "config not applying": launch loads from installed package share dir, not source; updated both source and installed configs on rover.
+* Acceptance test result: Pass — user confirmed improved speed/turning; odom shows ~1.0 m/s linear, ~4.0 rad/s angular.
+* Evidence links: PR #32 merged commit `e4270b6`; rover tested via driver station UI.
+* Follow-ups / Risks: If still slow, proceed to Step 2 (lower `max_wheel_rad_s` 20→12 in URDF for more PWM duty per rad/s). Encoder validation still pending. Consider rebuilding rover with `colcon build` to sync installed configs with source after future changes.

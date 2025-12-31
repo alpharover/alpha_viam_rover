@@ -1,64 +1,80 @@
 # Rover Session To-Do List
 
 > Hand this file to the agent when rover is back online.
-> Created: 2025-12-29
+> Updated: 2025-12-31
 
 ---
 
-## Phase 1: File Sync (do first)
+## Session Context (2025-12-31)
 
-**Goal**: Ensure local repo matches rover's authoritative files, then commit.
+**What was accomplished today:**
+- PR #32 merged to main (92 files, +7948 lines)
+- Mac and rover synced to `main` @ commit `e4270b6`
+- Diff_drive velocity limits tuned: linear 0.8→1.0 m/s, angular 3.0→4.0 rad/s
+- User confirmed improved drive speed/turning
+- Driver station verified working
 
-### Critical files to verify/sync FROM rover:
+**Current branch:** `main` (both Mac and rover)
 
-```bash
-# Run from Mac - compare rover vs local
-CRITICAL_FILES=(
-  "lib/driver_station_mapping.py"
-  "scripts/driver_station_server.py"
-  "scripts/driver_station_session.sh"
-  "scripts/driver_station.sh"
-  "scripts/ros_clean.sh"
-  "tests/unit/test_driver_station_mapping.py"
-  "web/driver_station/app.js"
-  "web/driver_station/index.html"
-  "web/driver_station/joystick.js"
-  "web/driver_station/style.css"
-  "web/driver_station/ws.js"
-)
-
-# Quick diff check (run for each file):
-ssh alpha_viam@alpha-viam.local "cat ~/alpha_viam_rover/<file>" | diff - <file>
-```
-
-### Also check these modified files (bringup/drivers):
-- `bringup/alpha_viam_bringup/alpha_viam_bringup/launch/base_bringup.launch.py`
-- `drivers/l298n_hardware/src/l298n_system.cpp`
-- `drivers/l298n_hardware/include/l298n_hardware/l298n_system.hpp`
-
-### Actions:
-1. SSH to rover, check `git status` there
-2. If rover has uncommitted changes that are newer, `scp` them to local
-3. If local is newer/same, proceed to commit
-4. Commit all driver_station + supporting files
-5. Push to origin
-6. On rover: `git pull` to sync
+**Key insight from today:** Launch loads configs from installed package share dir (`install/alpha_viam_bringup/share/...`), not source. To apply config changes:
+1. Edit source file
+2. Either rebuild (`colcon build`) OR directly edit installed file
+3. Restart driver station session
 
 ---
 
-## Phase 2: Validation Testing (off-ground, E-stop ready)
+## Phase 1: Further Speed Tuning (if needed)
 
-### 2a. Basic teleop validation
+If movement still feels limited, apply Step 2 from Oracle analysis:
+
+### Lower `max_wheel_rad_s` for more PWM duty per rad/s
+
 ```bash
-# On rover:
+# On rover, edit URDF (source):
+nano ~/alpha_viam_rover/urdf/rover.urdf.xacro
+# Find line ~89: <param name="max_wheel_rad_s">20.0</param>
+# Change to: <param name="max_wheel_rad_s">12.0</param>
+
+# Rebuild l298n_hardware:
+cd ~/alpha_viam_rover
+source /opt/ros/humble/setup.bash
+colcon build --packages-select l298n_hardware
+
+# Restart driver station:
 scripts/driver_station_session.sh
-
-# On Mac browser:
-# Open http://alpha-viam.local:8090/
-# Verify: video feed, joystick control, arm/disarm toggle
 ```
 
-### 2b. MCAP capture - reverse + gentle turn
+**Why this helps:** At 20 rad/s max, commanded 4 rad/s only produces ~20% PWM duty. Lowering to 12 rad/s means same command produces ~33% duty.
+
+---
+
+## Phase 2: Encoder Validation
+
+**Context**: Single-channel encoders (no B channel). Direction inferred from command sign.
+
+### Check encoder readings:
+```bash
+# While wheels spin:
+ros2 topic echo /joint_states --field velocity
+
+# Expected: non-zero values that correlate with wheel motion
+```
+
+### Parameters to note/tune (in l298n_hardware via URDF):
+- `ticks_per_rev` - encoder ticks per wheel revolution
+- `speed_kp` - PI controller proportional gain
+- `speed_ki` - PI controller integral gain  
+- `speed_i_max` - integral windup limit
+
+### Validation:
+1. Spin wheels at constant cmd_vel
+2. Check `/joint_states` velocity is stable (not jumping wildly)
+3. Check `WHEEL_DIFF` in driver station UI is near 0 for straight driving
+
+---
+
+## Phase 3: MCAP Capture (validation evidence)
+
 ```bash
 # While driver_station is running, in another terminal:
 ros2 bag record -o bags/validation_$(date +%Y%m%d_%H%M%S) \
@@ -84,43 +100,16 @@ ros2 bag record -o bags/validation_$(date +%Y%m%d_%H%M%S) \
 
 ---
 
-## Phase 3: Encoder Validation
-
-**Context**: Single-channel encoders only (no B channel). Direction inferred from command sign.
-
-### Check encoder readings:
-```bash
-# While wheels spin:
-ros2 topic echo /joint_states --field velocity
-
-# Expected: non-zero values that correlate with wheel motion
-```
-
-### Parameters to note/tune (in l298n_hardware):
-- `ticks_per_rev` - encoder ticks per wheel revolution
-- `speed_kp` - PI controller proportional gain
-- `speed_ki` - PI controller integral gain  
-- `speed_i_max` - integral windup limit
-
-### Validation:
-1. Spin wheels at constant cmd_vel
-2. Check `/joint_states` velocity is stable (not jumping wildly)
-3. Check `WHEEL_DIFF` in driver station UI is near 0 for straight driving
-
----
-
 ## Phase 4: Documentation Updates
 
 After validation passes:
 
 1. Update `AGENTS_PROGRESS.md` with:
-   - File sync completed
    - MCAP bag location
    - Encoder validation results
+   - Any additional tuning applied
 
-2. Verify `docs/hw/pinmap.md` is accurate (already notes single-channel encoders)
-
-3. Close/update GitHub issues if applicable:
+2. Close/update GitHub issues if applicable:
    - #2 (Encoders) - partial progress
    - #24 (Teleop) - likely closeable
 
@@ -131,14 +120,16 @@ After validation passes:
 ### Rover access:
 ```bash
 ssh alpha_viam@alpha-viam.local
+# or
+ssh alpha_viam@192.168.0.87
 cd ~/alpha_viam_rover
 ```
 
 ### Driver station workflow:
 ```bash
 scripts/driver_station_session.sh
-# Browser: http://alpha-viam.local:8090/
-# Video: http://alpha-viam.local:8080/stream
+# Browser: http://192.168.0.87:8090/
+# Video: http://192.168.0.87:8080/stream
 ```
 
 ### Build after changes:
@@ -153,10 +144,16 @@ colcon build --packages-select l298n_hardware
 scripts/ros_clean.sh
 ```
 
+### Check current velocity limits:
+```bash
+cat ~/alpha_viam_rover/install/alpha_viam_bringup/share/alpha_viam_bringup/configs/diff_drive_params.yaml | grep max_velocity
+```
+
 ---
 
 ## Notes
 
 - Encoders are single-channel only (hardware limitation)
 - Deprecated teleop_keyboard.py/sh files were deleted (use driver_station instead)
-- Local repo branch: `chore/lint-fixes`
+- Rover backup exists at `~/alpha_viam_rover_working_20251231_095936.tgz` (can delete if not needed)
+- PR #32 merged - all drive stabilization work is now on main
