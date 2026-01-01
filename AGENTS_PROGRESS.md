@@ -920,3 +920,18 @@ Rules
 * Acceptance test result: Pass — user confirmed improved speed/turning; odom shows ~1.0 m/s linear, ~4.0 rad/s angular.
 * Evidence links: PR #32 merged commit `e4270b6`; rover tested via driver station UI.
 * Follow-ups / Risks: If still slow, proceed to Step 2 (lower `max_wheel_rad_s` 20→12 in URDF for more PWM duty per rad/s). Encoder validation still pending. Consider rebuilding rover with `colcon build` to sync installed configs with source after future changes.
+
+---
+
+* 2025-12-31 / agent: codex-ide
+* Phase / Subsystem: Sensors + Tools / IMU + Web Driver Station
+* Task ID: ADR-0009 — IMU temperature topic + driver station IMU integration + mock mode
+* Summary of changes:
+  - **IMU temperature publishing (ADR-0009)**: Extended `mpu6050_driver/node.py` to publish die temperature on `/imu/temperature` (sensor_msgs/Temperature) at configurable rate (default 1Hz). Added params `publish_temperature`, `temperature_topic`, `temperature_rate_hz` to `configs/imu.yaml` and schema.
+  - **Driver station IMU integration**: Added 7 IMU fields to `SharedState` (`imu_temp_c`, `imu_accel_x/y/z`, `imu_gyro_x/y/z`). Subscribed to `/imu/data` and `/imu/temperature`. Extended stats broadcast with `"imu"` section. Updated `web/driver_station/app.js` with IMU element refs and `fmtImu()` formatter.
+  - **Mock mode**: Replaced `_MOCK_MODE` pattern with `_ROS_AVAILABLE` try-import. Added `--mock` CLI flag to run without ROS 2 (for local Mac testing). Implemented `mock_sim_loop()` generating synthetic sensor data (IMU, odom, power, wifi). Updated `main()` to branch early for mock vs ROS mode.
+  - **Web UI reorganization**: Removed CAMERA_VIEW and QUICK_HINTS panels. Reorganized layout: LEFT side (ROVER_STATUS → DRIVE_TELEMETRY → CONTROL_LIMITS), RIGHT side (SENSOR_DATA → POWER_SYSTEMS → IMU_DATA).
+* Files touched: `drivers/mpu6050_driver/mpu6050_driver/node.py`, `configs/imu.yaml`, `configs/schemas/imu.schema.json`, `bringup/.../base_bringup.launch.py`, `scripts/driver_station_server.py`, `web/driver_station/{index.html,app.js}`, `docs/ADR/0009-imu-temperature-topic.md`.
+* Acceptance test result: Pass — mock mode starts on Mac (`python scripts/driver_station_server.py --mock`), UI shows oscillating synthetic IMU data. Unit tests pass (12/12).
+* Evidence links: N/A (on-rover validation with real IMU pending).
+* Follow-ups / Risks: Validate real IMU data appears in UI when running on rover; verify temperature topic at ~1Hz; capture MCAP with `/imu/temperature`.

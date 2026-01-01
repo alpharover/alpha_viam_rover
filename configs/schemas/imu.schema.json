@@ -10,6 +10,9 @@
         "frame_id": {"type": "string"},
         "i2c_bus": {"type": "integer", "minimum": 0},
         "address": {"type": ["integer", "string"]},
+        "publish_temperature": {"type": "boolean"},
+        "temperature_topic": {"type": "string"},
+        "temperature_rate_hz": {"type": "number", "exclusiveMinimum": 0},
         "filter": {
           "type": "object",
           "additionalProperties": true,

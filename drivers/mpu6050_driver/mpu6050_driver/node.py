@@ -12,7 +12,7 @@ except Exception:  # pragma: no cover - fallback for minimal installs
 
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Imu
+from sensor_msgs.msg import Imu, Temperature
 
 
 # MPU-6050 registers
@@ -54,6 +54,9 @@ class Mpu6050Node(Node):
         self.declare_parameter("imu_topic", "/imu/data")
         self.declare_parameter("calibrate_gyro", True)
         self.declare_parameter("calib_samples", 500)
+        self.declare_parameter("publish_temperature", True)
+        self.declare_parameter("temperature_topic", "/imu/temperature")
+        self.declare_parameter("temperature_rate_hz", 1.0)
 
         bus_no = int(self.get_parameter("i2c_bus").value)
         addr_param = self.get_parameter("address").value
@@ -66,6 +69,12 @@ class Mpu6050Node(Node):
         imu_topic = str(self.get_parameter("imu_topic").value)
         self._calib_gyro = bool(self.get_parameter("calibrate_gyro").value)
         self._calib_samples = int(self.get_parameter("calib_samples").value)
+
+        self._publish_temperature = bool(self.get_parameter("publish_temperature").value)
+        temperature_topic = str(self.get_parameter("temperature_topic").value)
+        temp_rate_hz = float(self.get_parameter("temperature_rate_hz").value)
+        self._temperature_period_s = 1.0 / max(1e-6, temp_rate_hz) if temp_rate_hz > 0 else 0.0
+        self._last_temp_pub_monotonic = 0.0
 
         self._bus = None  # type: ignore[assignment]
         try:
@@ -94,6 +103,11 @@ class Mpu6050Node(Node):
 
         # Publisher and timer
         self._pub_imu = self.create_publisher(Imu, imu_topic, 20)
+
+        self._pub_temp = None
+        if self._publish_temperature and self._temperature_period_s > 0:
+            self._pub_temp = self.create_publisher(Temperature, temperature_topic, 10)
+
         self._timer = self.create_timer(self._period, self._tick)
         self.get_logger().info(
             ("MPU-6050 started on i2c-%d addr 0x%02x, " "accel=%dg, gyro=%d dps, rate=%.1f Hz")
@@ -166,9 +180,33 @@ class Mpu6050Node(Node):
         temp_c = (temp_raw / 340.0) + 36.53
         return ax, ay, az, gx, gy, gz, temp_c
 
+    def _maybe_publish_temperature(self, stamp, temp_c: float, now_mono: float) -> None:
+        if not self._publish_temperature or self._pub_temp is None:
+            return
+        if self._temperature_period_s <= 0:
+            return
+
+        if self._last_temp_pub_monotonic == 0.0:
+            should_publish = True
+        else:
+            should_publish = (now_mono - self._last_temp_pub_monotonic) >= self._temperature_period_s
+
+        if not should_publish:
+            return
+
+        msg = Temperature()
+        msg.header.stamp = stamp
+        msg.header.frame_id = self._frame_id
+        msg.temperature = float(temp_c)
+        msg.variance = 0.0
+        self._pub_temp.publish(msg)
+        self._last_temp_pub_monotonic = now_mono
+
     def _tick(self) -> None:
         try:
-            ax_raw, ay_raw, az_raw, gx_raw, gy_raw, gz_raw, _ = self._read_raw()
+            ax_raw, ay_raw, az_raw, gx_raw, gy_raw, gz_raw, temp_c = self._read_raw()
+            now_mono = time.monotonic()
+            stamp = self.get_clock().now().to_msg()
 
             # Scales
             acc_lsb_g = _accel_lsb_per_g(self._accel_range)
@@ -190,7 +228,7 @@ class Mpu6050Node(Node):
 
             # Compose Imu message
             msg = Imu()
-            msg.header.stamp = self.get_clock().now().to_msg()
+            msg.header.stamp = stamp
             msg.header.frame_id = self._frame_id
 
             # Orientation unknown; use identity quaternion and set covariance[0] = -1
@@ -217,6 +255,8 @@ class Mpu6050Node(Node):
             msg.linear_acceleration_covariance[8] = 0.04
 
             self._pub_imu.publish(msg)
+
+            self._maybe_publish_temperature(stamp, temp_c, now_mono)
         except Exception as e:
             if not hasattr(self, "_last_err"):
                 self._last_err = 0.0  # type: ignore[attr-defined]

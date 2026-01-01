@@ -90,6 +90,9 @@ def generate_launch_description():
                             "gyro_range_dps",
                             "calibrate_gyro",
                             "calib_samples",
+                            "publish_temperature",
+                            "temperature_topic",
+                            "temperature_rate_hz",
                         }
                         imu_params = {k: v for k, v in _raw.items() if k in allowed}
                         # Capture filter sub-params if present

@@ -12,6 +12,11 @@ function fmtNumber(value, digits, fallback = '--') {
     return value.toFixed(digits);
 }
 
+function fmtImu(value, fallback = '--') {
+    if (typeof value !== 'number' || Number.isNaN(value)) return fallback;
+    return value.toFixed(2);
+}
+
 class DriverStation {
     constructor() {
         this.ws = new RoverWS();
@@ -60,6 +65,14 @@ class DriverStation {
             valWheelL: document.getElementById('val-wheel-l'),
             valWheelR: document.getElementById('val-wheel-r'),
             valWheelDiff: document.getElementById('val-wheel-diff'),
+
+            valImuTemp: document.getElementById('val-imu-temp'),
+            valImuAx: document.getElementById('val-imu-ax'),
+            valImuAy: document.getElementById('val-imu-ay'),
+            valImuAz: document.getElementById('val-imu-az'),
+            valImuGx: document.getElementById('val-imu-gx'),
+            valImuGy: document.getElementById('val-imu-gy'),
+            valImuGz: document.getElementById('val-imu-gz'),
 
             // Sliders
             sliderSpeed: document.getElementById('slider-speed'),
@@ -442,6 +455,29 @@ class DriverStation {
         }
         if (this.elements.valWheelDiff) {
             this.elements.valWheelDiff.textContent = fmtNumber(d.wheel_vel_diff_rad_s, 2, '--.--');
+        }
+
+        const imu = stats.imu || {};
+        if (this.elements.valImuTemp) {
+            this.elements.valImuTemp.textContent = fmtNumber(imu.temp_c, 1, '--.-');
+        }
+        if (this.elements.valImuAx) {
+            this.elements.valImuAx.textContent = fmtImu(imu.accel_x);
+        }
+        if (this.elements.valImuAy) {
+            this.elements.valImuAy.textContent = fmtImu(imu.accel_y);
+        }
+        if (this.elements.valImuAz) {
+            this.elements.valImuAz.textContent = fmtImu(imu.accel_z);
+        }
+        if (this.elements.valImuGx) {
+            this.elements.valImuGx.textContent = fmtImu(imu.gyro_x);
+        }
+        if (this.elements.valImuGy) {
+            this.elements.valImuGy.textContent = fmtImu(imu.gyro_y);
+        }
+        if (this.elements.valImuGz) {
+            this.elements.valImuGz.textContent = fmtImu(imu.gyro_z);
         }
     }
 

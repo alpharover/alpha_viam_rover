@@ -6,6 +6,9 @@ imu:
   rate_hz: 100.0
   accel_range_g: 2        # 2, 4, 8, 16
   gyro_range_dps: 250     # 250, 500, 1000, 2000
+  publish_temperature: true
+  temperature_topic: /imu/temperature
+  temperature_rate_hz: 1.0
   filter:
     type: madgwick  # optional orientation filter
     gain: 0.1       # beta

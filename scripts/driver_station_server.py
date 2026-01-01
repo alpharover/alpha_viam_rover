@@ -31,11 +31,12 @@ import time
 from dataclasses import dataclass
 from typing import Any, Optional
 
+import math
+import random
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-
 
 try:
     from aiohttp import ClientSession, ClientTimeout, WSMsgType, http_exceptions, web
@@ -48,22 +49,25 @@ except Exception as exc:  # pragma: no cover
     )
     raise SystemExit(2) from exc
 
-
+# ROS 2 imports are optional (mock mode runs without them)
 try:
     import rclpy
     from geometry_msgs.msg import Twist, TwistStamped
     from nav_msgs.msg import Odometry
     from rclpy.executors import MultiThreadedExecutor
     from rclpy.node import Node
-    from sensor_msgs.msg import JointState
+    from sensor_msgs.msg import Imu, JointState, Temperature
     from std_msgs.msg import Float32, Int32, String
-except Exception as exc:  # pragma: no cover
-    print(
-        "ERROR: ROS 2 Python deps are missing (rclpy, messages).\n"
-        "Run this after sourcing ROS 2 Humble (and your overlay).\n",
-        file=sys.stderr,
-    )
-    raise SystemExit(2) from exc
+
+    _ROS_AVAILABLE = True
+except Exception:
+    rclpy = None  # type: ignore[assignment]
+    Node = object  # type: ignore[assignment,misc]
+    Twist = TwistStamped = Odometry = MultiThreadedExecutor = None  # type: ignore[assignment,misc]
+    JointState = Imu = Temperature = None  # type: ignore[assignment,misc]
+    Float32 = Int32 = String = None  # type: ignore[assignment,misc]
+
+    _ROS_AVAILABLE = False
 
 
 from lib.driver_station_mapping import scale_norm_twist
@@ -98,6 +102,9 @@ class DriverStationConfig:
     mjpeg_source_size: str
     mjpeg_fps: float
     mjpeg_quality: int
+
+    # Mock mode (run without ROS 2)
+    mock: bool
 
 
 @dataclass
@@ -140,6 +147,15 @@ class SharedState:
 
     odom_linear_x_mps: Optional[float]
     odom_angular_z_rad_s: Optional[float]
+
+    # IMU telemetry (/imu/data + /imu/temperature)
+    imu_temp_c: Optional[float]
+    imu_accel_x: Optional[float]
+    imu_accel_y: Optional[float]
+    imu_accel_z: Optional[float]
+    imu_gyro_x: Optional[float]
+    imu_gyro_y: Optional[float]
+    imu_gyro_z: Optional[float]
 
 
 def _configure_aiohttp_logging() -> None:
@@ -337,6 +353,11 @@ class DriverStationNode(Node):
             Odometry, "/diff_drive_controller/odom", self._on_odom, 50
         )
 
+        self._sub_imu = self.create_subscription(Imu, "/imu/data", self._on_imu, 50)
+        self._sub_imu_temp = self.create_subscription(
+            Temperature, "/imu/temperature", self._on_imu_temp, 10
+        )
+
         period = 1.0 / max(1.0, float(cfg.publish_rate_hz))
         self._timer = self.create_timer(period, self._tick)
 
@@ -437,6 +458,19 @@ class DriverStationNode(Node):
         with self._state.lock:
             self._state.odom_linear_x_mps = float(msg.twist.twist.linear.x)
             self._state.odom_angular_z_rad_s = float(msg.twist.twist.angular.z)
+
+    def _on_imu(self, msg: Imu) -> None:
+        with self._state.lock:
+            self._state.imu_accel_x = float(msg.linear_acceleration.x)
+            self._state.imu_accel_y = float(msg.linear_acceleration.y)
+            self._state.imu_accel_z = float(msg.linear_acceleration.z)
+            self._state.imu_gyro_x = float(msg.angular_velocity.x)
+            self._state.imu_gyro_y = float(msg.angular_velocity.y)
+            self._state.imu_gyro_z = float(msg.angular_velocity.z)
+
+    def _on_imu_temp(self, msg: Temperature) -> None:
+        with self._state.lock:
+            self._state.imu_temp_c = float(msg.temperature)
 
 
 def _read_cpu_temp_c() -> Optional[float]:
@@ -626,6 +660,84 @@ async def ws_handler(request: web.Request) -> web.StreamResponse:
     return ws
 
 
+async def mock_sim_loop(cfg: DriverStationConfig, state: SharedState) -> None:
+    """Generate synthetic telemetry data when running in mock mode."""
+    t0 = time.monotonic()
+    last_lin = 0.0
+
+    while True:
+        await asyncio.sleep(0.02)  # 50 Hz
+        now = time.monotonic()
+        t = now - t0
+
+        with state.lock:
+            active = state.armed and (state.controller_client_id is not None)
+            age = now - state.last_cmd_monotonic if state.last_cmd_monotonic else 999.0
+            lin_norm = state.lin_norm
+            ang_norm = state.ang_norm
+            max_speed = state.max_speed
+            max_turn = state.max_turn
+            deadband = state.deadband
+            expo = state.expo
+
+        if (not active) or (cfg.deadman_s > 0.0 and age > cfg.deadman_s):
+            lin_norm = 0.0
+            ang_norm = 0.0
+
+        lin, ang = scale_norm_twist(
+            lin_norm=lin_norm,
+            ang_norm=ang_norm,
+            min_speed=cfg.min_speed,
+            min_turn=cfg.min_turn,
+            max_speed=max_speed,
+            max_turn=max_turn,
+            deadband=deadband,
+            expo=expo,
+        )
+
+        # Simple accel estimate from commanded lin change
+        dt = 0.02
+        ax_cmd = (lin - last_lin) / dt
+        last_lin = lin
+
+        with state.lock:
+            state.last_pub_linear_x = float(lin)
+            state.last_pub_angular_z = float(ang)
+            state.last_pub_monotonic = now
+
+            # Synthetic IMU data (oscillating + noisy)
+            state.imu_temp_c = 38.0 + 1.5 * math.sin(t / 20.0) + random.uniform(-0.2, 0.2)
+            state.imu_accel_x = ax_cmd + 0.15 * math.sin(1.7 * t) + random.uniform(-0.05, 0.05)
+            state.imu_accel_y = 0.10 * math.cos(1.3 * t) + random.uniform(-0.05, 0.05)
+            state.imu_accel_z = 9.80665 + 0.25 * math.sin(0.9 * t) + random.uniform(-0.05, 0.05)
+            state.imu_gyro_x = 0.02 * math.sin(0.6 * t) + random.uniform(-0.01, 0.01)
+            state.imu_gyro_y = 0.02 * math.cos(0.5 * t) + random.uniform(-0.01, 0.01)
+            state.imu_gyro_z = float(ang) + 0.02 * math.sin(0.4 * t) + random.uniform(-0.01, 0.01)
+
+            # Synthetic odometry (based on commanded velocities)
+            state.odom_linear_x_mps = float(lin)
+            state.odom_angular_z_rad_s = float(ang)
+
+            # Synthetic wheel velocities (differential drive approximation)
+            wheel_base = 0.3  # meters
+            left_vel = lin - (ang * wheel_base / 2.0)
+            right_vel = lin + (ang * wheel_base / 2.0)
+            state.wheel_left_vel_rad_s = left_vel / 0.05  # wheel_radius ~0.05m
+            state.wheel_right_vel_rad_s = right_vel / 0.05
+
+            # Synthetic power readings
+            state.power_bus_voltage_v = 12.6 + 0.3 * math.sin(t / 30.0) + random.uniform(-0.05, 0.05)
+            base_current = 0.5 + abs(lin) * 2.0 + abs(ang) * 0.5
+            state.power_current_a = base_current + random.uniform(-0.1, 0.1)
+            state.power_w = state.power_bus_voltage_v * state.power_current_a
+
+            # Synthetic wifi
+            state.wifi_signal_dbm = -55.0 + 5.0 * math.sin(t / 15.0) + random.uniform(-2, 2)
+            state.wifi_link_ok = 1
+            state.wifi_flap_count = 0
+            state.wifi_iface = "wlan0"
+
+
 async def stats_broadcast_loop(app: web.Application) -> None:
     state: SharedState = app["state"]
     cfg: DriverStationConfig = app["cfg"]
@@ -671,6 +783,15 @@ async def stats_broadcast_loop(app: web.Application) -> None:
                 "odom": {
                     "linear_x": state.odom_linear_x_mps,
                     "angular_z": state.odom_angular_z_rad_s,
+                },
+                "imu": {
+                    "temp_c": state.imu_temp_c,
+                    "accel_x": state.imu_accel_x,
+                    "accel_y": state.imu_accel_y,
+                    "accel_z": state.imu_accel_z,
+                    "gyro_x": state.imu_gyro_x,
+                    "gyro_y": state.imu_gyro_y,
+                    "gyro_z": state.imu_gyro_z,
                 },
                 "system": _system_stats(),
                 "control": {
@@ -788,6 +909,13 @@ def _create_state(cfg: DriverStationConfig) -> SharedState:
         wheel_right_vel_rad_s=None,
         odom_linear_x_mps=None,
         odom_angular_z_rad_s=None,
+        imu_temp_c=None,
+        imu_accel_x=None,
+        imu_accel_y=None,
+        imu_accel_z=None,
+        imu_gyro_x=None,
+        imu_gyro_y=None,
+        imu_gyro_z=None,
     )
 
 
@@ -818,6 +946,12 @@ def _parse_args(argv: list[str]) -> DriverStationConfig:
     parser.add_argument("--mjpeg-source-size", default="640x480")
     parser.add_argument("--mjpeg-fps", type=float, default=30.0)
     parser.add_argument("--mjpeg-quality", type=int, default=80)
+
+    parser.add_argument(
+        "--mock",
+        action="store_true",
+        help="Run without ROS 2 (synthetic telemetry for local testing)",
+    )
 
     args = parser.parse_args(argv)
 
@@ -852,6 +986,7 @@ def _parse_args(argv: list[str]) -> DriverStationConfig:
         mjpeg_source_size=str(args.mjpeg_source_size),
         mjpeg_fps=max(1.0, float(args.mjpeg_fps)),
         mjpeg_quality=int(args.mjpeg_quality),
+        mock=bool(args.mock),
     )
 
 
@@ -908,16 +1043,28 @@ async def run_server(
 
     stats_task = asyncio.create_task(stats_broadcast_loop(app))
 
+    # Start mock simulation loop if in mock mode
+    mock_task: asyncio.Task[None] | None = None
+    if cfg.mock:
+        mock_task = asyncio.create_task(mock_sim_loop(cfg, state))
+
     rover_host = _default_rover_hostname()
     url = f"http://{rover_host}:{cfg.http_port}/"
-    print(f"[driver_station] UI: {url}")
-    if cfg.video_mode == "mjpeg":
+    mode_str = " [MOCK MODE]" if cfg.mock else ""
+    print(f"[driver_station]{mode_str} UI: {url}")
+    if cfg.video_mode == "mjpeg" and not cfg.mock:
         print(f"[driver_station] Video (MJPEG UI): http://{rover_host}:{cfg.mjpeg_port}/")
         print(f"[driver_station] Video (MJPEG stream): http://{rover_host}:{cfg.mjpeg_port}/stream")
 
     try:
         await stop_event.wait()
     finally:
+        if mock_task is not None:
+            mock_task.cancel()
+            try:
+                await mock_task
+            except asyncio.CancelledError:
+                pass
         stats_task.cancel()
         try:
             await stats_task
@@ -932,6 +1079,31 @@ def main(argv: list[str]) -> int:
     cfg = _parse_args(argv)
     _configure_aiohttp_logging()
     state = _create_state(cfg)
+
+    # Mock mode: skip all ROS initialization
+    if cfg.mock:
+        print("[driver_station] Running in MOCK MODE (no ROS 2 required)")
+        # No MJPEG in mock mode (no camera)
+        try:
+            return asyncio.run(run_server(cfg, state=state, mjpeg=None))
+        finally:
+            with state.lock:
+                state.controller_client_id = None
+                state.armed = False
+                state.lin_norm = 0.0
+                state.ang_norm = 0.0
+                state.last_cmd_monotonic = time.monotonic()
+        return 0
+
+    # ROS mode: require ROS 2 to be available
+    if not _ROS_AVAILABLE:
+        print(
+            "ERROR: ROS 2 Python deps are missing (rclpy, messages).\n"
+            "Run this after sourcing ROS 2 Humble (and your overlay),\n"
+            "or use --mock for local testing without ROS 2.\n",
+            file=sys.stderr,
+        )
+        return 2
 
     mjpeg: MjpegStreamer | None = None
     if cfg.video_mode == "mjpeg":

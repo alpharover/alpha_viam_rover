@@ -35,41 +35,52 @@
         <!-- LEFT: MINI PANELS -->
         <section class="hud-left">
             <div class="hud-panel">
-                <div class="hud-panel__title">// CAMERA_VIEW</div>
-                <div class="hud-panel__body">
-                    <div class="waveform" aria-hidden="true">
-                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-                    </div>
-                    <div class="hud-mini-text">ANALYZING...</div>
-                </div>
-            </div>
-
-            <div class="hud-panel">
-                <div class="hud-panel__title">// SENSOR_DATA</div>
-                <div class="hud-panel__body">
-                    <div class="stat-row">
-                        <span class="label">CPU_TEMP</span>
-                        <span class="value"><span id="val-cpu-temp">--</span> C</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="label">WIFI_SIGNAL</span>
-                        <span class="value"><span id="val-wifi-sig">--</span> dBm</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="label">MEM_USED</span>
-                        <span class="value"><span id="val-mem">--</span> MB</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="hud-panel">
                 <div class="hud-panel__title">// ROVER_STATUS</div>
                 <div class="hud-panel__body">
                     <div class="status-chip">MOTOR_READY</div>
                     <div class="status-chip status-chip--dim">STANDBY_MODE</div>
                     <div class="hud-mini-text">SAFETY: OFF-GROUND FIRST</div>
+                </div>
+            </div>
+
+            <div class="hud-panel">
+                <div class="hud-panel__title">// DRIVE_TELEMETRY</div>
+                <div class="hud-panel__body">
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">ODOM_LIN_X</span>
+                        <span class="value"><span id="val-odom-vx">--.--</span> m/s</span>
+                    </div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">ODOM_ANG_Z</span>
+                        <span class="value"><span id="val-odom-wz">--.--</span> rad/s</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">WHEEL_L</span>
+                        <span class="value"><span id="val-wheel-l">--.--</span> rad/s</span>
+                    </div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">WHEEL_R</span>
+                        <span class="value"><span id="val-wheel-r">--.--</span> rad/s</span>
+                    </div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">WHEEL_DIFF</span>
+                        <span class="value"><span id="val-wheel-diff">--.--</span> rad/s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-panel">
+                <div class="hud-panel__title">// CONTROL_LIMITS</div>
+                <div class="hud-panel__body">
+                    <div class="slider-control">
+                        <label for="slider-speed">MAX_VEL <span id="disp-speed">0.0</span></label>
+                        <input type="range" id="slider-speed" min="0" max="2.0" step="0.01" value="1.0">
+                    </div>
+                    <div class="slider-control">
+                        <label for="slider-turn">MAX_ANG <span id="disp-turn">6.50</span></label>
+                        <input type="range" id="slider-turn" min="0" max="12.0" step="0.01" value="6.50">
+                    </div>
                 </div>
             </div>
         </section>
@@ -100,28 +111,19 @@
         <!-- RIGHT: TELEMETRY -->
         <section class="hud-right">
             <div class="hud-panel">
-                <div class="hud-panel__title">// DRIVE_TELEMETRY</div>
+                <div class="hud-panel__title">// SENSOR_DATA</div>
                 <div class="hud-panel__body">
-                    <div class="stat-row stat-row--compact">
-                        <span class="label">ODOM_LIN_X</span>
-                        <span class="value"><span id="val-odom-vx">--.--</span> m/s</span>
+                    <div class="stat-row">
+                        <span class="label">CPU_TEMP</span>
+                        <span class="value"><span id="val-cpu-temp">--</span> C</span>
                     </div>
-                    <div class="stat-row stat-row--compact">
-                        <span class="label">ODOM_ANG_Z</span>
-                        <span class="value"><span id="val-odom-wz">--.--</span> rad/s</span>
+                    <div class="stat-row">
+                        <span class="label">WIFI_SIGNAL</span>
+                        <span class="value"><span id="val-wifi-sig">--</span> dBm</span>
                     </div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-row stat-row--compact">
-                        <span class="label">WHEEL_L</span>
-                        <span class="value"><span id="val-wheel-l">--.--</span> rad/s</span>
-                    </div>
-                    <div class="stat-row stat-row--compact">
-                        <span class="label">WHEEL_R</span>
-                        <span class="value"><span id="val-wheel-r">--.--</span> rad/s</span>
-                    </div>
-                    <div class="stat-row stat-row--compact">
-                        <span class="label">WHEEL_DIFF</span>
-                        <span class="value"><span id="val-wheel-diff">--.--</span> rad/s</span>
+                    <div class="stat-row">
+                        <span class="label">MEM_USED</span>
+                        <span class="value"><span id="val-mem">--</span> MB</span>
                     </div>
                 </div>
             </div>
@@ -145,24 +147,38 @@
             </div>
 
             <div class="hud-panel">
-                <div class="hud-panel__title">// CONTROL_LIMITS</div>
+                <div class="hud-panel__title">// IMU_DATA</div>
                 <div class="hud-panel__body">
-                    <div class="slider-control">
-                        <label for="slider-speed">MAX_VEL <span id="disp-speed">0.0</span></label>
-                        <input type="range" id="slider-speed" min="0" max="2.0" step="0.01" value="1.0">
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">TEMP</span>
+                        <span class="value"><span id="val-imu-temp">--.-</span> C</span>
                     </div>
-                    <div class="slider-control">
-                        <label for="slider-turn">MAX_ANG <span id="disp-turn">6.50</span></label>
-                        <input type="range" id="slider-turn" min="0" max="12.0" step="0.01" value="6.50">
+                    <div class="stat-divider"></div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">ACCEL_X</span>
+                        <span class="value"><span id="val-imu-ax">--</span> m/s²</span>
                     </div>
-                </div>
-            </div>
-
-            <div class="hud-panel hud-panel--hint">
-                <div class="hud-panel__title">// QUICK_HINTS</div>
-                <div class="hud-panel__body">
-                    <div class="hud-mini-text">ARM: click/tap toggle</div>
-                    <div class="hud-mini-text">VIDEO: hover for raw feed</div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">ACCEL_Y</span>
+                        <span class="value"><span id="val-imu-ay">--</span> m/s²</span>
+                    </div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">ACCEL_Z</span>
+                        <span class="value"><span id="val-imu-az">--</span> m/s²</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">GYRO_X</span>
+                        <span class="value"><span id="val-imu-gx">--</span> rad/s</span>
+                    </div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">GYRO_Y</span>
+                        <span class="value"><span id="val-imu-gy">--</span> rad/s</span>
+                    </div>
+                    <div class="stat-row stat-row--compact">
+                        <span class="label">GYRO_Z</span>
+                        <span class="value"><span id="val-imu-gz">--</span> rad/s</span>
+                    </div>
                 </div>
             </div>
         </section>
