@@ -80,7 +80,10 @@
       <param name="right_enc_a">21</param>
       <param name="right_enc_b">-1</param>
       <!-- Encoder + control params -->
-      <param name="ticks_per_rev">192</param>
+      <!-- Measured: 0.5 physical rev = 15.48 rad reported with 192 ticks
+           Correction factor: 15.48 / 3.14159 = 4.93x
+           New value: 192 * 4.93 = 946 (likely 5:1 gear ratio in motors) -->
+      <param name="ticks_per_rev">946</param>
       <param name="encoder_glitch_us">100</param>
       <param name="use_speed_control">true</param>
       <param name="speed_kp">6.0</param>
